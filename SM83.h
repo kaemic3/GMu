@@ -26,8 +26,8 @@ public:
 
 
     // 16 bit registers
-    uint16_t SP = 0x0000;
-    uint16_t PC = 0x0000;
+    uint16_t sp = 0x0000;
+    uint16_t pc = 0x0000;
 
     // Interrupts
     // https://gbdev.io/pandocs/Interrupts.html
@@ -52,7 +52,7 @@ public:
 
     // Need to write functions for each opcode
     // https://gbdev.io/gb-opcodes/optables/
-    uint8_t nop();
+    uint8_t nop(); uint8_t ld_bc_d16();
 
     // For illegal opcodes
     uint8_t xxx();
@@ -82,8 +82,8 @@ private:
     uint8_t read(uint16_t addr, bool bReadOnly = false);
 
     // Access flags
-    uint8_t GetFlag(SM83_FLAGS f);
-    void SetFlag(SM83_FLAGS f);
+    uint8_t GetFlag(SM83_FLAGS f);                  // Used to check a specific flag
+    void SetFlag(SM83_FLAGS f, bool v);             // Used to set a specific flag, bool v is used to determine set or reset
 
     // Instruction struct
     struct INSTRUCTION {
