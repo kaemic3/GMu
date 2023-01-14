@@ -2,7 +2,7 @@
 
 Bus::Bus() {
     // Clear RAM
-    for(auto i : ram) i = 0x00;
+    for(uint8_t i : ram) i = 0x00;
 
     // connect cpu to bus
     cpu.ConnectBus(this);
