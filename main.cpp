@@ -17,7 +17,7 @@ SDL_Window *gWindow = nullptr;
 // The surface contained by the window
 SDL_Surface *gScreenSurface = nullptr;
 // The image we will load and show on the screen
-SDL_Surface *gHelloWorld = nullptr;
+SDL_Surface *gImage = nullptr;
 
 bool init() {
     // Initialization flag
@@ -47,8 +47,8 @@ bool loadMedia(){
     // Loading success flag
     bool success = true;
     // Load splash image
-    gHelloWorld = SDL_LoadBMP("../x.bmp");
-    if(gHelloWorld == nullptr){
+    gImage = SDL_LoadBMP("../x.bmp");
+    if(gImage == nullptr){
         std::cout << "Unable to load image! SDL_Error: " << SDL_GetError() << "\n";
         success = false;
     }
@@ -57,7 +57,7 @@ bool loadMedia(){
 
 void close() {
     // Deallocate surface
-    SDL_FreeSurface(gHelloWorld);
+    SDL_FreeSurface(gImage);
     // Destroy window
     SDL_DestroyWindow(gWindow);
     gWindow = nullptr;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
                         quit = true;
                 }
                 // Apply image
-                SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
+                SDL_BlitSurface(gImage, nullptr, gScreenSurface, nullptr);
                 // Update the surface
                 SDL_UpdateWindowSurface(gWindow);
             }
