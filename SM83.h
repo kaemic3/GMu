@@ -59,6 +59,8 @@ public:
 
     // Clock function
     void clock();
+    // Helper function to tell when an instruction has finished
+    bool complete();
     // Reset function
     void reset();
     // Interrupt function
