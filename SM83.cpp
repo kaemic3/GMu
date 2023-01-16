@@ -38,6 +38,9 @@ void SM83::clock() {
     }
     cycles--;
 }
+bool SM83::complete() {
+    return cycles == 0;
+}
 // Instructions in alphabetical order
 uint8_t SM83::ld_bc_d16() {
 
@@ -47,5 +50,6 @@ uint8_t SM83::ld_bc_d16() {
 uint8_t SM83::nop() {
     return 0;
 }
+
 
 
