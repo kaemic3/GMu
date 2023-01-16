@@ -92,11 +92,11 @@ int main(int argc, char* argv[]) {
                     if(e.type == SDL_QUIT)
                         quit = true;
                 }
+                // Apply image
+                SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
+                // Update the surface
+                SDL_UpdateWindowSurface(gWindow);
             }
-            // Apply image
-            SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
-            // Update the surface
-            SDL_UpdateWindowSurface(gWindow);
         }
     }
     close();
