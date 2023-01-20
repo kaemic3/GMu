@@ -1,7 +1,10 @@
 #include <iostream>
 #include "Bus.h"
-#include <SDL.h>
+#include "SDL_Handler.h"
+
 // Will probably want to make a class that handles SDL stuff
+// Will also need to make a class for text on the screen
+
 // Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -14,10 +17,9 @@ bool loadMedia();
 void close();
 // The window we'll be rendering to
 SDL_Window *gWindow = nullptr;
-// The surface contained by the window
-SDL_Surface *gScreenSurface = nullptr;
-// The image we will load and show on the screen
-SDL_Surface *gImage = nullptr;
+// Our renderer
+SDL_Renderer *gRenderer = nullptr;
+
 
 bool init() {
     // Initialization flag
