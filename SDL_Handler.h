@@ -2,7 +2,7 @@
 #define GMU_SDL_HANDLER_H
 
 #include <SDL.h>
-#include <SDl_ttf.h>
+#include <SDL_ttf.h>
 
 class SDL_Handler {
 
