@@ -6,8 +6,8 @@
 // Will also need to make a class for text on the screen
 
 // Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
 
 // Starts up SDL and creates a window
 bool init();
