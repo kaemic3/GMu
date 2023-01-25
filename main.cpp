@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     gb.cpu.nop();
     int t = gb.ram[0xFFFF];
     std::cout << t << "\n";
+    SDL_Handler test;
 
     return 0;
 }

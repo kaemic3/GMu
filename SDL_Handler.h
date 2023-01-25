@@ -10,6 +10,7 @@ class zText{
     zText();
     // Deallocate memory
     ~zText();
+
     // Loads image at specified path
     bool loadFromFiles(const std::string &path);
     // Creates image from font string
