@@ -3,10 +3,12 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <SDL.h>
 #include <SDL_ttf.h>
 
-
+// Forward declare zText class
+class zText;
 class SDL_Handler {
 public:
     // Constructor
@@ -28,6 +30,9 @@ public:
 private:
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
+    // This vector contains pointers to all zText objects
+    // Used for freeing all memory being used
+    static std::vector<zText*> sTextList;
     friend class zText;
 };
 
@@ -42,6 +47,8 @@ public:
     // Creates image from font string - this should be a helper function
     bool generateTexture();
     // Deallocates texture
+    void freeTexture();
+    // Deallocates texture and font
     void free();
     // Renders texture at given point
     void render(int x, int y, SDL_Rect *clip = nullptr, double angle = 0.0, SDL_Point *center = nullptr, SDL_RendererFlip flip = SDL_FLIP_NONE);
@@ -55,7 +62,10 @@ public:
     // Set color
     bool setColor(std::string color);
     // Set font
-    bool setFont(std::string font, int size);
+    bool setFont(std::string font);
+    // Getter functions for X and Y coordinates
+    int getX();
+    int getY();
 
 private:
     // Current SDL_Handler
@@ -63,9 +73,13 @@ private:
     // Image dimensions
     int tWidth;
     int tHeight;
+    // Set the height and width
+    void setDimensions(SDL_Surface *curSurface);
     // Text position
     int tX;
     int tY;
+    // Set position
+    bool setPosition(int x, int y);
 
     // Current font
     TTF_Font *tFont;

@@ -53,16 +53,111 @@ void SDL_Handler::renderPresent() {
     SDL_RenderPresent(pRenderer);
 }
 
+void SDL_Handler::close() {
+    // Need to iterate through our list of zText objects and free them all
+    for(auto text : sTextList)
+        text->free();
+    // Reset the TextList
+    SDL_Handler::sTextList = {};
+    // Destroy window and renderer
+    SDL_DestroyRenderer(pRenderer);
+    SDL_DestroyWindow(pWindow);
+    pRenderer = nullptr;
+    pWindow = nullptr;
+    // Quit SDL subsystems
+    TTF_Quit();
+    SDL_Quit();
+}
+
+// Static member definitions
+std::vector<zText*> SDL_Handler::sTextList = {};
+
 // ---------------------------
 // zText
 // ---------------------------
 zText::zText(SDL_Handler *curHandler, std::string text, int x, int y, std::string color, std::string fontType, int fontSize) {
-    pHandler = curHandler; tCurText = text; tX = x; tY = y;
+    pHandler = curHandler; tCurText = text; tX = x; tY = y; tFontSize = fontSize;
     setColor(color);
+    setFont(fontType);
+    generateTexture();
+    SDL_Handler::sTextList.push_back(this);
 }
 zText::~zText() {
+    free();
+}
+
+bool zText::generateTexture() {
+    // Free existing texture
+    freeTexture();
+    // Render text surface
+    SDL_Surface *textSurface = TTF_RenderText_Solid(tFont, tCurText.c_str(), tFontColor);
+    if (textSurface == nullptr) {
+        printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+        return false;
+    }
+    // Create texture from surface
+    tTexture = SDL_CreateTextureFromSurface(pHandler->pRenderer, textSurface);
+    if (tTexture == nullptr) {
+        printf("Unable to generate texture from rendered text! SDL_ttf Error: %s\n", TTF_GetError());
+        return false;
+    }
+    setDimensions(textSurface);
+    // Free our surface
+    SDL_FreeSurface(textSurface);
+
+    return true;
+}
+// Helper function for setting dimensions private members
+void zText::setDimensions(SDL_Surface* curSurface) {
+    tWidth = curSurface->w;
+    tHeight = curSurface->h;
+}
+void zText::render(int x, int y, SDL_Rect *clip, double angle, SDL_Point *center, SDL_RendererFlip flip) {
+    // set rendering space and render to the screen
+    SDL_Rect renderQuad = {x, y, tWidth, tHeight};
+    // Update our X Y coordinates
+    setPosition(x, y);
+    // Set clip rendering dimensions
+    if (clip) {
+        renderQuad.w = clip->w;
+        renderQuad.h = clip->h;
+    }
+    // Render text surface
+    SDL_RenderCopyEx(pHandler->pRenderer, tTexture, clip, &renderQuad, angle, center, flip);
+}
+bool zText::setPosition(int x, int y) {
+    // Check to see if the coordinates are the same
+    if(tX == x && tY == y)
+        return false;
+    // If not update our members
+    tX = x;
+    tY=y;
+    return true;
 
 }
+void zText::freeTexture() {
+    // Free texture if it exists
+    if(tTexture) {
+        SDL_DestroyTexture(tTexture);
+        tTexture = nullptr;
+        tWidth = 0;
+        tHeight = 0;
+    }
+}
+void zText::free() {
+    freeTexture();
+    // Free font if it exists
+    if(tFont) {
+        TTF_CloseFont(tFont);
+        tFont = nullptr;
+    }
+}
+// Getter and setter member functions
+int zText::getWidth() { return tWidth; }
+int zText::getHeight() { return tHeight; }
+int zText::getX() { return tX; }
+int zText::getY() { return tY; }
+
 // Return true if color is in the ColorMap
 // Return False if the color is not in the ColorMap
 bool zText::setColor(std::string color) {
@@ -77,7 +172,7 @@ bool zText::setColor(std::string color) {
     return true;
 }
 
-bool zText::setFont(std::string font, int size) {
+bool zText::setFont(std::string font) {
     // Get the font directory
     auto it = sFontMap.find(font);
     if(it == sFontMap.end()) {
@@ -85,60 +180,19 @@ bool zText::setFont(std::string font, int size) {
         return false;
     }
     std::string fontDir = it->second;
-    tFont = TTF_OpenFont(fontDir.c_str(), size);
+    tFont = TTF_OpenFont(fontDir.c_str(), tFontSize);
+    if(tFont == nullptr) {
+        printf("Unable to open font! SDL_Error: %s\n", TTF_GetError());
+        return false;
+    }
 
     return true;
 }
-
-bool zText::generateTexture() {
-    // Free existing texture
-    free();
-    // Render text surface
-    SDL_Surface *textSurface = TTF_RenderText_Solid(tFont, tCurText.c_str(), tFontColor);
-    if (textSurface == nullptr) {
-        printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
-        return false;
-    }
-    // Create texture from surface
-    tTexture = SDL_CreateTextureFromSurface(pHandler->pRenderer, textSurface);
-    if (tTexture == nullptr) {
-        printf("Unable to generate texture from rendered text! SDL_ttf Error: %s\n", TTF_GetError());
-        return false;
-    }
-    // Get dimensions
-    tWidth = textSurface->w;
-    tHeight = textSurface->h;
-    // Free our surface
-    SDL_FreeSurface(textSurface);
-
-    return true;
-}
-
-void zText::render(int x, int y, SDL_Rect *clip, double angle, SDL_Point *center, SDL_RendererFlip flip) {
-    // set rendering space and render to the screen
-    SDL_Rect renderQuad = {x, y, tWidth, tHeight};
-    // Set clip rendering dimensions
-    if (clip) {
-        renderQuad.w = clip->w;
-        renderQuad.h = clip->h;
-    }
-    // Render text surface
-    SDL_RenderCopyEx(pHandler->pRenderer, tTexture, clip, &renderQuad, angle, center, flip);
-}
-
-void zText::free() {
-    // Free texture if it exists
-    if(tTexture) {
-        SDL_DestroyTexture(tTexture);
-        tTexture = nullptr;
-        tWidth = 0;
-        tHeight = 0;
-    }
-}
+// Static member definitions
 std::map<std::string, std::string> zText::sFontMap = {
     {"Amstrad CPC", "../Fonts/amstrad_cpc464.ttf"},
     {"Fira Code", "../Fonts/FiraCode.ttf"}
 };
 std::map<std::string, SDL_Color> zText::sColorMap = {
-        { "Yellow", {243, 243, 13} }
+        { "yellow", {243, 243, 13} }
 };
