@@ -28,10 +28,8 @@ public:
 private:
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
-
-
+    friend class zText;
 };
-
 
 class zText{
 public:
@@ -42,7 +40,7 @@ public:
     // Update text
     bool updateText(std::string nText);
     // Creates image from font string - this should be a helper function
-    bool generateNewTexture(std::string textureText);
+    bool generateTexture();
     // Deallocates texture
     void free();
     // Renders texture at given point
@@ -56,6 +54,8 @@ public:
     std::string getString();
     // Set color
     bool setColor(std::string color);
+    // Set font
+    bool setFont(std::string font, int size);
 
 private:
     // Current SDL_Handler
