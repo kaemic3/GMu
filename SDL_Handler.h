@@ -90,8 +90,8 @@ private:
 
     // Current text as std::string
     std::string tCurText;
-    // Text texture
-    SDL_Texture *tTexture;
+    // Text texture - needs to be initialized here, maybe want to separate the generate function from constructor
+    SDL_Texture *tTexture = nullptr;
     // Available fonts - maybe make this a std::vector<std::pair<std::string, std::string>> ??
     // Also static as there is no need for duplicates here, need to define in main file.
     static std::map<std::string, std::string> sFontMap;
