@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     if(!wSDLMain.init("GMu Debug", SCREEN_WIDTH, SCREEN_HEIGHT))
         return 1;
     zText test(&wSDLMain, "Test text :3", 0, 0, "yellow", "Amstrad CPC", 16);
+    zText test2(&wSDLMain, "nyakomode go brrrrrrrrrrrrrrrrrrr", 5, 10, "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
@@ -31,7 +32,8 @@ int main(int argc, char* argv[]) {
         // Run after we check for events
         // Need a clear screen function
         wSDLMain.clearScreen();
-        test.render(1000, 40);
+        test.render(5, 5);
+        test2.render(5, 25);
         // Update screen
         wSDLMain.renderPresent();
     }
