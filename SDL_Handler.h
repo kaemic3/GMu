@@ -51,6 +51,7 @@ public:
     // Deallocates texture and font
     void free();
     // Renders texture at given point
+    void render();
     void render(int x, int y, SDL_Rect *clip = nullptr, double angle = 0.0, SDL_Point *center = nullptr, SDL_RendererFlip flip = SDL_FLIP_NONE);
     // Load fonts list, may only be used in constructor???
     bool loadMedia();

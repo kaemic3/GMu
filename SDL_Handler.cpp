@@ -112,6 +112,9 @@ void zText::setDimensions(SDL_Surface* curSurface) {
     tWidth = curSurface->w;
     tHeight = curSurface->h;
 }
+void zText::render() {
+    render(tX, tY);
+}
 void zText::render(int x, int y, SDL_Rect *clip, double angle, SDL_Point *center, SDL_RendererFlip flip) {
     // set rendering space and render to the screen
     SDL_Rect renderQuad = {x, y, tWidth, tHeight};
