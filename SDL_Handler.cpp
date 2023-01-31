@@ -53,6 +53,15 @@ void SDL_Handler::renderPresent() {
     SDL_RenderPresent(pRenderer);
 }
 
+void SDL_Handler::renderText() {
+    // Iterate through sTextList and call of their render functions
+    for(auto text : sTextList) {
+        if(!text)
+            printf("Error zText is a nullptr\n");
+        text->render();
+    }
+}
+
 void SDL_Handler::close() {
     // Need to iterate through our list of zText objects and free them all
     for(auto text : sTextList)

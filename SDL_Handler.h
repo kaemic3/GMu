@@ -27,6 +27,8 @@ public:
     void clearScreen();
     // Update screen
     void renderPresent();
+    // Render all text to the window
+    void renderText();
 private:
     SDL_Window *pWindow;
     SDL_Renderer *pRenderer;
