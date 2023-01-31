@@ -19,9 +19,7 @@ std::string toHex(int num) {
 int main(int argc, char* argv[]) {
     Bus gb;
     gb.cpu.nop();
-    int t = gb.ram[0xFFFF];
     gb.cpu.a_reg = 33;
-    std::cout << t << "\n";
     SDL_Handler wSDLMain;
     // Need to create some text objects here
     // Main loop flag
