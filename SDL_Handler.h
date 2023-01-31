@@ -45,7 +45,7 @@ public:
     // Deallocate memory
     ~zText();
     // Update text
-    bool updateText(std::string nText);
+    void updateText(std::string nText);
     // Creates image from font string - this should be a helper function
     bool generateTexture();
     // Deallocates texture

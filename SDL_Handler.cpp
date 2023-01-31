@@ -45,6 +45,7 @@ bool SDL_Handler::init(const std::string &title, const int wScreen, const int hS
 int SDL_Handler::pollEvent() {
     return SDL_PollEvent(&eventHandler);
 }
+
 void SDL_Handler::clearScreen() {
     SDL_SetRenderDrawColor(pRenderer, 0, 2, 107, 0xFF);
     SDL_RenderClear(pRenderer);
@@ -94,7 +95,11 @@ zText::zText(SDL_Handler *curHandler, std::string text, int x, int y, std::strin
 zText::~zText() {
     free();
 }
-
+void zText::updateText(std::string nText) {
+    tCurText = nText;
+    // Now generate a new text texture
+    generateTexture();
+}
 bool zText::generateTexture() {
     // Free existing texture
     freeTexture();
