@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 #include <SDL.h>
 #include <SDL_ttf.h>
 
@@ -42,10 +44,12 @@ class zText{
 public:
     // Initialize variables
     zText(SDL_Handler *curHandler, std::string text, int x, int y, std::string color, std::string fontType, int fontSize);
+    zText(SDL_Handler *curHandler, int num, bool u16, int x, int y, std::string color, std::string fontType, int fontSize);
     // Deallocate memory
     ~zText();
     // Update text
     void updateText(std::string nText);
+    void updateText(int num, bool u16 = false);
     // Creates image from font string - this should be a helper function
     bool generateTexture();
     // Deallocates texture
@@ -83,6 +87,8 @@ private:
     int tY;
     // Set position
     bool setPosition(int x, int y);
+    // Convert int to hex string
+    std::string toHexString(int num, bool u16 = false);
 
     // Current font
     TTF_Font *tFont;

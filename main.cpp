@@ -1,6 +1,4 @@
 #include <iostream>
-#include <iomanip>
-#include <sstream>
 #include "Bus.h"
 #include "SDL_Handler.h"
 
@@ -9,12 +7,6 @@ const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
 const int REGISTER_X_OFFSET = 1040;
 
-// Used to convert decimal value to hex string
-std::string toHex(int num) {
-    std::stringstream stream;
-    stream << std::setfill('0') << std::setw(sizeof (uint16_t) * 2) << std::hex << num;
-    return stream.str();
-}
 // Need to use setup SDL to test instructions
 int main(int argc, char* argv[]) {
     Bus gb;
@@ -31,9 +23,9 @@ int main(int argc, char* argv[]) {
     zText test2(&wSDLMain, "nyahko go brrrrrrrrrrrrrrrrrrr", 8, 28, "yellow", "Amstrad CPC", 16);
     zText test3(&wSDLMain, "$0000:", 8, 48, "yellow", "Amstrad CPC", 16);
     zText reg_a(&wSDLMain, "A :", REGISTER_X_OFFSET, 8, "yellow", "Amstrad CPC", 16);
-    zText reg_a_value(&wSDLMain, toHex(gb.cpu.a_reg), reg_a.getX() + 48, reg_a.getY(), "yellow", "Amstrad CPC", 16);
+    zText reg_a_value(&wSDLMain, gb.cpu.a_reg, false, reg_a.getX() + 48, reg_a.getY(), "yellow", "Amstrad CPC", 16);
     zText pc_text(&wSDLMain, "PC:", REGISTER_X_OFFSET, 28, "yellow", "Amstrad CPC", 16);
-    zText pc_value(&wSDLMain, toHex(gb.cpu.pc), pc_text.getX() + 48, pc_text.getY(), "yellow", "Amstrad CPC", 16);
+    zText pc_value(&wSDLMain, gb.cpu.pc, true, pc_text.getX() + 48, pc_text.getY(), "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
@@ -59,7 +51,7 @@ int main(int argc, char* argv[]) {
         // Run after we check for events
         // Need a clear screen function
         wSDLMain.clearScreen();
-        pc_value.updateText(toHex(gb.cpu.pc));
+        pc_value.updateText(gb.cpu.pc, true);
         wSDLMain.renderText();
         //test.render(5, 5);
         //test2.render();

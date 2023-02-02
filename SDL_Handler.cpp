@@ -92,6 +92,13 @@ zText::zText(SDL_Handler *curHandler, std::string text, int x, int y, std::strin
     generateTexture();
     SDL_Handler::sTextList.push_back(this);
 }
+zText::zText(SDL_Handler *curHandler, int num, bool u16, int x, int y, std::string color, std::string fontType, int fontSize) {
+    pHandler = curHandler; tCurText = toHexString(num, u16); tX = x; tY = y; tFontSize = fontSize;
+    setColor(color);
+    setFont(fontType);
+    generateTexture();
+    SDL_Handler::sTextList.push_back(this);
+}
 zText::~zText() {
     free();
 }
@@ -99,6 +106,24 @@ void zText::updateText(std::string nText) {
     tCurText = nText;
     // Now generate a new text texture
     generateTexture();
+}
+
+void zText::updateText(int num, bool u16) {
+    tCurText = toHexString(num, u16);
+    generateTexture();
+}
+
+std::string zText::toHexString(int num, bool u16) {
+    std::stringstream stream;
+    if(u16) {
+        stream << std::setfill('0') << std::setw(sizeof (uint16_t) * 2) << std::hex << num;
+        return stream.str();
+    }
+    else {
+        stream << std::setfill('0') << std::setw(sizeof (uint8_t) * 2) << std::hex << num;
+        return stream.str();
+    }
+
 }
 bool zText::generateTexture() {
     // Free existing texture
