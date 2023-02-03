@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <bitset>
 #include <SDL.h>
 #include <SDL_ttf.h>
 
@@ -45,11 +46,12 @@ public:
     // Initialize variables
     zText(SDL_Handler *curHandler, std::string text, int x, int y, std::string color, std::string fontType, int fontSize);
     zText(SDL_Handler *curHandler, int num, bool u16, int x, int y, std::string color, std::string fontType, int fontSize);
+    zText(SDL_Handler *curHandler, int num, bool u16, bool binary, int x, int y, std::string color, std::string fontType, int fontSize);
     // Deallocate memory
     ~zText();
     // Update text
     void updateText(std::string nText);
-    void updateText(int num, bool u16 = false);
+    void updateText(int num, bool u16 = false, bool binary = false);
     // Creates image from font string - this should be a helper function
     bool generateTexture();
     // Deallocates texture
@@ -59,8 +61,6 @@ public:
     // Renders texture at given point
     void render();
     void render(int x, int y, SDL_Rect *clip = nullptr, double angle = 0.0, SDL_Point *center = nullptr, SDL_RendererFlip flip = SDL_FLIP_NONE);
-    // Load fonts list, may only be used in constructor???
-    bool loadMedia();
     // Get image dimensions
     int getWidth();
     int getHeight();
@@ -88,7 +88,7 @@ private:
     // Set position
     bool setPosition(int x, int y);
     // Convert int to hex string
-    std::string toHexString(int num, bool u16 = false);
+    std::string toHexString(int num, bool u16 = false, bool binary = false);
 
     // Current font
     TTF_Font *tFont;

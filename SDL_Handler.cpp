@@ -99,6 +99,15 @@ zText::zText(SDL_Handler *curHandler, int num, bool u16, int x, int y, std::stri
     generateTexture();
     SDL_Handler::sTextList.push_back(this);
 }
+
+zText::zText(SDL_Handler *curHandler, int num, bool u16, bool binary, int x, int y, std::string color, std::string fontType, int fontSize) {
+
+    pHandler = curHandler; tCurText = toHexString(num, u16, binary); tX = x; tY = y; tFontSize = fontSize;
+    setColor(color);
+    setFont(fontType);
+    generateTexture();
+    SDL_Handler::sTextList.push_back(this);
+}
 zText::~zText() {
     free();
 }
@@ -108,16 +117,19 @@ void zText::updateText(std::string nText) {
     generateTexture();
 }
 
-void zText::updateText(int num, bool u16) {
-    tCurText = toHexString(num, u16);
+void zText::updateText(int num, bool u16, bool binary) {
+    tCurText = toHexString(num, u16, binary);
     generateTexture();
 }
 
-std::string zText::toHexString(int num, bool u16) {
+std::string zText::toHexString(int num, bool u16, bool binary) {
     std::stringstream stream;
     if(u16) {
         stream << std::setfill('0') << std::setw(sizeof (uint16_t) * 2) << std::hex << num;
         return stream.str();
+    }
+    else if(binary) {
+        return std::bitset<8>(num).to_string();
     }
     else {
         stream << std::setfill('0') << std::setw(sizeof (uint8_t) * 2) << std::hex << num;
