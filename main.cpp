@@ -65,6 +65,7 @@ int main(int argc, char* argv[]) {
                 quit = true;
                 break;
             }
+            // Get keyboard input
             if(wSDLMain.eventHandler.type == SDL_KEYDOWN) {
                 switch(wSDLMain.eventHandler.key.keysym.sym) {
                     case SDLK_SPACE:
