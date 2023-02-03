@@ -8,18 +8,22 @@ const int SCREEN_HEIGHT = 720;
 const int REGISTER_X_OFFSET = SCREEN_WIDTH - 240;
 const int REGISTER_VALUE_OFFSET = 48;
 const int REGISTER_PAIR_OFFSET = 64;
+const int REGISTER_FLAG_OFFSET = 96;
 
 // Need to use setup SDL to test instructions
 int main(int argc, char* argv[]) {
     Bus gb;
     gb.cpu.nop();
     gb.cpu.a_reg = 33;
+    gb.cpu.f_reg = 33;
     SDL_Handler wSDLMain;
     // Main loop flag
     bool quit = false;
     // Initialize SDL_Handler
     if(!wSDLMain.init("GMu Debug", SCREEN_WIDTH, SCREEN_HEIGHT))
         return 1;
+
+    // Debug text
     zText reg_a(&wSDLMain, "A:", REGISTER_X_OFFSET, 8, "yellow", "Amstrad CPC", 16);
     zText reg_a_value(&wSDLMain, gb.cpu.a_reg, false, reg_a.getX() + REGISTER_VALUE_OFFSET, reg_a.getY(), "yellow", "Amstrad CPC", 16);
 
@@ -44,11 +48,14 @@ int main(int argc, char* argv[]) {
     zText reg_l(&wSDLMain, "L:", reg_h_value.getX() + REGISTER_PAIR_OFFSET, reg_h.getY(), "yellow", "Amstrad CPC", 16);
     zText reg_l_value(&wSDLMain, gb.cpu.h_reg, false, reg_l.getX() + REGISTER_VALUE_OFFSET, reg_l.getY(), "yellow", "Amstrad CPC", 16);
 
-    // Need to make a function to draw the binary version of the flag register
-    // zText reg_flag
+    zText reg_flag(&wSDLMain, "Flags:", REGISTER_X_OFFSET, 108, "yellow", "Amstrad CPC", 16);
+    zText reg_flag_value(&wSDLMain, gb.cpu.f_reg, false, true, reg_flag.getX() + REGISTER_FLAG_OFFSET, reg_flag.getY(), "yellow", "Amstrad CPC", 16);
+    zText reg_flag_key(&wSDLMain, "ZNHC----", reg_flag_value.getX(), reg_flag_value.getY() + 20, "yellow", "Amstrad CPC", 16);
 
-    zText pc_text(&wSDLMain, "PC:", REGISTER_X_OFFSET, 148, "yellow", "Amstrad CPC", 16);
+    zText pc_text(&wSDLMain, "PC:", REGISTER_X_OFFSET, 168, "yellow", "Amstrad CPC", 16);
     zText pc_value(&wSDLMain, gb.cpu.pc, true, pc_text.getX() + 48, pc_text.getY(), "yellow", "Amstrad CPC", 16);
+    zText sp_text(&wSDLMain, "SP:", REGISTER_X_OFFSET, 188, "yellow", "Amstrad CPC", 16);
+    zText sp_value(&wSDLMain, gb.cpu.sp, true, sp_text.getX() + REGISTER_VALUE_OFFSET, sp_text.getY(), "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
