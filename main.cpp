@@ -73,6 +73,36 @@ int main(int argc, char* argv[]) {
                     case SDLK_RETURN:
                         gb.cpu.pc += 0x100;
                         break;
+                    case SDLK_RSHIFT:
+                        gb.cpu.sp++;
+                        break;
+                    case SDLK_LSHIFT:
+                        gb.cpu.sp += 0x100;
+                        break;
+                    case SDLK_a:
+                        gb.cpu.a_reg++;
+                        break;
+                    case SDLK_f:
+                        gb.cpu.f_reg++;
+                        break;
+                    case SDLK_b:
+                        gb.cpu.b_reg++;
+                        break;
+                    case SDLK_c:
+                        gb.cpu.c_reg++;
+                        break;
+                    case SDLK_d:
+                        gb.cpu.d_reg++;
+                        break;
+                    case SDLK_e:
+                        gb.cpu.e_reg++;
+                        break;
+                    case SDLK_h:
+                        gb.cpu.h_reg++;
+                        break;
+                    case SDLK_l:
+                        gb.cpu.l_reg++;
+                        break;
                     default:
                         break;
                 }
@@ -81,7 +111,19 @@ int main(int argc, char* argv[]) {
         // Run after we check for events
         // Need a clear screen function
         wSDLMain.clearScreen();
+        // Update debug text
+        reg_a_value.updateText(gb.cpu.a_reg);
+        reg_f_value.updateText(gb.cpu.f_reg);
+        reg_b_value.updateText(gb.cpu.b_reg);
+        reg_c_value.updateText(gb.cpu.c_reg);
+        reg_d_value.updateText(gb.cpu.d_reg);
+        reg_e_value.updateText(gb.cpu.e_reg);
+        reg_h_value.updateText(gb.cpu.h_reg);
+        reg_l_value.updateText(gb.cpu.l_reg);
+        reg_flag_value.updateText(gb.cpu.f_reg, false, true);
         pc_value.updateText(gb.cpu.pc, true);
+        sp_value.updateText(gb.cpu.sp, true);
+        // Render the text
         wSDLMain.renderText();
 
         // Update screen
