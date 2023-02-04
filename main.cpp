@@ -2,13 +2,6 @@
 #include "Bus.h"
 #include "SDL_Handler.h"
 
-// Screen dimension constants
-const int SCREEN_WIDTH = 1280;
-const int SCREEN_HEIGHT = 720;
-const int REGISTER_X_OFFSET = SCREEN_WIDTH - 240;
-const int REGISTER_VALUE_OFFSET = 48;
-const int REGISTER_PAIR_OFFSET = 64;
-const int REGISTER_FLAG_OFFSET = 96;
 
 // Need to use setup SDL to test instructions
 int main(int argc, char* argv[]) {
@@ -16,6 +9,10 @@ int main(int argc, char* argv[]) {
     gb.cpu.nop();
     gb.cpu.a_reg = 33;
     gb.cpu.f_reg = 33;
+    gb.ram[0x0000] = 33;
+    gb.ram[0x0001] = 99;
+    gb.ram[0x000F] = 22;
+    gb.ram[0x0030] = 11;
     SDL_Handler wSDLMain;
     // Main loop flag
     bool quit = false;
@@ -56,6 +53,11 @@ int main(int argc, char* argv[]) {
     zText pc_value(&wSDLMain, gb.cpu.pc, true, pc_text.getX() + 48, pc_text.getY(), "yellow", "Amstrad CPC", 16);
     zText sp_text(&wSDLMain, "SP:", REGISTER_X_OFFSET, 188, "yellow", "Amstrad CPC", 16);
     zText sp_value(&wSDLMain, gb.cpu.sp, true, sp_text.getX() + REGISTER_VALUE_OFFSET, sp_text.getY(), "yellow", "Amstrad CPC", 16);
+
+    zMemoryText test0(&wSDLMain, gb, 0x0000, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test1(&wSDLMain, gb, 0x0010, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 20, "yellow", "Amstrad CPC", 16);
+    zMemoryText test2(&wSDLMain, gb, 0x0020, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 40, "yellow", "Amstrad CPC", 16);
+    zMemoryText test3(&wSDLMain, gb, 0x0030, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 60, "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
