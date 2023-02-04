@@ -2,13 +2,27 @@
 #define GMU_SDL_HANDLER_H
 
 #include <string>
+#include <cstdio>
 #include <map>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <bitset>
+#include "Bus.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+
+
+// Screen dimension constants
+const int SCREEN_WIDTH = 1280;
+const int SCREEN_HEIGHT = 720;
+const int REGISTER_X_OFFSET = SCREEN_WIDTH - 240;
+const int REGISTER_VALUE_OFFSET = 48;
+const int REGISTER_PAIR_OFFSET = 64;
+const int REGISTER_FLAG_OFFSET = 96;
+const int MEMORY_BASE_OFFSET = 8;
+const int MEMORY_ADDRESS_OFFSET = 48;
+const int FONT_SIZE = 16;
 
 // Forward declare zText class
 class zText;
@@ -62,8 +76,8 @@ public:
     void render();
     void render(int x, int y, SDL_Rect *clip = nullptr, double angle = 0.0, SDL_Point *center = nullptr, SDL_RendererFlip flip = SDL_FLIP_NONE);
     // Get image dimensions
-    int getWidth();
-    int getHeight();
+    int getWidth() const;
+    int getHeight() const;
     // Get current string
     std::string getString();
     // Set color
@@ -71,8 +85,8 @@ public:
     // Set font
     bool setFont(std::string font);
     // Getter functions for X and Y coordinates
-    int getX();
-    int getY();
+    int getX() const;
+    int getY() const;
 
 private:
     // Current SDL_Handler
@@ -108,4 +122,23 @@ private:
     static std::map<std::string, SDL_Color> sColorMap;
 };
 
+class zMemoryText {
+public:
+    zMemoryText(SDL_Handler* curHandler, const Bus &gb, int baseAddress, int x, int y, std::string color, std::string fontType, int fontSize);
+    ~zMemoryText();
+    // Pointers to all text objects
+    std::vector<zText*>addressLine = {};
+
+    // Over-write text with new values
+    void update();
+    int getBaseNum() const;
+    int getBaseX() const;
+    int getBaseY() const;
+private:
+    int baseNum;
+    int baseX;
+    int baseY;
+
+
+};
 #endif //GMU_SDL_HANDLER_H

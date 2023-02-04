@@ -1,5 +1,4 @@
 #include "SDL_Handler.h"
-#include <cstdio>
 
 SDL_Handler::SDL_Handler() {
     pWindow = nullptr;
@@ -207,10 +206,10 @@ void zText::free() {
     }
 }
 // Getter and setter member functions
-int zText::getWidth() { return tWidth; }
-int zText::getHeight() { return tHeight; }
-int zText::getX() { return tX; }
-int zText::getY() { return tY; }
+int zText::getWidth() const { return tWidth; }
+int zText::getHeight() const { return tHeight; }
+int zText::getX() const { return tX; }
+int zText::getY() const { return tY; }
 
 // Return true if color is in the ColorMap
 // Return False if the color is not in the ColorMap
@@ -250,3 +249,46 @@ std::map<std::string, std::string> zText::sFontMap = {
 std::map<std::string, SDL_Color> zText::sColorMap = {
         { "yellow", {243, 243, 13} }
 };
+
+// ---------------------------
+// zMemoryText
+// ---------------------------
+zMemoryText::zMemoryText(SDL_Handler *curHandler, const Bus &gb, int baseAddress, int x, int y, std::string color, std::string fontType, int fontSize) {
+    baseNum = baseAddress; baseX = x; baseY = y;
+    // Initialize base address text
+    zText *baseAddressText = new zText(curHandler, baseAddress, true, x, y, color, fontType, fontSize);
+    addressLine.push_back(baseAddressText);
+    zText *baseAddressColon = new zText(curHandler, ": ", baseAddressText->getX() + baseAddressText->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
+    addressLine.push_back(baseAddressColon);
+    // Need to initialize a vector of address lines
+
+    // Initialize the first 8 bytes
+    for(int i = baseAddress; i < baseAddress + 8; ++i) {
+        zText* temp = new zText(curHandler, gb.ram[i], false, addressLine.back()->getX() + addressLine.back()->getWidth() + FONT_SIZE, baseAddressText->getY(), color, fontType, fontSize);
+        addressLine.push_back(temp);
+    }
+    // Break line for clarity
+    zText* breakLine = new zText(curHandler, " | ", addressLine.back()->getX() + addressLine.back()->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
+    addressLine.push_back(breakLine);
+    // Last 8 bytes
+    for(int i = baseAddress + 8; i < baseAddress + 16; ++i) {
+        zText* temp = new zText(curHandler, gb.ram[i], false, addressLine.back()->getX() + addressLine.back()->getWidth() + FONT_SIZE, baseAddressText->getY(), color, fontType, fontSize);
+        addressLine.push_back(temp);
+    }
+}
+
+zMemoryText::~zMemoryText() {
+    // Delete all of the text objects
+    for (auto i : addressLine) {
+        i->free();
+        delete i;
+    }
+}
+
+void zMemoryText::update() {
+
+}
+
+int zMemoryText::getBaseNum() const { return baseNum; }
+int zMemoryText::getBaseX() const { return baseX; }
+int zMemoryText::getBaseY() const { return baseY; }
