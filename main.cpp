@@ -15,6 +15,16 @@ int main(int argc, char* argv[]) {
     gb.ram[0x000F] = 22;
     gb.ram[0x0030] = 11;
     */
+    gb.cpu.a_reg = 0x33;
+    gb.cpu.b_reg = 0xf;
+    gb.ram[0x0000] = 0x04;
+    gb.ram[0x0001] = 0x04;
+    gb.ram[0x0002] = 0x04;
+    gb.ram[0x0003] = 0x04;
+    gb.ram[0x0004] = 0x04;
+    gb.ram[0x0005] = 0x04;
+    gb.ram[0x0006] = 0x04;
+
     SDL_Handler wSDLMain;
     // Main loop flag
     bool quit = false;
@@ -55,6 +65,8 @@ int main(int argc, char* argv[]) {
     zText pc_value(&wSDLMain, gb.cpu.pc, true, pc_text.getX() + 48, pc_text.getY(), "yellow", "Amstrad CPC", 16);
     zText sp_text(&wSDLMain, "SP:", REGISTER_X_OFFSET, 188, "yellow", "Amstrad CPC", 16);
     zText sp_value(&wSDLMain, gb.cpu.sp, true, sp_text.getX() + REGISTER_VALUE_OFFSET, sp_text.getY(), "yellow", "Amstrad CPC", 16);
+    zText clock_text(&wSDLMain, "Cycles: ", REGISTER_X_OFFSET, sp_value.getY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zText clock_value(&wSDLMain, gb.cpu.cycles, false, clock_text.getX() + clock_text.getWidth(), sp_value.getY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
 
     // Text to show RAM contents
     zMemoryText test0(&wSDLMain, gb, 0x0000, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET, "yellow", "Amstrad CPC", 16);
@@ -65,6 +77,8 @@ int main(int argc, char* argv[]) {
     zMemoryText test5(&wSDLMain, gb, 0x0050, MEMORY_BASE_OFFSET, test4.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test6(&wSDLMain, gb, 0x0060, MEMORY_BASE_OFFSET, test5.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test7(&wSDLMain, gb, 0x0070, MEMORY_BASE_OFFSET, test6.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+
+    zMemoryText test8(&wSDLMain, gb, 0x8000, MEMORY_BASE_OFFSET, test7.getBaseY() + LINE_OFFSET + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
@@ -78,7 +92,7 @@ int main(int argc, char* argv[]) {
             if(wSDLMain.eventHandler.type == SDL_KEYDOWN) {
                 switch(wSDLMain.eventHandler.key.keysym.sym) {
                     case SDLK_SPACE:
-                        gb.cpu.pc++;
+                        gb.cpu.clock();
                         break;
                     case SDLK_RETURN:
                         gb.cpu.pc += 0x100;
@@ -133,6 +147,7 @@ int main(int argc, char* argv[]) {
         reg_flag_value.updateText(gb.cpu.f_reg, false, true);
         pc_value.updateText(gb.cpu.pc, true);
         sp_value.updateText(gb.cpu.sp, true);
+        clock_value.updateText(gb.cpu.cycles);
         test0.update();
         test1.update();
         test2.update();
@@ -141,6 +156,7 @@ int main(int argc, char* argv[]) {
         test5.update();
         test6.update();
         test7.update();
+        test8.update();
         // Render the text
         wSDLMain.renderText();
 
