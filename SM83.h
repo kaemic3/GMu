@@ -36,9 +36,7 @@ public:
     uint8_t ie_reg = 0x00;  // Interrupt enable register @ 0xFFFF
     uint8_t if_reg = 0x00;
 
-
-
-
+    // Use f_reg for flags
     enum SM83_FLAGS{
         //
         C = (1 << 4),       // Carry bit
@@ -47,12 +45,13 @@ public:
         Z = (1 << 7)        // Zero bit
 
     };
+
     // Connect the bus pointer of the CPU to an actual bus object
     void ConnectBus(Bus *n) { bus = n; }
 
     // Need to write functions for each opcode
     // https://gbdev.io/gb-opcodes/optables/
-    uint8_t nop(); uint8_t ld_bc_d16();
+    uint8_t nop(); uint8_t inc_b(); uint8_t inc_bc(); uint8_t ld_abs_bc_a(); ;uint8_t ld_bc_d16();
 
     // For illegal opcodes
     uint8_t xxx();
@@ -84,8 +83,8 @@ private:
     uint8_t read(uint16_t addr, bool bReadOnly = false);
 
     // Access flags
-    uint8_t GetFlag(SM83_FLAGS f);                  // Used to check a specific flag
-    void SetFlag(SM83_FLAGS f, bool v);             // Used to set a specific flag, bool v is used to determine set or reset
+    uint8_t getFlag(SM83_FLAGS f);                  // Used to check a specific flag
+    void setFlag(SM83_FLAGS f, bool v);             // Used to set a specific flag, bool v is used to determine set or reset
 
     // Instruction struct
     struct INSTRUCTION {
