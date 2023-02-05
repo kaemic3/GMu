@@ -17,16 +17,17 @@ int main(int argc, char* argv[]) {
     */
     gb.cpu.a_reg = 0x33;
     gb.cpu.b_reg = 0x11;
+    gb.cpu.c_reg = 0x33;
+    gb.cpu.h_reg = 0xFE;
+    gb.cpu.l_reg = 0xFB;
+
     gb.cpu.sp = 0xFFFE;
-    gb.ram[0x0000] = 0x05;
-    gb.ram[0x0001] = 0x05;
-    gb.ram[0x0002] = 0x05;
-    gb.ram[0x0003] = 0x05;
-    gb.ram[0x0004] = 0x05;
-    gb.ram[0x0005] = 0x06;
-    gb.ram[0x0006] = 0xff;
-    gb.ram[0x0007] = 0x07;
-    gb.ram[0x0008] = 0x07;
+    gb.cpu.sp = 0x3399;
+    gb.ram[0x0000] = 0x08;
+    gb.ram[0x0001] = 0x00;
+    gb.ram[0x0002] = 0x80;
+    gb.ram[0x0003] = 0x09;
+
 
     SDL_Handler wSDLMain;
     // Main loop flag
@@ -150,7 +151,7 @@ int main(int argc, char* argv[]) {
         reg_flag_value.updateText(gb.cpu.f_reg, false, true);
         pc_value.updateText(gb.cpu.pc, true);
         sp_value.updateText(gb.cpu.sp, true);
-        clock_value.updateText(gb.cpu.cycles);
+        clock_value.updateText(std::to_string(gb.cpu.cycles));
         test0.update();
         test1.update();
         test2.update();

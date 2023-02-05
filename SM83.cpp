@@ -7,7 +7,7 @@ SM83::SM83() {
 
     opcode_lookup =
     {
-            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}
+            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}
     };
 }
 
@@ -60,6 +60,39 @@ uint8_t SM83::fetch() {
     return fetched;
 }
 // Instructions in alphabetical order
+
+// Add the contents of the BC register pair into the HL register pair.
+// Flags:
+//  - N: Reset to 0
+//  - H: Set to 1 if overflow from bit 11
+//  - C: Set to 1 if overflow from bit 15
+uint8_t SM83::add_hl_bc() {
+    // For checking L register overflow
+    uint16_t l_overflow = l_reg + c_reg;
+    l_reg += c_reg;
+    // Check to see if L + C overflows
+    if(l_overflow > 0xFF)
+        h_reg++;
+    // For checking for half carry
+    uint8_t h_check = ((h_reg & 0xf) + (b_reg & 0xf));
+    // For checking H register overflow
+    uint16_t h_overflow = h_reg + b_reg;
+    h_reg += b_reg;
+    // Check to see if half carry needs to be enabled
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Check to see if carry needs to be enabled
+    if(h_overflow > 0xFF)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
 
 // Decrement the B register. Set according flags.
 // Flags:
@@ -120,6 +153,19 @@ uint8_t SM83::inc_bc() {
     // Check to see if C wrapped back around to 0x00
     if (c_reg == 0x00)
         b_reg++;        // If so, increase B
+    return 0;
+}
+
+// Load the 16-bit value in the SP into the 16-bit little endian absolute address.
+uint8_t SM83::ld_abs_a16_sp() {
+    // Load the absolute address into addr_abs
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    addr_abs = (highByte << 8) | lowByte;
+
+    // Write the SP to the absolute address in little-endian
+    write(addr_abs++, sp);
+    write(addr_abs, (sp >> 8));
     return 0;
 }
 

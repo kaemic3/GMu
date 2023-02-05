@@ -103,7 +103,7 @@ private:
     // Set position
     bool setPosition(int x, int y);
     // Convert int to hex string
-    std::string toHexString(int num, bool u16 = false, bool binary = false);
+    std::string toHexString(int num, bool u16, bool binary = false);
 
     // Current font
     TTF_Font *tFont;
