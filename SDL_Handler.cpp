@@ -254,11 +254,11 @@ std::map<std::string, SDL_Color> zText::sColorMap = {
 // zMemoryText
 // ---------------------------
 zMemoryText::zMemoryText(SDL_Handler *curHandler, const Bus &gb, int baseAddress, int x, int y, std::string color, std::string fontType, int fontSize) {
-    baseNum = baseAddress; baseX = x; baseY = y;
+    baseNum = baseAddress; baseX = x; baseY = y; pGb = &gb;
     // Initialize base address text
     zText *baseAddressText = new zText(curHandler, baseAddress, true, x, y, color, fontType, fontSize);
     addressLine.push_back(baseAddressText);
-    zText *baseAddressColon = new zText(curHandler, ": ", baseAddressText->getX() + baseAddressText->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
+    zText *baseAddressColon = new zText(curHandler, ":", baseAddressText->getX() + baseAddressText->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
     addressLine.push_back(baseAddressColon);
     // Need to initialize a vector of address lines
 
@@ -268,7 +268,7 @@ zMemoryText::zMemoryText(SDL_Handler *curHandler, const Bus &gb, int baseAddress
         addressLine.push_back(temp);
     }
     // Break line for clarity
-    zText* breakLine = new zText(curHandler, " | ", addressLine.back()->getX() + addressLine.back()->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
+    zText* breakLine = new zText(curHandler, " |", addressLine.back()->getX() + addressLine.back()->getWidth(), baseAddressText->getY(), color, fontType, fontSize);
     addressLine.push_back(breakLine);
     // Last 8 bytes
     for(int i = baseAddress + 8; i < baseAddress + 16; ++i) {
@@ -284,8 +284,14 @@ zMemoryText::~zMemoryText() {
         delete i;
     }
 }
-
+// Grabs the ram address values and updates the corresponding text in addressLine
 void zMemoryText::update() {
+    for(int i = 2; i < 10; ++i) {
+        addressLine[i]->updateText(pGb->ram[baseNum + i - 2]);
+    }
+    for(int i = 11; i < addressLine.size(); ++i) {
+        addressLine[i]->updateText(pGb->ram[baseNum + i - 3]);
+    }
 
 }
 

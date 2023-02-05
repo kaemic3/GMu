@@ -23,6 +23,7 @@ const int REGISTER_FLAG_OFFSET = 96;
 const int MEMORY_BASE_OFFSET = 8;
 const int MEMORY_ADDRESS_OFFSET = 48;
 const int FONT_SIZE = 16;
+const int LINE_OFFSET = 20;
 
 // Forward declare zText class
 class zText;
@@ -116,7 +117,7 @@ private:
     // Text texture - needs to be initialized here, maybe want to separate the generate function from constructor
     SDL_Texture *tTexture = nullptr;
     // Available fonts - maybe make this a std::vector<std::pair<std::string, std::string>> ??
-    // Also static as there is no need for duplicates here, need to define in main file.
+    // Also static as there is no need for duplicates here
     static std::map<std::string, std::string> sFontMap;
     // Color map
     static std::map<std::string, SDL_Color> sColorMap;
@@ -126,11 +127,13 @@ class zMemoryText {
 public:
     zMemoryText(SDL_Handler* curHandler, const Bus &gb, int baseAddress, int x, int y, std::string color, std::string fontType, int fontSize);
     ~zMemoryText();
-    // Pointers to all text objects
-    std::vector<zText*>addressLine = {};
+
 
     // Over-write text with new values
     void update();
+    // ^ Consider a re-write. Will need to change the constructor to not include text
+    // that is not RAM values?? Or make 2 vectors for the first and last 8 bytes in the line??
+
     int getBaseNum() const;
     int getBaseX() const;
     int getBaseY() const;
@@ -138,7 +141,8 @@ private:
     int baseNum;
     int baseX;
     int baseY;
-
-
+    const Bus *pGb;
+    // Pointers to all text objects
+    std::vector<zText*>addressLine = {};
 };
 #endif //GMU_SDL_HANDLER_H

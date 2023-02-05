@@ -6,6 +6,7 @@
 // Need to use setup SDL to test instructions
 int main(int argc, char* argv[]) {
     Bus gb;
+    /*
     gb.cpu.nop();
     gb.cpu.a_reg = 33;
     gb.cpu.f_reg = 33;
@@ -13,6 +14,7 @@ int main(int argc, char* argv[]) {
     gb.ram[0x0001] = 99;
     gb.ram[0x000F] = 22;
     gb.ram[0x0030] = 11;
+    */
     SDL_Handler wSDLMain;
     // Main loop flag
     bool quit = false;
@@ -54,10 +56,15 @@ int main(int argc, char* argv[]) {
     zText sp_text(&wSDLMain, "SP:", REGISTER_X_OFFSET, 188, "yellow", "Amstrad CPC", 16);
     zText sp_value(&wSDLMain, gb.cpu.sp, true, sp_text.getX() + REGISTER_VALUE_OFFSET, sp_text.getY(), "yellow", "Amstrad CPC", 16);
 
+    // Text to show RAM contents
     zMemoryText test0(&wSDLMain, gb, 0x0000, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET, "yellow", "Amstrad CPC", 16);
-    zMemoryText test1(&wSDLMain, gb, 0x0010, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 20, "yellow", "Amstrad CPC", 16);
-    zMemoryText test2(&wSDLMain, gb, 0x0020, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 40, "yellow", "Amstrad CPC", 16);
-    zMemoryText test3(&wSDLMain, gb, 0x0030, MEMORY_BASE_OFFSET, MEMORY_BASE_OFFSET + 60, "yellow", "Amstrad CPC", 16);
+    zMemoryText test1(&wSDLMain, gb, 0x0010, MEMORY_BASE_OFFSET, test0.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test2(&wSDLMain, gb, 0x0020, MEMORY_BASE_OFFSET, test1.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test3(&wSDLMain, gb, 0x0030, MEMORY_BASE_OFFSET, test2.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test4(&wSDLMain, gb, 0x0040, MEMORY_BASE_OFFSET, test3.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test5(&wSDLMain, gb, 0x0050, MEMORY_BASE_OFFSET, test4.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test6(&wSDLMain, gb, 0x0060, MEMORY_BASE_OFFSET, test5.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test7(&wSDLMain, gb, 0x0070, MEMORY_BASE_OFFSET, test6.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
@@ -126,6 +133,14 @@ int main(int argc, char* argv[]) {
         reg_flag_value.updateText(gb.cpu.f_reg, false, true);
         pc_value.updateText(gb.cpu.pc, true);
         sp_value.updateText(gb.cpu.sp, true);
+        test0.update();
+        test1.update();
+        test2.update();
+        test3.update();
+        test4.update();
+        test5.update();
+        test6.update();
+        test7.update();
         // Render the text
         wSDLMain.renderText();
 
