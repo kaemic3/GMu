@@ -7,7 +7,7 @@ SM83::SM83() {
 
     opcode_lookup =
     {
-            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}
+            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}
     };
 }
 
@@ -61,6 +61,29 @@ uint8_t SM83::fetch() {
 }
 // Instructions in alphabetical order
 
+// Decrement the B register. Set according flags.
+// Flags:
+//  - Z: If result is 0
+//  - N: Gets set to 1
+//  - H: If bit 4 is set after subtracting 1 from B
+
+uint8_t SM83::dec_b() {
+    uint8_t h_check = ((b_reg & 0xf) - (1 & 0xf));
+    b_reg--;
+    if(b_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check to see if bit 4 was set due to our subtraction
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    setFlag(N, 1);
+    return 0;
+}
+
 // Increment the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
@@ -81,7 +104,7 @@ uint8_t SM83::inc_b() {
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
-    // Check if bit 4 in b_reg is set
+    // Check if bit 4 in b_reg is set due to our addition
     if((h_check & 0x10) == 0x10)
         setFlag(H, 1);      // If so, set the half-carry flag
     else
@@ -109,11 +132,38 @@ uint8_t SM83::ld_abs_bc_a() {
     return 0;
 }
 
+// Load the B register with an immediate 8-bit data value.
+uint8_t SM83::ld_b_d8() {
+    b_reg = read(pc++);
+    return 0;
+}
+
 // Load register pair BC with an immediate little-endian 16-bit data value.
 uint8_t SM83::ld_bc_d16() {
     c_reg = read(pc++);
     b_reg = read(pc++);
     // No additional clocks, return 0
+    return 0;
+}
+
+// Rotates the bits in A register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlca() {
+    // If bit 7 in B is set, set the carry bit
+    if(b_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    b_reg = (b_reg << 1) | (b_reg >> 7);
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
