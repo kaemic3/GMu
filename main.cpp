@@ -16,10 +16,10 @@ int main(int argc, char* argv[]) {
     gb.ram[0x0030] = 11;
     */
     gb.cpu.a_reg = 0x33;
-    gb.cpu.b_reg = 0x11;
-    gb.cpu.c_reg = 0x33;
-    gb.cpu.h_reg = 0xFE;
-    gb.cpu.l_reg = 0xFB;
+    gb.cpu.b_reg = 0x22;
+    gb.cpu.c_reg = 0x22;
+    gb.cpu.h_reg = 0xCE;
+    gb.cpu.l_reg = 0xEE;
 
     gb.cpu.sp = 0xFFFE;
     gb.cpu.sp = 0x3399;

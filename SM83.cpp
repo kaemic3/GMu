@@ -7,7 +7,7 @@ SM83::SM83() {
 
     opcode_lookup =
     {
-            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}
+            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}
     };
 }
 
@@ -153,6 +153,17 @@ uint8_t SM83::inc_bc() {
     // Check to see if C wrapped back around to 0x00
     if (c_reg == 0x00)
         b_reg++;        // If so, increase B
+    return 0;
+}
+// Load the  8-bit data value from the absolute address in the register pair BC into register A.
+uint8_t SM83::ld_a_abs_bc() {
+    uint16_t lowByte = c_reg;
+    uint16_t highByte = b_reg;
+    // Load the absolute address into addr_abs
+    addr_abs = (highByte << 8) | lowByte;
+    // Read in the 8-bit data value at the address in addr_abs
+    a_reg = read(addr_abs);
+
     return 0;
 }
 
