@@ -6,27 +6,16 @@
 // Need to use setup SDL to test instructions
 int main(int argc, char* argv[]) {
     Bus gb;
-    /*
-    gb.cpu.nop();
-    gb.cpu.a_reg = 33;
-    gb.cpu.f_reg = 33;
-    gb.ram[0x0000] = 33;
-    gb.ram[0x0001] = 99;
-    gb.ram[0x000F] = 22;
-    gb.ram[0x0030] = 11;
-    */
-    gb.cpu.a_reg = 0x33;
-    gb.cpu.b_reg = 0x22;
-    gb.cpu.c_reg = 0x22;
+
+    gb.cpu.a_reg = 0x3F;
+    gb.cpu.b_reg = 0x81;
+    gb.cpu.c_reg = 0x10;
     gb.cpu.h_reg = 0xCE;
     gb.cpu.l_reg = 0xEE;
 
     gb.cpu.sp = 0xFFFE;
     gb.cpu.sp = 0x3399;
-    gb.ram[0x0000] = 0x08;
-    gb.ram[0x0001] = 0x00;
-    gb.ram[0x0002] = 0x80;
-    gb.ram[0x0003] = 0x09;
+    gb.ram[0x0000] = 0x0F;
 
 
     SDL_Handler wSDLMain;

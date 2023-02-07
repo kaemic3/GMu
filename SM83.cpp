@@ -7,7 +7,7 @@ SM83::SM83() {
 
     opcode_lookup =
     {
-            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}
+            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 1, 4}, {"DEC C", &op::dec_c, 1, 4}, {"LD C,d8", &op::ld_c_d8, 2, 8}, {"RRCA", &op::rrca, 1, 4}
     };
 }
 
@@ -101,6 +101,7 @@ uint8_t SM83::add_hl_bc() {
 //  - H: If bit 4 is set after subtracting 1 from B
 
 uint8_t SM83::dec_b() {
+    // Used to check half carry flag
     uint8_t h_check = ((b_reg & 0xf) - (1 & 0xf));
     b_reg--;
     if(b_reg == 0x00)
@@ -114,6 +115,34 @@ uint8_t SM83::dec_b() {
         setFlag(H, 0);
 
     setFlag(N, 1);
+    return 0;
+}
+
+uint8_t SM83::dec_c() {
+    // Used to check half carry flag
+    uint8_t h_check = ((c_reg & 0xf) - (1 & 0xf));
+    c_reg--;
+
+    // Check zero flag
+    if(c_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry flag
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Decrement the BC register pair.
+uint8_t SM83::dec_bc() {
+    if(c_reg == 0x00)
+        b_reg--;
+    c_reg--;
     return 0;
 }
 
@@ -140,6 +169,30 @@ uint8_t SM83::inc_b() {
     // Check if bit 4 in b_reg is set due to our addition
     if((h_check & 0x10) == 0x10)
         setFlag(H, 1);      // If so, set the half-carry flag
+    else
+        setFlag(H, 0);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Increment the C register.
+// Flags:
+//  -Z: Set this flag to 1 if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set this flag to 1 if bit 4 is set after the increment
+uint8_t SM83::inc_c() {
+    // Used for checking half carry flag
+    uint8_t h_check = ((c_reg & 0xf) + (1 &0xf));
+    c_reg++;
+    // Check zero
+    if(c_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
     else
         setFlag(H, 0);
     // Reset sign flag
@@ -203,6 +256,12 @@ uint8_t SM83::ld_bc_d16() {
     return 0;
 }
 
+// Load the C register with the immediate 8-bit data value.
+uint8_t SM83::ld_c_d8() {
+    c_reg = read(pc++);
+    return 0;
+}
+
 // Rotates the bits in A register left.
 // Flags:
 //  - Z: Reset to 0
@@ -218,9 +277,32 @@ uint8_t SM83::rlca() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     b_reg = (b_reg << 1) | (b_reg >> 7);
+    // Reset the rest of the flags
     setFlag(Z, 0);
     setFlag(N, 0);
     setFlag(H, 0);
+    return 0;
+}
+// Rotate the contents of register A right one.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is one before the rotation
+uint8_t SM83::rrca() {
+    // If bit 0 is set, set the carry bit
+    if(a_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits right 1
+    // First shift all bits right one, then or will all bits shifted right 7.
+    a_reg = (a_reg >> 1) | (a_reg << 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
+
     return 0;
 }
 
