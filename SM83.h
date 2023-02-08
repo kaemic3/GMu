@@ -51,8 +51,9 @@ public:
 
     // Need to write functions for each opcode
     // https://gbdev.io/gb-opcodes/optables/
-    uint8_t nop();          uint8_t add_hl_bc();     uint8_t dec_b();        uint8_t dec_c();   uint8_t dec_bc();    uint8_t inc_b();   uint8_t inc_c(); uint8_t inc_bc();
-    uint8_t ld_a_abs_bc();  uint8_t ld_abs_a16_sp(); uint8_t ld_abs_bc_a();  uint8_t ld_b_d8(); uint8_t ld_bc_d16(); uint8_t ld_c_d8(); uint8_t rlca(); uint8_t rrca();
+    uint8_t nop();          uint8_t add_hl_bc();     uint8_t dec_b();           uint8_t dec_c();            uint8_t dec_bc();           uint8_t inc_b();        uint8_t inc_bc();       uint8_t inc_c();
+    uint8_t inc_d();        uint8_t inc_de();        uint8_t ld_a_abs_bc();     uint8_t ld_abs_a16_sp();    uint8_t ld_abs_bc_a();      uint8_t ld_abs_de_a();  uint8_t ld_b_d8();      uint8_t ld_bc_d16();
+    uint8_t ld_c_d8();      uint8_t ld_de_d16();     uint8_t rlca();            uint8_t rrca();             uint8_t stop_d8();
 
     // For illegal opcodes
     uint8_t xxx();

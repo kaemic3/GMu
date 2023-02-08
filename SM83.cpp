@@ -7,7 +7,8 @@ SM83::SM83() {
 
     opcode_lookup =
     {
-            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 1, 4}, {"DEC C", &op::dec_c, 1, 4}, {"LD C,d8", &op::ld_c_d8, 2, 8}, {"RRCA", &op::rrca, 1, 4}
+            {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
+            {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}
     };
 }
 
@@ -176,6 +177,15 @@ uint8_t SM83::inc_b() {
     return 0;
 }
 
+// Increment the BC register pair. If C overflows, increment the B register.
+uint8_t SM83::inc_bc() {
+    c_reg++;
+    // Check to see if C wrapped back around to 0x00
+    if (c_reg == 0x00)
+        b_reg++;        // If so, increase B
+    return 0;
+}
+
 // Increment the C register.
 // Flags:
 //  -Z: Set this flag to 1 if result is 0
@@ -200,14 +210,39 @@ uint8_t SM83::inc_c() {
     return 0;
 }
 
-// Increment the BC register pair. If C overflows, increment the B register.
-uint8_t SM83::inc_bc() {
-    c_reg++;
-    // Check to see if C wrapped back around to 0x00
-    if (c_reg == 0x00)
-        b_reg++;        // If so, increase B
+// Increment the D register.
+// Flags:
+//  -Z: Set this flag to 1 if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set this flag to 1 if bit 4 is set after the increment
+uint8_t SM83::inc_d() {
+    // Used to check half carry flag
+    uint8_t h_check = ((d_reg & 0xf) + (1 &0xf));
+    d_reg++;
+    // Check zero
+    if(d_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
     return 0;
 }
+
+// Increment the DE register pair. If E overflows increment the D register.
+uint8_t SM83::inc_de() {
+    e_reg++;
+    // Check to see if E register wrapped back around to 0x00
+    if(e_reg == 0x00)
+        d_reg++;
+    return 0;
+}
+
 // Load the  8-bit data value from the absolute address in the register pair BC into register A.
 uint8_t SM83::ld_a_abs_bc() {
     uint16_t lowByte = c_reg;
@@ -242,6 +277,15 @@ uint8_t SM83::ld_abs_bc_a() {
     return 0;
 }
 
+//  Using DE as an absolute address, load value in A into that address.
+uint8_t SM83::ld_abs_de_a() {
+    uint16_t lowByte = e_reg;
+    uint16_t  highByte = d_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    write(addr_abs, a_reg);
+    return 0;
+}
+
 // Load the B register with an immediate 8-bit data value.
 uint8_t SM83::ld_b_d8() {
     b_reg = read(pc++);
@@ -259,6 +303,13 @@ uint8_t SM83::ld_bc_d16() {
 // Load the C register with the immediate 8-bit data value.
 uint8_t SM83::ld_c_d8() {
     c_reg = read(pc++);
+    return 0;
+}
+
+// Load the DE register pair with the immediate 16-bit data value.
+uint8_t SM83::ld_de_d16() {
+    e_reg = read(pc++);
+    d_reg = read(pc++);
     return 0;
 }
 
@@ -303,6 +354,12 @@ uint8_t SM83::rrca() {
     setFlag(H, 0);
     setFlag(N, 0);
 
+    return 0;
+}
+
+uint8_t SM83::stop_d8() {
+    // Need to pause the Game Boy when this opcode is run
+    // To exit stop check link: https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
     return 0;
 }
 
