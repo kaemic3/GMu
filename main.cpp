@@ -12,12 +12,11 @@ int main(int argc, char* argv[]) {
     gb.cpu.c_reg = 0x10;
     gb.cpu.h_reg = 0xCE;
     gb.cpu.l_reg = 0xEE;
-    gb.cpu.d_reg = 0xff;
+    gb.cpu.d_reg = 0x33;
 
     gb.cpu.sp = 0xFFFE;
     gb.cpu.sp = 0x3399;
-    gb.ram[0x0000] = 0x07;
-    gb.ram[0x0001] = 0x17;
+    gb.ram[0x0000] = 0x19;
 
 
 
