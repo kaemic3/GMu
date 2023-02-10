@@ -440,7 +440,7 @@ uint8_t SM83::rrca() {
     else
         setFlag(C, 0);
     // Rotate bits right 1
-    // First shift all bits right one, then or will all bits shifted right 7.
+    // First shift all bits right one, then or with all bits shifted right 7.
     a_reg = (a_reg >> 1) | (a_reg << 7);
     // Reset the rest of the flags
     setFlag(Z, 0);
