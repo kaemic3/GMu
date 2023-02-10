@@ -8,7 +8,7 @@ SM83::SM83() {
     opcode_lookup =
     {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
-            {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}
+            {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}
     };
 }
 
@@ -196,6 +196,39 @@ uint8_t SM83::dec_bc() {
     return 0;
 }
 
+// Decrement the DE register pair.
+uint8_t SM83::dec_de() {
+    if(e_reg == 0x00)
+        d_reg--;
+    e_reg--;
+    return 0;
+}
+
+// Decrement the E register.
+// Flag:
+//  -Z: Set if result is 0
+//  -N: Set to 1
+//  -H: Set if bit 4 is set to 1 after decrement
+
+uint8_t SM83::dec_e() {
+    // Used to check half carry
+    uint8_t h_check ((e_reg & 0xF) - (1 & 0xF));
+    e_reg--;
+    // Check zero flag
+    if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry flag
+    if((h_reg & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Increment the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
@@ -289,6 +322,28 @@ uint8_t SM83::inc_de() {
     // Check to see if E register wrapped back around to 0x00
     if(e_reg == 0x00)
         d_reg++;
+    return 0;
+}
+// Increment the E register.
+// Flags:
+//  -Z: Set if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set if bit 4 is set after increment
+uint8_t SM83::inc_e() {
+    uint8_t h_check = ((e_reg & 0xF) + (1 & 0xf));
+    e_reg++;
+    // Check for zero flag
+    if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check for half carry
+    if((h_check &0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset sign flag
+    setFlag(N, 0);
     return 0;
 }
 
