@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
     gb.cpu.sp = 0xFFFE;
     gb.cpu.sp = 0x3399;
     gb.ram[0x0000] = 0x1A;
+    gb.ram[0x0001] = 0x03;
+    gb.ram[0x0002] = 0x0c;
     gb.ram[0x8000] = 0x33;
 
 
@@ -89,10 +91,13 @@ int main(int argc, char* argv[]) {
             if(wSDLMain.eventHandler.type == SDL_KEYDOWN) {
                 switch(wSDLMain.eventHandler.key.keysym.sym) {
                     case SDLK_SPACE:
+                        // Step one clock cycle
                         gb.cpu.clock();
                         break;
                     case SDLK_RETURN:
-                        gb.cpu.pc += 0x100;
+                        // Step to next opcode
+                        gb.cpu.cycles = 0;
+                        gb.cpu.clock();
                         break;
                     case SDLK_RSHIFT:
                         gb.cpu.sp++;
