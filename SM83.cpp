@@ -9,7 +9,7 @@ SM83::SM83() {
     {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
-            {}
+            {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}
     };
 }
 
@@ -348,6 +348,15 @@ uint8_t SM83::inc_e() {
     return 0;
 }
 
+// Increment the HL register pair. If L overflows increment the H register.
+uint8_t SM83::inc_hl() {
+    l_reg++;
+    if(l_reg == 0x00)
+        h_reg++;
+
+    return 0;
+}
+
 // Jump to an address -128 - +127 memory addresses relative to the current position
 // of the PC.
 // Note: If you are trying to jump to a memory address relative to the address of
@@ -359,6 +368,20 @@ uint8_t SM83::jr() {
     int8_t offset = read(pc++);
     pc += offset;
     return 0;
+}
+// Jump to an address -128 - +127 memory address relative to the current position
+// of the PC only if the zero flag is not set. Add 4 clock cycles if the condition is
+// met.
+uint8_t SM83::jr_nz_r8() {
+    // Used a signed 8-bit int
+    int8_t offset = read(pc++);
+    // Check if zero flag is set
+    if(getFlag(Z) == 1)
+        return 0;
+
+    pc += offset;
+
+    return 4;
 }
 
 // Load the  8-bit data value from the absolute address in the register pair BC into register A.
@@ -413,6 +436,16 @@ uint8_t SM83::ld_abs_de_a() {
     return 0;
 }
 
+// Using HL as an absolute address, load the value in A into that address, then increment the HL register pair.
+uint8_t SM83::ld_abs_hli_a() {
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    write(addr_abs, a_reg);
+    inc_hl();
+    return 0;
+}
+
 // Load the B register with an immediate 8-bit data value.
 uint8_t SM83::ld_b_d8() {
     b_reg = read(pc++);
@@ -448,6 +481,13 @@ uint8_t SM83::ld_de_d16() {
 // Load E register with the immediate 8-bit data value.
 uint8_t SM83::ld_e_d8() {
     e_reg = read(pc++);
+    return 0;
+}
+
+// Load the HL register pair with the immediate 16-bit value
+uint8_t SM83::ld_hl_d16() {
+    l_reg = read(pc++);
+    h_reg = read(pc++);
     return 0;
 }
 
