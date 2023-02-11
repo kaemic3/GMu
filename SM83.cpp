@@ -8,7 +8,8 @@ SM83::SM83() {
     opcode_lookup =
     {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
-            {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}
+            {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
+            {}
     };
 }
 
@@ -449,22 +450,27 @@ uint8_t SM83::ld_e_d8() {
     e_reg = read(pc++);
     return 0;
 }
-// Rotates the bits in A register left. Wrap occurs only when the carry
-// bit is enabled. Otherwise, the bits only shift left.
+
+// Rotates the bits in A register left. If the carry is enabled, that bit is fed into
+// bit 9.
 // Flags:
 //  -Z: Reset to 0
 //  -N: Reset to 0
 //  -H: Reset to 0
-//  -C: Set if bit 7 is enabled after bit shift
+//  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rla() {
+    // Check if bit 7 is enabled before rotating
+    uint8_t c_check = a_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1)
-        a_reg = (a_reg << 1) | (a_reg >> 7);
+    if(getFlag(C) == 1) {
+        a_reg = (a_reg << 1);           // Shift left 1
+        a_reg |= 0x01;                  // Set bit 0
+    }
     else
         a_reg = (a_reg << 1);
     // Need to check for carry
-    // Check to see if bit 7 is enabled
-    if(a_reg & (1 << 7))
+    // Check to see if bit 7 was enabled before rotate
+    if(c_check)
         setFlag(C, 1);
     else
         setFlag(C, 0);
@@ -490,12 +496,43 @@ uint8_t SM83::rlca() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     a_reg = (a_reg << 1) | (a_reg >> 7);
+
     // Reset the rest of the flags
     setFlag(Z, 0);
     setFlag(N, 0);
     setFlag(H, 0);
     return 0;
 }
+
+// Rotates the bits in A register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
+uint8_t SM83::rra() {
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = a_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        a_reg = (a_reg >> 1);       // Shift right one
+        a_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        a_reg = (a_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset other flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
 // Rotate the contents of register A right one.
 // Flags:
 //  -Z: Reset to 0
@@ -508,9 +545,11 @@ uint8_t SM83::rrca() {
         setFlag(C, 1);
     else
         setFlag(C, 0);
+
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     a_reg = (a_reg >> 1) | (a_reg << 7);
+
     // Reset the rest of the flags
     setFlag(Z, 0);
     setFlag(H, 0);
