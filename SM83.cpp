@@ -9,7 +9,7 @@ SM83::SM83() {
     {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
-            {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}
+            {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}
     };
 }
 
@@ -126,12 +126,50 @@ uint8_t SM83::add_hl_de() {
     return 0;
 }
 
+// This instruction is meant to run after an addition or subtraction on the A register.
+// It is meant to adjust the value in A to conform with BCD rules.
+// This article online was a great help with this particular instruction
+// as it simplified BCD for me, and you can see how its influence is in my code.
+// The code provided was written in Rust (I think) and I have changed it to work in C++,
+// and adjusted some other things like setting/resetting flags.
+// Link: https://ehaskins.com/2018-01-30%20Z80%20DAA/
+// Flags:
+//  -Z: Set if the value in A is 0
+//  -H: Reset to 0
+//  -C: Set if the value of A > 0x99 and subtraction is not being performed for adjustment
+uint8_t SM83::daa() {
+    // Need to add or subtract 6 when the value in each nibble is > 0x9 for least
+    // significant, and 0x9 for the most significant
+    int8_t correction = 0;      // Note this is a signed int
+    // Check to see if the half carry flag is enabled, or the sign flag is disabled
+    // and the value of the lower nibble exceeds 0x9 in register A
+    if(getFlag(H) || (!getFlag(N) && (a_reg & 0xf) > 0x9))
+        correction |= 0x6;
+    // Check to see if the carry flag is enabled, or the sign flag is disabled
+    // and the value of a_reg is greater than 0x99 (this means the high nibble is > 0x9
+    if(getFlag(C) || (!getFlag(N) && a_reg > 0x99)) {
+        correction |= 0x60;
+        setFlag(C, 1);
+    }
+    else
+        setFlag(C, 0);
+    // Add or subtract based on sign flag
+    a_reg += getFlag(N) ? -correction : correction;
+    // Check zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset half carry
+    setFlag(H, 0);
+    return 0;
+}
+
 // Decrement the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
 //  - N: Gets set to 1
 //  - H: If bit 4 is set after subtracting 1 from B
-
 uint8_t SM83::dec_b() {
     // Used to check half carry flag
     uint8_t h_check = ((b_reg & 0xf) - (1 & 0xf));
@@ -213,7 +251,7 @@ uint8_t SM83::dec_de() {
 
 uint8_t SM83::dec_e() {
     // Used to check half carry
-    uint8_t h_check ((e_reg & 0xF) - (1 & 0xF));
+    uint8_t h_check = ((e_reg & 0xf) - (1 & 0xf));
     e_reg--;
     // Check zero flag
     if(e_reg == 0x00)
@@ -221,7 +259,7 @@ uint8_t SM83::dec_e() {
     else
         setFlag(Z, 0);
     // Check half carry flag
-    if((h_reg & 0x10) == 0x10)
+    if((h_check & 0x10) == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -230,6 +268,30 @@ uint8_t SM83::dec_e() {
     return 0;
 }
 
+// Decrement the H register.
+// Flag:
+//  -Z: Set if result is 0
+//  -N: Set to 1
+//  -H: Set if bit 4 is set to 1 after decrement\
+
+uint8_t SM83::dec_h() {
+// Used to check half carry
+    uint8_t h_check = ((h_reg & 0xf) - (1 & 0xf));
+    h_reg--;
+    // Check zero flag
+    if(h_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry flag
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    return 0;
+}
 // Increment the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
@@ -244,7 +306,6 @@ uint8_t SM83::inc_b() {
     // If bit 4 is enabled, that means this addition should set the half carry bit.
 
     uint8_t h_check= ((b_reg & 0xf) + (1 & 0xf));
-
     b_reg++;
     if(b_reg == 0)
         setFlag(Z, 1);
@@ -325,16 +386,43 @@ uint8_t SM83::inc_de() {
         d_reg++;
     return 0;
 }
+
 // Increment the E register.
 // Flags:
 //  -Z: Set if result is 0
 //  -N: Reset this flag to 0
 //  -H: Set if bit 4 is set after increment
 uint8_t SM83::inc_e() {
-    uint8_t h_check = ((e_reg & 0xF) + (1 & 0xf));
+
+    // Used to check for half carry flag
+    uint8_t h_check = ((e_reg & 0xf) + (1 & 0xf));
     e_reg++;
     // Check for zero flag
     if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check for half carry
+    if((h_check &0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Increment the H register.
+// Flags:
+//  -Z: Set if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set if bit 4 is set after increment
+uint8_t SM83::inc_h() {
+    // Used to check for half carry flag
+    uint8_t h_check = ((h_reg & 0xf) + (1 & 0xf));
+    h_reg++;
+    // Check for zero flag
+    if(h_reg == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
@@ -478,9 +566,15 @@ uint8_t SM83::ld_de_d16() {
     d_reg = read(pc++);
     return 0;
 }
+
 // Load E register with the immediate 8-bit data value.
 uint8_t SM83::ld_e_d8() {
     e_reg = read(pc++);
+    return 0;
+}
+// Load H register with the immediate 8-bit data value.
+uint8_t SM83::ld_h_d8() {
+    h_reg = read(pc++);
     return 0;
 }
 
