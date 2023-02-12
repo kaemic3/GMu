@@ -9,7 +9,8 @@ SM83::SM83() {
     {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr_r8, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
-            {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}
+            {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}, {"LD A,(HL+)", &op::ld_a_abs_hli, 8, 1}, {"DEC HL", &op::dec_hl, 8, 1}, {"INC L", &op::inc_l, 4, 1}, {"DEC L", &op::dec_l, 4, 1}, {"LD L,d8", &op::ld_l_d8, 8, 2}, {"CPL", &op::cpl, 4, 1},
+            {}
     };
 }
 
@@ -167,6 +168,19 @@ uint8_t SM83::add_hl_hl() {
     return 0;
 }
 
+// Get the complement of the A register, then save that into A.
+// The complement of A is A with all of its bits flipped.
+// Flag:
+//  -N: Set to 1
+//  -H: Set to 1
+uint8_t SM83::cpl() {
+    a_reg = ~a_reg;
+    // Set sign and half carry flags
+    setFlag(N, 1);
+    setFlag(H, 1);
+    return 0;
+}
+
 // This instruction is meant to run after an addition or subtraction on the A register.
 // It is meant to adjust the value in A to conform with BCD rules.
 // This article online was a great help with this particular instruction
@@ -313,8 +327,7 @@ uint8_t SM83::dec_e() {
 // Flag:
 //  -Z: Set if result is 0
 //  -N: Set to 1
-//  -H: Set if bit 4 is set to 1 after decrement\
-
+//  -H: Set if bit 4 is set to 1 after decrement
 uint8_t SM83::dec_h() {
 // Used to check half carry
     uint8_t h_check = ((h_reg & 0xf) - (1 & 0xf));
@@ -333,6 +346,39 @@ uint8_t SM83::dec_h() {
     setFlag(N, 1);
     return 0;
 }
+
+// Decrement the HL register pair.
+uint8_t SM83::dec_hl() {
+    if(l_reg == 0x00)
+        h_reg--;
+    l_reg--;
+    return 0;
+}
+
+// Decrement the L register.
+// Flag:
+//  -Z: Set if result is 0
+//  -N: Set to 1
+//  -H: Set if bit 4 is set to 1 after decrement
+uint8_t SM83::dec_l() {
+// Used to check half carry
+    uint8_t h_check = ((l_reg & 0xf) - (1 & 0xf));
+    l_reg--;
+    // Check zero flag
+    if(l_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry flag
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Increment the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
@@ -486,6 +532,30 @@ uint8_t SM83::inc_hl() {
     return 0;
 }
 
+// Increment the L register.
+// Flags:
+//  -Z: Set if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set if bit 4 is set after increment
+uint8_t SM83::inc_l() {
+    // Used to check for half carry flag
+    uint8_t h_check = ((l_reg & 0xf) + (1 & 0xf));
+    l_reg++;
+    // Check for zero flag
+    if(l_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check for half carry
+    if((h_check &0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
 // Jump to an address -128 - +127 memory addresses relative to the current position
 // of the PC.
 // Note: If you are trying to jump to a memory address relative to the address of
@@ -530,8 +600,8 @@ uint8_t SM83::ld_a_abs_bc() {
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
     // Read in the 8-bit data value at the address in addr_abs
-    a_reg = read(addr_abs);
-
+    fetch();
+    a_reg = fetched;
     return 0;
 }
 // Load the 8-bit data value from the absolute address in the register pair DE into register A.
@@ -540,7 +610,21 @@ uint8_t SM83::ld_a_abs_de() {
     uint16_t highByte = d_reg;
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
-    a_reg = read(addr_abs);
+    fetch();
+    a_reg = fetched;
+    return 0;
+}
+
+// Load the 8-bit data value from the absolute address in the register pair HL into register A
+// then, increment the HL register pair.
+uint8_t SM83::ld_a_abs_hli() {
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    // Load the absolute address into addr_abs
+    addr_abs = (highByte << 8) | lowByte;
+    fetch();
+    a_reg = fetched;
+    inc_hl();
     return 0;
 }
 
@@ -633,6 +717,12 @@ uint8_t SM83::ld_h_d8() {
 uint8_t SM83::ld_hl_d16() {
     l_reg = read(pc++);
     h_reg = read(pc++);
+    return 0;
+}
+
+// Load L register with the immediate 8-bit data value.
+uint8_t SM83::ld_l_d8() {
+    l_reg = read(pc++);
     return 0;
 }
 
