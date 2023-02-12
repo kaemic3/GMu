@@ -10,7 +10,7 @@ SM83::SM83() {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr_r8, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
             {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}, {"LD A,(HL+)", &op::ld_a_abs_hli, 8, 1}, {"DEC HL", &op::dec_hl, 8, 1}, {"INC L", &op::inc_l, 4, 1}, {"DEC L", &op::dec_l, 4, 1}, {"LD L,d8", &op::ld_l_d8, 8, 2}, {"CPL", &op::cpl, 4, 1},
-            {}
+            {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}
     };
 }
 
@@ -220,6 +220,37 @@ uint8_t SM83::daa() {
     return 0;
 }
 
+// Using HL as an absolute address, decrement the data at that address.
+// Flag:
+//  -Z: Set if result is 0
+//  -N: Set to 1
+//  -H: Set if bit 4 is set after decrementing the data
+uint8_t SM83::dec_abs_hl() {
+    // Load the data that HL is pointing to
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch data
+    uint8_t data = fetch();
+    // Used to check half carry flag
+    uint8_t h_check = (data & 0xf) - (1 &0xf);
+    data--;
+    // Check zero flag
+    if(data == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry flag
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    write(addr_abs, data);
+    return 0;
+}
+
 // Decrement the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
@@ -379,12 +410,42 @@ uint8_t SM83::dec_l() {
     return 0;
 }
 
+// Using HL as an absolute address, increment the data that HL points to.
+// Flag:
+// -Z: Set if the result is 0
+// -N: Reset to 0
+// -H: Set if bit 4 after incrementing the data
+uint8_t SM83::inc_abs_hl() {
+    // Need to load the data that HL is pointing to.
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch the data
+    uint8_t data = fetch();
+    // Used to check half carry
+    uint8_t h_check = (data & 0xf) + (1 & 0xf);
+    data++;     // Increment the data
+    // Check Z flag
+    if(data == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset sign flag
+    setFlag(N, 0);
+    write(addr_abs, data);
+    return 0;
+}
+
 // Increment the B register. Set according flags.
 // Flags:
 //  - Z: If result is 0
 //  - N: Gets reset to 0
 //  - H: If bit 4 is set after adding 1 to B
-
 uint8_t SM83::inc_b() {
     // Used for the half carry bit
     // By &ing the B register with 0xf, we reset the high nibble. Same for 1, but the high nibble
@@ -556,6 +617,13 @@ uint8_t SM83::inc_l() {
     return 0;
 }
 
+// Increment the SP.
+uint8_t SM83::inc_sp() {
+    // Since the SP is an uint16_t, there is nothing really to do here.
+    sp++;
+    return 0;
+}
+
 // Jump to an address -128 - +127 memory addresses relative to the current position
 // of the PC.
 // Note: If you are trying to jump to a memory address relative to the address of
@@ -568,6 +636,19 @@ uint8_t SM83::jr_r8() {
     pc += offset;
     return 0;
 }
+
+// Jump to an address -128 - +127 memory address relative to the current position
+// of the PC only if the carry flag is not set. Add 4 clock cycles if the condition is
+// met.
+uint8_t SM83::jr_nc_r8() {
+    // Use a signed 8-bit int
+    int8_t offset = read(pc++);
+    if(getFlag(C))
+        return 0;
+    pc += offset;
+    return 4;
+}
+
 // Jump to an address -128 - +127 memory address relative to the current position
 // of the PC only if the zero flag is not set. Add 4 clock cycles if the condition is
 // met.
@@ -575,7 +656,7 @@ uint8_t SM83::jr_nz_r8() {
     // Used a signed 8-bit int
     int8_t offset = read(pc++);
     // Check if zero flag is set
-    if(getFlag(Z) == 1)
+    if(getFlag(Z))
         return 0;
     pc += offset;
     return 4;
@@ -587,7 +668,7 @@ uint8_t SM83::jr_nz_r8() {
 uint8_t SM83::jr_z_r8() {
     int8_t offset = read(pc++);
     // Check if the Z flag is not set
-    if((!getFlag(Z)) == 1)
+    if(!getFlag(Z))
         return 0;
     pc +=offset;
     return 4;
@@ -600,8 +681,8 @@ uint8_t SM83::ld_a_abs_bc() {
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
     // Read in the 8-bit data value at the address in addr_abs
-    fetch();
-    a_reg = fetched;
+
+    a_reg = fetch();
     return 0;
 }
 // Load the 8-bit data value from the absolute address in the register pair DE into register A.
@@ -610,8 +691,7 @@ uint8_t SM83::ld_a_abs_de() {
     uint16_t highByte = d_reg;
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
-    fetch();
-    a_reg = fetched;
+    a_reg = fetch();
     return 0;
 }
 
@@ -622,8 +702,7 @@ uint8_t SM83::ld_a_abs_hli() {
     uint16_t highByte = h_reg;
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
-    fetch();
-    a_reg = fetched;
+    a_reg = fetch();
     inc_hl();
     return 0;
 }
@@ -666,6 +745,16 @@ uint8_t SM83::ld_abs_hli_a() {
     addr_abs = (highByte << 8) | lowByte;
     write(addr_abs, a_reg);
     inc_hl();
+    return 0;
+}
+
+// Using HL as an absolute address, load the value in A into that address, then decrement the HL register pair.
+uint8_t SM83::ld_abs_hld_a() {
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    write(addr_abs, a_reg);
+    dec_hl();
     return 0;
 }
 
@@ -713,7 +802,7 @@ uint8_t SM83::ld_h_d8() {
     return 0;
 }
 
-// Load the HL register pair with the immediate 16-bit value
+// Load the HL register pair with the immediate 16-bit value.
 uint8_t SM83::ld_hl_d16() {
     l_reg = read(pc++);
     h_reg = read(pc++);
@@ -723,6 +812,16 @@ uint8_t SM83::ld_hl_d16() {
 // Load L register with the immediate 8-bit data value.
 uint8_t SM83::ld_l_d8() {
     l_reg = read(pc++);
+    return 0;
+}
+
+// Load the SP with the immediate 16-bit value.
+uint8_t SM83::ld_sp_d16() {
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Create 16-bit data from low and high bytes read in from PC
+    uint16_t data = (highByte << 8) | lowByte;
+    sp = data;
     return 0;
 }
 
