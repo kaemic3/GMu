@@ -7,18 +7,18 @@
 int main(int argc, char* argv[]) {
     Bus gb;
 
-    gb.cpu.a_reg = 0xF3;
-    gb.cpu.b_reg = 0x81;
+    gb.cpu.a_reg = 0xf3;
+    gb.cpu.b_reg = 0xce;
     gb.cpu.c_reg = 0xff;
-    gb.cpu.h_reg = 0xCE;
-    gb.cpu.l_reg = 0xEE;
-    gb.cpu.d_reg = 0x80;
-    gb.cpu.e_reg = 0x00;
+    gb.cpu.h_reg = 0xce;
+    gb.cpu.l_reg = 0xff;
+    gb.cpu.d_reg = 0xce;
+    gb.cpu.e_reg = 0xee;
 
-    gb.cpu.sp = 0xFFFE;
+    gb.cpu.sp = 0xfffe;
     gb.cpu.sp = 0x3399;
-    gb.ram[0x0000] = 0x27;
-    gb.ram[0x0001] = 0x27;
+    gb.ram[0x0000] = 0x29;
+
 
 
 
