@@ -10,7 +10,7 @@ SM83::SM83() {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr_r8, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
             {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}, {"LD A,(HL+)", &op::ld_a_abs_hli, 8, 1}, {"DEC HL", &op::dec_hl, 8, 1}, {"INC L", &op::inc_l, 4, 1}, {"DEC L", &op::dec_l, 4, 1}, {"LD L,d8", &op::ld_l_d8, 8, 2}, {"CPL", &op::cpl, 4, 1},
-            {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}, {"LD (HL),d8", &op::ld_abs_hl_d8, 12, 2}
+            {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}, {"LD (HL),d8", &op::ld_abs_hl_d8, 12, 2}, {"SCF", &op::scf, 4, 1}, {"JR C,r8", &op::jr_c_r8, 8, 2}, {"ADD HL,SP", &op::add_hl_sp, 8, 1}
     };
 }
 
@@ -71,12 +71,6 @@ uint8_t SM83::fetch() {
 //  - C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_bc() {
 
-    // For checking for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (b_reg & 0xf));
-    // For checking H register overflow
-    uint16_t h_overflow = h_reg + b_reg;
-    h_reg += b_reg;
-
     // For checking L register overflow
     uint16_t l_overflow = l_reg + c_reg;
     l_reg += c_reg;
@@ -84,8 +78,16 @@ uint8_t SM83::add_hl_bc() {
     if(l_overflow > 0xff)
         h_reg++;
 
+    // For checking for half carry
+    uint8_t h_check = ((h_reg & 0xf) + (b_reg & 0xf));
+    // For checking H register overflow
+    uint16_t h_overflow = h_reg + b_reg;
+    h_reg += b_reg;
+
+
+
     // Check to see if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10)
+    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -106,6 +108,11 @@ uint8_t SM83::add_hl_bc() {
 //  - H: Set to 1 if overflow from bit 11
 //  - C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_de() {
+    // Check for L register overflow
+    uint16_t l_overflow = l_reg + e_reg;
+    l_reg += e_reg;
+    if(l_overflow > 0xff)
+        h_reg++;
 
     // Used to check for half carry
     uint8_t h_check = ((h_reg & 0xf) + (d_reg & 0xf));
@@ -113,14 +120,8 @@ uint8_t SM83::add_hl_de() {
     uint16_t h_overflow = h_reg + d_reg;
     h_reg += d_reg;
 
-    // Check for L register overflow
-    uint16_t l_overflow = l_reg + e_reg;
-    l_reg += e_reg;
-    if(l_overflow > 0xff)
-        h_reg++;
-
     // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10)
+    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -140,25 +141,55 @@ uint8_t SM83::add_hl_de() {
 //  - H: Set to 1 if overflow from bit 11
 //  - C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_hl() {
-
-    // Used to check for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (h_reg & 0xf));
-    // Used to check for carry
-    uint16_t h_overflow = h_reg + d_reg;
-    h_reg += h_reg;
-
     // Check for L register overflow
     uint16_t l_overflow = l_reg + l_reg;
     l_reg += l_reg;
     if(l_overflow > 0xff)
         h_reg++;
 
+    // Used to check for half carry
+    uint8_t h_check = ((h_reg & 0xf) + (h_reg & 0xf));
+    // Used to check for carry
+    uint16_t h_overflow = h_reg + h_reg;
+    h_reg += h_reg;
+
     // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10)
+    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
     // Check if carry needs to be enabled
+    if(h_overflow > 0xFF)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+uint8_t SM83::add_hl_sp() {
+    uint8_t lowByte = sp;
+    uint8_t highByte = (sp >> 8);
+
+    // Check for L register overflow
+    uint16_t l_overflow = l_reg + lowByte;
+    l_reg += lowByte;
+    if(l_overflow > 0xff)
+        h_reg++;
+
+    // Used to check for half carry
+    uint8_t h_check = (h_reg & 0xf) + (highByte & 0xf);
+    // Used to check for carry flag
+    uint16_t h_overflow = h_reg + highByte;
+    h_reg += highByte;
+
+    // Check half if half carry needs to be enabled
+    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Check if carry flag needs to be enabled
     if(h_overflow > 0xFF)
         setFlag(C, 1);
     else
@@ -638,6 +669,18 @@ uint8_t SM83::jr_r8() {
 }
 
 // Jump to an address -128 - +127 memory address relative to the current position
+// of the PC only if the carry flag is set. Add 4 clock cycles if the condition is
+// met.
+uint8_t SM83::jr_c_r8() {
+    // Use a signed 8-bit int
+    int8_t offset = read(pc++);
+    if(!getFlag(C))
+        return 0;
+    pc += offset;
+    return 4;
+}
+
+// Jump to an address -128 - +127 memory address relative to the current position
 // of the PC only if the carry flag is not set. Add 4 clock cycles if the condition is
 // met.
 uint8_t SM83::jr_nc_r8() {
@@ -939,6 +982,13 @@ uint8_t SM83::rrca() {
     setFlag(H, 0);
     setFlag(N, 0);
 
+    return 0;
+}
+// Set the carry flag. Reset the sign and half carry flags.
+uint8_t SM83::scf() {
+    setFlag(C, 1);
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 

@@ -10,16 +10,14 @@ int main(int argc, char* argv[]) {
     gb.cpu.a_reg = 0xf3;
     gb.cpu.b_reg = 0x80;
     gb.cpu.c_reg = 0x00;
-    gb.cpu.h_reg = 0x80;
-    gb.cpu.l_reg = 0x00;
+    gb.cpu.h_reg = 0xce;
+    gb.cpu.l_reg = 0xee;
     gb.cpu.d_reg = 0xce;
     gb.cpu.e_reg = 0xee;
 
     gb.cpu.sp = 0xfffe;
-    gb.cpu.sp = 0x3399;
-    gb.ram[0x0000] = 0x36;
-    gb.ram[0x0001] = 0x33;
-    gb.ram[0x0002] = 0x23;
+    gb.cpu.sp = 0xf3d1;
+    gb.ram[0x0000] = 0x39;
 
     gb.ram[0x8000] = 0x12;
 
