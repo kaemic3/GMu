@@ -141,17 +141,22 @@ uint8_t SM83::add_hl_de() {
 //  - H: Set to 1 if overflow from bit 11
 //  - C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_hl() {
+    // Need to create copies of each of these before the increments.
+    // After lots of testing, this seems to be the only way
+    // to emulate the actual hardware properly.
+    uint8_t l_old = l_reg;
+    uint8_t h_old = h_reg;
     // Check for L register overflow
-    uint16_t l_overflow = l_reg + l_reg;
-    l_reg += l_reg;
+    uint16_t l_overflow = l_reg + l_old;
+    l_reg += l_old;
     if(l_overflow > 0xff)
         h_reg++;
 
     // Used to check for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (h_reg & 0xf));
+    uint8_t h_check = ((h_old & 0xf) + (h_old & 0xf));
     // Used to check for carry
-    uint16_t h_overflow = h_reg + h_reg;
-    h_reg += h_reg;
+    uint16_t h_overflow = h_old + h_old;
+    h_reg += h_old;
 
     // Check if half carry needs to be enabled
     if((h_check & 0x10) == 0x10 || h_reg == 0x10)
@@ -167,7 +172,7 @@ uint8_t SM83::add_hl_hl() {
     setFlag(N, 0);
     return 0;
 }
-
+// TODO: Need to fix this. Currently not working!!!!
 uint8_t SM83::add_hl_sp() {
     uint8_t lowByte = sp;
     uint8_t highByte = (sp >> 8);
