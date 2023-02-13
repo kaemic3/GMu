@@ -146,25 +146,29 @@ uint8_t SM83::add_hl_hl() {
     // to emulate the actual hardware properly.
     uint8_t l_old = l_reg;
     uint8_t h_old = h_reg;
+    // Copy of H register
+    uint16_t h_16 = h_reg;
     // Check for L register overflow
     uint16_t l_overflow = l_reg + l_old;
     l_reg += l_old;
-    if(l_overflow > 0xff)
+    if(l_overflow > 0xff) {
         h_reg++;
+        h_16++;
+    }
 
     // Used to check for half carry
     uint8_t h_check = ((h_old & 0xf) + (h_old & 0xf));
     // Used to check for carry
-    uint16_t h_overflow = h_old + h_old;
+    h_16 += h_old;
     h_reg += h_old;
 
     // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
+    if((h_check & 0x10) == 0x10 || h_reg == 0x10 || h_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
     // Check if carry needs to be enabled
-    if(h_overflow > 0xFF)
+    if(h_16 > 0xFF)
         setFlag(C, 1);
     else
         setFlag(C, 0);
@@ -172,31 +176,34 @@ uint8_t SM83::add_hl_hl() {
     setFlag(N, 0);
     return 0;
 }
+
 // TODO: Need to fix this. Currently not working!!!!
 uint8_t SM83::add_hl_sp() {
+    // Create temporary variables for the H register
+    uint16_t h_16 = h_reg;
+    // Read in the value from the SP
     uint8_t lowByte = sp;
     uint8_t highByte = (sp >> 8);
 
-    // Check for L register overflow
+    // Check for L overflow
     uint16_t l_overflow = l_reg + lowByte;
     l_reg += lowByte;
-    if(l_overflow > 0xff)
+    if(l_overflow > 0xff) {
+        h_16++;
         h_reg++;
-
-    // Used to check for half carry
-    uint8_t h_check = (h_reg & 0xf) + (highByte & 0xf);
-    // Used to check for carry flag
-    uint16_t h_overflow = h_reg + highByte;
+    }
+    // Check for half carry
+    uint8_t h_check = (h_reg &0xf) + (highByte & 0xf);
+    h_16 += highByte;
     h_reg += highByte;
-
-    // Check half if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
+    if((h_check & 0x10) == 0x10 || h_16 > 0xff || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
-    // Check if carry flag needs to be enabled
-    if(h_overflow > 0xFF)
+    // Check for overflow
+    if(h_16 > 0xff) {
         setFlag(C, 1);
+    }
     else
         setFlag(C, 0);
     // Reset sign flag
