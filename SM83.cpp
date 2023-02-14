@@ -172,7 +172,6 @@ uint8_t SM83::add_hl_hl() {
     // Used to check for carry
     h_16 += h_old;
     h_reg += h_old;
-
     // Check if half carry needs to be enabled
     if((h_check & 0x10) == 0x10 || h_16 > 0xff || h_reg == 0x10 )
         setFlag(H, 1);
