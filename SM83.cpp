@@ -66,37 +66,45 @@ uint8_t SM83::fetch() {
 
 // Add the contents of the BC register pair into the HL register pair.
 // Flags:
-//  - N: Reset to 0
-//  - H: Set to 1 if overflow from bit 11
-//  - C: Set to 1 if overflow from bit 15
+//  -N: Reset to 0
+//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_bc() {
-
-    // For checking L register overflow
+    // Create a 16-bit copy of the H register
+    uint16_t h_16 = h_reg;
+    // Calculate the overflow and half carry flags
     uint16_t l_overflow = l_reg + c_reg;
     l_reg += c_reg;
-    // Check to see if L + C overflows
-    if(l_overflow > 0xff)
+    if(l_overflow > 0xff) {
+        // Increment both h_reg and the 16-bit version
         h_reg++;
-
-    // For checking for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (b_reg & 0xf));
-    // For checking H register overflow
-    uint16_t h_overflow = h_reg + b_reg;
+        h_16++;
+    }
+    // Check for half carry flag
+    uint8_t h_check = (h_reg & 0xf) + (b_reg & 0xf);
+    // Add the two versions of H with B
+    h_16 += b_reg;
     h_reg += b_reg;
+    // Now run the check for the half carry flag
 
-
-
-    // Check to see if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
+    // To break down this check:
+    // First we do the standard check to see if the addition caused bit 3 to overflow into
+    // bit 4 of the H reg. Then we need to see if H overflows. In this case an 8-bit version,
+    // at this point in the code, would be equal to 0. This causes the flag to not be set properly.
+    // To remedy this, we use a 16-bit version to prevent the value from resetting, then check to see
+    // if the value has exceeded the maximum 8-bit uint, being 0xff. Last we check to see if the
+    // value in h_reg equals 0x10. The reason is due to the way the L register can carry into H,
+    // which should cause the flag to be set. Our h_check variable only accounts for when bit 3 overflows into
+    // bit 4 of H when we are adding H and B, not when L overflows into H.
+    if((h_check & 0x10) == 0x10 || h_16 > 0xff || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
-    // Check to see if carry needs to be enabled
-    if(h_overflow > 0xFF)
+    // Check overflow of HL pair
+    if(h_16 > 0xff)
         setFlag(C, 1);
     else
         setFlag(C, 0);
-
     // Reset sign flag
     setFlag(N, 0);
     return 0;
@@ -104,29 +112,32 @@ uint8_t SM83::add_hl_bc() {
 
 // Add the contents of the DE register pair into the HL register pair.
 // Flags:
-//  - N: Reset to 0
-//  - H: Set to 1 if overflow from bit 11
-//  - C: Set to 1 if overflow from bit 15
+//  -N: Reset to 0
+//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_de() {
-    // Check for L register overflow
+    // Create a 16-bit copy of the H register
+    uint16_t h_16 = h_reg;
+    // Calculate the overflow and half carry flags
     uint16_t l_overflow = l_reg + e_reg;
     l_reg += e_reg;
-    if(l_overflow > 0xff)
+    if(l_overflow > 0xff) {
+        // Increment both h_reg and the 16-bit version
         h_reg++;
-
-    // Used to check for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (d_reg & 0xf));
-    // Used to check for carry
-    uint16_t h_overflow = h_reg + d_reg;
+        h_16++;
+    }
+    // Check for half carry flag
+    uint8_t h_check = (h_reg & 0xf) + (d_reg & 0xf);
+    // Add the two versions of H with D
+    h_16 += d_reg;
     h_reg += d_reg;
-
-    // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || h_reg == 0x10)
+    // Now run the check for the half carry flag
+    if((h_check & 0x10) == 0x10 || h_16 > 0xff || h_reg == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
-    // Check if carry needs to be enabled
-    if(h_overflow > 0xFF)
+    // Check overflow of HL pair
+    if(h_16 > 0xff)
         setFlag(C, 1);
     else
         setFlag(C, 0);
@@ -163,7 +174,7 @@ uint8_t SM83::add_hl_hl() {
     h_reg += h_old;
 
     // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || h_reg == 0x10 || h_16 > 0xff)
+    if((h_check & 0x10) == 0x10 || h_16 > 0xff || h_reg == 0x10 )
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -177,7 +188,14 @@ uint8_t SM83::add_hl_hl() {
     return 0;
 }
 
-// TODO: Need to fix this. Currently not working!!!!
+// Add the 16 bit SP to the 16-bit register pair HL.
+// Note: Probably need to do more testing, but I am pretty
+// sure that this is a pretty good setup.
+
+// Flags:
+//  -N: Reset to 0
+//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -C: Set of H overflows from bit 15
 uint8_t SM83::add_hl_sp() {
     // Create temporary variables for the H register
     uint16_t h_16 = h_reg;
