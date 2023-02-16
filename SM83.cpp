@@ -10,7 +10,8 @@ SM83::SM83() {
             {"NOP", &op::nop, 4, 1}, {"LD BC,d16", &op::ld_bc_d16, 12, 3}, {"LD (BC),A", &op::ld_abs_bc_a, 8, 1}, {"INC BC", &op::inc_bc, 8, 1}, {"INC B", &op::inc_b, 4, 1}, {"DEC B", &op::dec_b, 4, 1}, {"LD B,d8", &op::ld_b_d8, 8, 2}, {"RLCA", &op::rlca, 4, 1}, {"LD (a16),SP", &op::ld_abs_a16_sp, 20, 3}, {"ADD HL,BC", &op::add_hl_bc, 8, 1}, {"LD A,(BC)", &op::ld_a_abs_bc, 8, 1}, {"DEC BC", &op::dec_bc, 8, 1}, {"INC C", &op::inc_c, 4, 1}, {"DEC C", &op::dec_c, 4, 1}, {"LD C,d8", &op::ld_c_d8, 8, 2}, {"RRCA", &op::rrca, 4, 1},
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr_r8, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
             {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}, {"LD A,(HL+)", &op::ld_a_abs_hli, 8, 1}, {"DEC HL", &op::dec_hl, 8, 1}, {"INC L", &op::inc_l, 4, 1}, {"DEC L", &op::dec_l, 4, 1}, {"LD L,d8", &op::ld_l_d8, 8, 2}, {"CPL", &op::cpl, 4, 1},
-            {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}, {"LD (HL),d8", &op::ld_abs_hl_d8, 12, 2}, {"SCF", &op::scf, 4, 1}, {"JR C,r8", &op::jr_c_r8, 8, 2}, {"ADD HL,SP", &op::add_hl_sp, 8, 1}
+            {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}, {"LD (HL),d8", &op::ld_abs_hl_d8, 12, 2}, {"SCF", &op::scf, 4, 1}, {"JR C,r8", &op::jr_c_r8, 8, 2}, {"ADD HL,SP", &op::add_hl_sp, 8, 1}, {"LD A, (HL-)", &op::ld_a_abs_hld, 8, 1}, {"DEC SP", &op::dec_sp, 8, 1}, {"INC A", &op::inc_a, 4, 1}, {"DEC A", &op::dec_a, 4, 1}, {"LD A,d8", &op::ld_a_d8, 8, 2}, {"CCF", &op::ccf, 4, 1},
+            {}
     };
 }
 
@@ -227,6 +228,14 @@ uint8_t SM83::add_hl_sp() {
     setFlag(N, 0);
     return 0;
 }
+// Complement (invert) the carry flag.
+uint8_t SM83::ccf() {
+    if(getFlag(C) == 1)
+        setFlag(C, 0);
+    else
+        setFlag(C, 1);
+    return 0;
+}
 
 // Get the complement of the A register, then save that into A.
 // The complement of A is A with all of its bits flipped.
@@ -279,6 +288,30 @@ uint8_t SM83::daa() {
     setFlag(H, 0);
     return 0;
 }
+// Decrement the A register. Set according flags.
+// Flags:
+//  - Z: If result is 0
+//  - N: Gets set to 1
+//  - H: If bit 4 is set after the subtraction
+uint8_t SM83::dec_a() {
+
+    // Used to check half carry flag
+    uint8_t h_check = ((a_reg & 0xf) - (1 & 0xf));
+    a_reg--;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check for half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set sign flag
+    setFlag(N, 1);
+    return 0;
+}
 
 // Using HL as an absolute address, decrement the data at that address.
 // Flag:
@@ -315,7 +348,7 @@ uint8_t SM83::dec_abs_hl() {
 // Flags:
 //  - Z: If result is 0
 //  - N: Gets set to 1
-//  - H: If bit 4 is set after subtracting 1 from B
+//  - H: If bit 4 is set after the subtraction
 uint8_t SM83::dec_b() {
     // Used to check half carry flag
     uint8_t h_check = ((b_reg & 0xf) - (1 & 0xf));
@@ -334,11 +367,15 @@ uint8_t SM83::dec_b() {
     return 0;
 }
 
+// Decrement the C register. Set according flags.
+// Flags:
+//  - Z: If result is 0
+//  - N: Gets set to 1
+//  - H: If bit 4 is set after the subtraction
 uint8_t SM83::dec_c() {
     // Used to check half carry flag
     uint8_t h_check = ((c_reg & 0xf) - (1 & 0xf));
     c_reg--;
-
     // Check zero flag
     if(c_reg == 0x00)
         setFlag(Z, 1);
@@ -354,9 +391,14 @@ uint8_t SM83::dec_c() {
     return 0;
 }
 
+// Decrement the D register. Set according flags.
+// Flags:
+//  - Z: If result is 0
+//  - N: Gets set to 1
+//  - H: If bit 4 is set after the subtraction
 uint8_t SM83::dec_d() {
     // Used to check half carry flag
-    uint8_t h_check = ((c_reg & 0xf) - (1 & 0xf));
+    uint8_t h_check = ((d_reg & 0xf) - (1 & 0xf));
     d_reg--;
     // Check for zero flag
     if(d_reg == 0x00)
@@ -470,6 +512,43 @@ uint8_t SM83::dec_l() {
     return 0;
 }
 
+// Decrement the SP.
+uint8_t SM83::dec_sp() {
+    // Since the SP is an uint16_t, there is no need to check for overflow, there is no need to check for overflow.
+    sp--;
+    return 0;
+}
+
+// Increment the A register.
+// Flags:
+//  -Z: Set this flag to 1 if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set this flag to 1 if bit 4 is set after the increment
+
+uint8_t SM83::inc_a() {
+    // Used for the half carry bit
+    // By &ing the A register with 0xf, we reset the high nibble. Same for 1, but the high nibble
+    // for 1 is never set. It is written out here for clarity.
+    // When we add these two numbers together, we can check bit 4.
+    // If bit 4 is enabled, that means this addition should set the half carry bit.
+
+    uint8_t h_check = (a_reg & 0xf) + (1 & 0xf);
+    a_reg++;
+    // Check for zero
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Check for half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Reset sign
+    setFlag(N, 0);
+    return 0;
+}
+
 // Using HL as an absolute address, increment the data that HL points to.
 // Flag:
 // -Z: Set if the result is 0
@@ -501,17 +580,14 @@ uint8_t SM83::inc_abs_hl() {
     return 0;
 }
 
-// Increment the B register. Set according flags.
+// Increment the B register.
 // Flags:
-//  - Z: If result is 0
-//  - N: Gets reset to 0
-//  - H: If bit 4 is set after adding 1 to B
+//  -Z: Set this flag to 1 if result is 0
+//  -N: Reset this flag to 0
+//  -H: Set this flag to 1 if bit 4 is set after the increment
+
 uint8_t SM83::inc_b() {
-    // Used for the half carry bit
-    // By &ing the B register with 0xf, we reset the high nibble. Same for 1, but the high nibble
-    // for 1 is never set. It is written out here for clarity.
-    // When we add these two numbers together, we can check bit 4.
-    // If bit 4 is enabled, that means this addition should set the half carry bit.
+
 
     uint8_t h_check= ((b_reg & 0xf) + (1 & 0xf));
     b_reg++;
@@ -745,6 +821,11 @@ uint8_t SM83::jr_z_r8() {
     pc +=offset;
     return 4;
 }
+// Load A with the immediate 8-bit data.
+uint8_t SM83::ld_a_d8() {
+    a_reg = read(pc++);
+    return 0;
+}
 
 // Load the 8-bit data value from the absolute address in the register pair BC into register A.
 uint8_t SM83::ld_a_abs_bc() {
@@ -764,6 +845,18 @@ uint8_t SM83::ld_a_abs_de() {
     // Load the absolute address into addr_abs
     addr_abs = (highByte << 8) | lowByte;
     a_reg = fetch();
+    return 0;
+}
+
+// Load the 8-bit data value from the absolute address in the register pair HL into register A
+// then, decrement the HL register pair.
+uint8_t SM83::ld_a_abs_hld() {
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    // Load the absolute address into addr_abs
+    addr_abs = (highByte << 8) | lowByte;
+    a_reg = fetch();
+    dec_hl();
     return 0;
 }
 
