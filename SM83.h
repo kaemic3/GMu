@@ -99,6 +99,8 @@ private:
     };
     // Use initializer list to initialize the opcode table
     std::vector<INSTRUCTION> opcode_lookup;
+    // For prefixed opcodes (&CB)
+    std::vector<INSTRUCTION> prefix_lookup;
 };
 
 
