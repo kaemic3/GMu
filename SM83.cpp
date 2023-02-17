@@ -11,7 +11,9 @@ SM83::SM83() {
             {"STOP d8", &op::stop_d8, 4, 2}, {"LD DE,d16", &op::ld_de_d16, 12, 3}, {"LD (DE),A", &op::ld_abs_de_a, 8, 1}, {"INC DE", &op::inc_de, 8, 1}, {"INC D", &op::inc_d, 4, 1}, {"DEC D", &op::dec_d, 4, 1}, {"LD D,d8", &op::ld_d_d8, 8, 2}, {"RLA", &op::rla, 4, 1}, {"JR", &op::jr_r8, 12, 2}, {"ADD HL,DE", &op::add_hl_de, 8, 1}, {"LD A,(DE)", &op::ld_a_abs_de, 8 ,1}, {"DEC DE", &op::dec_de, 8, 1}, {"INC E", &op::inc_e, 4, 1}, {"DEC E", &op::dec_e, 4, 1}, {"LD E,d8", &op::ld_e_d8, 8, 2}, {"RRA", &op::rra, 4, 1},
             {"JR NZ,r8", &op::jr_nz_r8, 8, 2}, {"LD HL,d16", &op::ld_hl_d16, 12, 3}, {"LD (HL+),A", &op::ld_abs_hli_a, 8, 1}, {"INC HL", &op::inc_hl, 8, 1}, {"INC H", &op::inc_h, 4, 1}, {"DEC H", &op::dec_h, 4, 1}, {"LD H,d8", &op::ld_h_d8, 8, 2}, {"DAA", &op::daa, 4, 1}, {"JR Z,r8", &op::jr_z_r8, 8, 2}, {"ADD HL,HL", &op::add_hl_hl, 8, 1}, {"LD A,(HL+)", &op::ld_a_abs_hli, 8, 1}, {"DEC HL", &op::dec_hl, 8, 1}, {"INC L", &op::inc_l, 4, 1}, {"DEC L", &op::dec_l, 4, 1}, {"LD L,d8", &op::ld_l_d8, 8, 2}, {"CPL", &op::cpl, 4, 1},
             {"JR NC,r8", &op::jr_nc_r8, 8, 2}, {"LD SP,d16", &op::ld_sp_d16, 12, 3}, {"LD (HL-),A", &op::ld_abs_hld_a, 8, 1}, {"INC SP", &op::inc_sp, 8, 1}, {"INC (HL)", &op::inc_abs_hl, 12, 1}, {"DEC (HL)", &op::dec_abs_hl, 12, 1}, {"LD (HL),d8", &op::ld_abs_hl_d8, 12, 2}, {"SCF", &op::scf, 4, 1}, {"JR C,r8", &op::jr_c_r8, 8, 2}, {"ADD HL,SP", &op::add_hl_sp, 8, 1}, {"LD A, (HL-)", &op::ld_a_abs_hld, 8, 1}, {"DEC SP", &op::dec_sp, 8, 1}, {"INC A", &op::inc_a, 4, 1}, {"DEC A", &op::dec_a, 4, 1}, {"LD A,d8", &op::ld_a_d8, 8, 2}, {"CCF", &op::ccf, 4, 1},
-            {"LD B,B", &op::ld_b_b, 4, 1}, {"LD B,C", &op::ld_b_c, 4, 1}, {"LD B,D", &op::ld_b_d, 4, 1}, {"LD B, E", &op::ld_b_e, 4, 1}, {"LD B,H", &op::ld_b_h, 4, 1}, {"LD B,L", &op::ld_b_l, 4, 1}, {"LD B,(HL)", &op::ld_b_abs_hl, 8, 1}, {"LD B,A", &op::ld_b_a, 4, 1}, {"LD C,B", &op::ld_c_b, 4, 1}, {"LD C,C", &op::ld_c_c, 4, 1}, {"LD C,D", &op::ld_c_d, 4, 1}, {"LD C,E", &op::ld_c_e, 4, 1}, {"LD C,E", &op::ld_c_h, 4, 1}, {"LD C,L", &op::ld_c_l, 4, 1}, {"LD, C,(HL)", &op::ld_c_abs_hl, 8, 1}, {"LD C,A", &op::ld_c_a, 4, 1}
+            {"LD B,B", &op::ld_b_b, 4, 1}, {"LD B,C", &op::ld_b_c, 4, 1}, {"LD B,D", &op::ld_b_d, 4, 1}, {"LD B,E", &op::ld_b_e, 4, 1}, {"LD B,H", &op::ld_b_h, 4, 1}, {"LD B,L", &op::ld_b_l, 4, 1}, {"LD B,(HL)", &op::ld_b_abs_hl, 8, 1}, {"LD B,A", &op::ld_b_a, 4, 1}, {"LD C,B", &op::ld_c_b, 4, 1}, {"LD C,C", &op::ld_c_c, 4, 1}, {"LD C,D", &op::ld_c_d, 4, 1}, {"LD C,E", &op::ld_c_e, 4, 1}, {"LD C,E", &op::ld_c_h, 4, 1}, {"LD C,L", &op::ld_c_l, 4, 1}, {"LD C,(HL)", &op::ld_c_abs_hl, 8, 1}, {"LD C,A", &op::ld_c_a, 4, 1},
+            {"LD D,B", &op::ld_d_b, 4, 1}, {"LD D,C", &op::ld_d_c, 4, 1}, {"LD D,D", &op::ld_d_d, 4, 1}, {"LD D,E", &op::ld_d_e, 4, 1}, {"LD D,H", &op::ld_d_h, 4, 1}, {"LD D,L", &op::ld_d_l, 4, 1}, {"LD D,(HL)", &op::ld_d_abs_hl, 8, 1}, {"LD D,A", &op::ld_d_a, 4, 1}, {"LD E,B", &op::ld_e_b, 4, 1}, {"LD E,C", &op::ld_e_c, 4, 1}, {"LD E,D", &op::ld_e_d, 4, 1}, {"LD E,E", &op::ld_e_e, 4, 1}, {"LD E,H", &op::ld_e_h, 4, 1}, {"LD E,L", &op::ld_e_l, 4, 1}, {"LD E,(HL)", &op::ld_e_abs_hl, 8 ,1}, {"LD E,A", &op::ld_e_a, 4, 1},
+            {"LD H,B", &op::ld_h_b, 4 ,1}
     };
 }
 
@@ -1054,8 +1056,64 @@ uint8_t SM83::ld_c_h() {
     return 0;
 }
 
+
+// Load the C register with the contents of the L register.
 uint8_t SM83::ld_c_l() {
     c_reg = l_reg;
+    return 0;
+}
+
+// Load the D register with the contents of the A register.
+uint8_t SM83::ld_d_a() {
+    d_reg = a_reg;
+    return 0;
+}
+
+// Load the D register with the data located at the absolute address in HL.
+uint8_t SM83::ld_d_abs_hl() {
+    // Get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store the data into D
+    d_reg = fetch();
+    return 0;
+}
+
+// Load the D register with the contents of the B register.
+uint8_t SM83::ld_d_b() {
+    d_reg = b_reg;
+    return 0;
+}
+
+
+// Load the D register with the contents of the C register.
+uint8_t SM83::ld_d_c() {
+    d_reg = c_reg;
+    return 0;
+}
+
+// Load the D register with the contents of itself.
+uint8_t SM83::ld_d_d() {
+    d_reg = d_reg;
+    return 0;
+}
+
+// Load the D register with the contents of the E register.
+uint8_t SM83::ld_d_e() {
+    d_reg = e_reg;
+    return 0;
+}
+
+// Load the D register with the contents of the H register.
+uint8_t SM83::ld_d_h() {
+    d_reg = h_reg;
+    return 0;
+}
+
+// Load the D register with the contents of the L register.
+uint8_t SM83::ld_d_l() {
+    d_reg = l_reg;
     return 0;
 }
 
@@ -1072,11 +1130,71 @@ uint8_t SM83::ld_de_d16() {
     return 0;
 }
 
+// Load the E register with the contents of the B register.
+uint8_t SM83::ld_e_b() {
+    e_reg = b_reg;
+    return 0;
+}
+
+// Load the E register with the contents of the C register.
+uint8_t SM83::ld_e_c() {
+    e_reg = c_reg;
+    return 0;
+}
+
+// Load the E register with the contents of the D register.
+uint8_t SM83::ld_e_d() {
+    e_reg = d_reg;
+    return 0;
+}
+
 // Load E register with the immediate 8-bit data value.
 uint8_t SM83::ld_e_d8() {
     e_reg = read(pc++);
     return 0;
 }
+
+// Load E register with itself.
+uint8_t SM83::ld_e_e() {
+    e_reg = e_reg;
+    return 0;
+}
+
+// Load the E register with the contents of the H register.
+uint8_t SM83::ld_e_h(){
+    e_reg = h_reg;
+    return 0;
+}
+
+// Load the E register with the contents of the L register.
+uint8_t SM83::ld_e_l() {
+    e_reg = l_reg;
+    return 0;
+}
+
+// Load the E register with the contents of the A register.
+uint8_t SM83::ld_e_a() {
+    e_reg = a_reg;
+    return 0;
+}
+
+// Load the E register with the data located at the absolute address in HL.
+uint8_t SM83::ld_e_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store data in E
+    e_reg = fetch();
+    return 0;
+}
+
+// Load the H register with the contents of the B register.
+uint8_t SM83::ld_h_b() {
+    h_reg = b_reg;
+    return 0;
+}
+
 // Load H register with the immediate 8-bit data value.
 uint8_t SM83::ld_h_d8() {
     h_reg = read(pc++);
