@@ -14,7 +14,8 @@ SM83::SM83() {
             {"LD B,B", &op::ld_b_b, 4, 1}, {"LD B,C", &op::ld_b_c, 4, 1}, {"LD B,D", &op::ld_b_d, 4, 1}, {"LD B,E", &op::ld_b_e, 4, 1}, {"LD B,H", &op::ld_b_h, 4, 1}, {"LD B,L", &op::ld_b_l, 4, 1}, {"LD B,(HL)", &op::ld_b_abs_hl, 8, 1}, {"LD B,A", &op::ld_b_a, 4, 1}, {"LD C,B", &op::ld_c_b, 4, 1}, {"LD C,C", &op::ld_c_c, 4, 1}, {"LD C,D", &op::ld_c_d, 4, 1}, {"LD C,E", &op::ld_c_e, 4, 1}, {"LD C,E", &op::ld_c_h, 4, 1}, {"LD C,L", &op::ld_c_l, 4, 1}, {"LD C,(HL)", &op::ld_c_abs_hl, 8, 1}, {"LD C,A", &op::ld_c_a, 4, 1},
             {"LD D,B", &op::ld_d_b, 4, 1}, {"LD D,C", &op::ld_d_c, 4, 1}, {"LD D,D", &op::ld_d_d, 4, 1}, {"LD D,E", &op::ld_d_e, 4, 1}, {"LD D,H", &op::ld_d_h, 4, 1}, {"LD D,L", &op::ld_d_l, 4, 1}, {"LD D,(HL)", &op::ld_d_abs_hl, 8, 1}, {"LD D,A", &op::ld_d_a, 4, 1}, {"LD E,B", &op::ld_e_b, 4, 1}, {"LD E,C", &op::ld_e_c, 4, 1}, {"LD E,D", &op::ld_e_d, 4, 1}, {"LD E,E", &op::ld_e_e, 4, 1}, {"LD E,H", &op::ld_e_h, 4, 1}, {"LD E,L", &op::ld_e_l, 4, 1}, {"LD E,(HL)", &op::ld_e_abs_hl, 8 ,1}, {"LD E,A", &op::ld_e_a, 4, 1},
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
-            {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}
+            {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
+            {}
     };
     prefix_lookup =
     {
@@ -525,6 +526,12 @@ uint8_t SM83::dec_sp() {
     sp--;
     return 0;
 }
+// TODO: Need to finish this after interrupts have been implemented.
+// Halt the system clock until an interrupt occurs.
+uint8_t SM83::halt() {
+
+    return 0;
+}
 
 // Increment the A register.
 // Flags:
@@ -828,9 +835,63 @@ uint8_t SM83::jr_z_r8() {
     pc +=offset;
     return 4;
 }
+
+// Load the A register with itself.
+uint8_t SM83::ld_a_a() {
+    a_reg = a_reg;
+    return 0;
+}
+
+// Load the A register with the data stored at the absolute address stored in HL.
+uint8_t SM83::ld_a_abs_hl() {
+    // Need to read in the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store the data into A
+    a_reg = fetch();
+    return 0;
+}
+
+// Load the A register with the contents of the B register.
+uint8_t SM83::ld_a_b() {
+    a_reg = b_reg;
+    return 0;
+}
+
+// Load the A register with the contents of the C register.
+uint8_t SM83::ld_a_c() {
+    a_reg = c_reg;
+    return 0;
+}
+
+// Load the A register with the contents of the D register.
+uint8_t SM83::ld_a_d() {
+    a_reg = d_reg;
+    return 0;
+}
+
 // Load A with the immediate 8-bit data.
 uint8_t SM83::ld_a_d8() {
     a_reg = read(pc++);
+    return 0;
+}
+
+// Load the A register with the contents of the E register.
+uint8_t SM83::ld_a_e() {
+    a_reg = e_reg;
+    return 0;
+}
+
+// Load the A register with the contents of the H register.
+uint8_t SM83::ld_a_h() {
+    a_reg = h_reg;
+    return 0;
+}
+
+// Load the A register with the contents of the L register.
+uint8_t SM83::ld_a_l() {
+    a_reg = l_reg;
     return 0;
 }
 
@@ -909,6 +970,19 @@ uint8_t SM83::ld_abs_de_a() {
     write(addr_abs, a_reg);
     return 0;
 }
+
+// Load the data stored at the absolute address in HL with the contents of the A register.
+uint8_t SM83::ld_abs_hl_a() {
+    // Need to load the address in HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Write the data in B into the address stored in HL
+    write(addr_abs, a_reg);
+    return 0;
+    return 0;
+}
+
 // Load the data stored at the absolute address in HL with the contents of the B register.
 uint8_t SM83::ld_abs_hl_b() {
     // Need to load the address in HL
@@ -947,11 +1021,48 @@ uint8_t SM83::ld_abs_hl_d() {
 
 // Using HL as an absolute address, load the immediate 8-bit data into that address.
 uint8_t SM83::ld_abs_hl_d8() {
+    // Need to load the address in HL
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     uint8_t data = read(pc++);
     write(addr_abs, data);
+    return 0;
+}
+
+// Load the data stored at the absolute address in HL with the contents of the E register.
+uint8_t SM83::ld_abs_hl_e() {
+    // Need to load the address in HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Write the data in C into the address stored in HL
+    write(addr_abs, e_reg);
+
+    return 0;
+}
+
+// Load the data stored at the absolute address in HL with the contents of the H register.
+uint8_t SM83::ld_abs_hl_h() {
+    // Need to load the address in HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Write the data in C into the address stored in HL
+    write(addr_abs, h_reg);
+
+    return 0;
+}
+
+// Load the data stored at the absolute address in HL with the contents of the L register.
+uint8_t SM83::ld_abs_hl_l() {
+    // Need to load the address in HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Write the data in C into the address stored in HL
+    write(addr_abs, l_reg);
+
     return 0;
 }
 
