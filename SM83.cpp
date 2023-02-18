@@ -15,7 +15,7 @@ SM83::SM83() {
             {"LD D,B", &op::ld_d_b, 4, 1}, {"LD D,C", &op::ld_d_c, 4, 1}, {"LD D,D", &op::ld_d_d, 4, 1}, {"LD D,E", &op::ld_d_e, 4, 1}, {"LD D,H", &op::ld_d_h, 4, 1}, {"LD D,L", &op::ld_d_l, 4, 1}, {"LD D,(HL)", &op::ld_d_abs_hl, 8, 1}, {"LD D,A", &op::ld_d_a, 4, 1}, {"LD E,B", &op::ld_e_b, 4, 1}, {"LD E,C", &op::ld_e_c, 4, 1}, {"LD E,D", &op::ld_e_d, 4, 1}, {"LD E,E", &op::ld_e_e, 4, 1}, {"LD E,H", &op::ld_e_h, 4, 1}, {"LD E,L", &op::ld_e_l, 4, 1}, {"LD E,(HL)", &op::ld_e_abs_hl, 8 ,1}, {"LD E,A", &op::ld_e_a, 4, 1},
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
-            {}
+            {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}
     };
     prefix_lookup =
     {
@@ -72,6 +72,267 @@ uint8_t SM83::fetch() {
     return fetched;
 }
 // Instructions in alphabetical order
+
+// Add the A register with itself.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_a() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (a_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + a_reg;
+    a_reg += a_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the data stored at the absolute address in HL with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + data;
+    a_reg += data;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the B register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_b() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (b_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + b_reg;
+    a_reg += b_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the C register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_c() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (c_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + c_reg;
+    a_reg += c_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the D register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_d() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (d_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + d_reg;
+    a_reg += d_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the E register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_e() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (e_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + e_reg;
+    a_reg += e_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the H register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_h() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (h_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + h_reg;
+    a_reg += h_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the L register with the A register and store in A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_l() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (l_reg & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + l_reg;
+    a_reg += l_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
 
 // Add the contents of the BC register pair into the HL register pair.
 // Flags:
