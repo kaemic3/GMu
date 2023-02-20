@@ -16,7 +16,7 @@ SM83::SM83() {
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
             {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}, {"ADC A,C", &op::adc_a_c, 4, 1}, {"ADC A,D", &op::adc_a_d, 4, 1}, {"ADC A,E", &op::adc_a_e, 4, 1}, {"ADC A,H", &op::adc_a_h, 4, 1}, {"ADC A,L", &op::adc_a_l, 4, 1}, {"ADC A,(HL)", &op::adc_a_abs_hl, 8, 1}, {"ADC A,A", &op::adc_a_a, 4, 1},
-            {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}
+            {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1}
 
     };
     prefix_lookup =
@@ -2203,6 +2203,49 @@ uint8_t SM83::rrca() {
 
     return 0;
 }
+
+// Subtract the value in register B from register A with the carry going into B.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Set to 1
+//  -H: Set if the result resets bit 4, if the result before B overflow resets bit 4,
+//      if A = 0x0f, or if B = 0xff before carry is added.
+//  -C: Set if (B + carry) > A
+uint8_t SM83::sbc_a_b() {
+    // Create a copy of operand r8
+    uint8_t cp_r8 = b_reg;
+    // 16-bit copy for overflow check
+    uint16_t cp_r8_16 = b_reg;
+    // Need to see if the carry flag is enabled and inc r8
+    if(getFlag(C) == 1) {
+        cp_r8++;
+        cp_r8_16++;
+    }
+    // Carry check
+    if(cp_r8_16 > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
+    // Needed in-case r8 overflows
+   uint8_t h_old_check = (a_reg & 0xf) - (b_reg & 0xf);
+    a_reg -= cp_r8;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_reg == 0x0f || b_reg == 0xff)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Set the carry flag. Reset the sign and half carry flags.
 uint8_t SM83::scf() {
     setFlag(C, 1);
@@ -2461,6 +2504,4 @@ uint8_t SM83::sub_l() {
 uint8_t SM83::nop() {
     return 0;
 }
-
-
 
