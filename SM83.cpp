@@ -16,7 +16,8 @@ SM83::SM83() {
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
             {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}, {"ADC A,C", &op::adc_a_c, 4, 1}, {"ADC A,D", &op::adc_a_d, 4, 1}, {"ADC A,E", &op::adc_a_e, 4, 1}, {"ADC A,H", &op::adc_a_h, 4, 1}, {"ADC A,L", &op::adc_a_l, 4, 1}, {"ADC A,(HL)", &op::adc_a_abs_hl, 8, 1}, {"ADC A,A", &op::adc_a_a, 4, 1},
-            {"SUB B", &op::sub_b, 4, 1}
+            {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}
+
     };
     prefix_lookup =
     {
@@ -2216,6 +2217,37 @@ uint8_t SM83::stop_d8() {
     return 0;
 }
 
+uint8_t SM83::sub_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch the data
+    uint8_t data = fetch();
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
+    // Check for carry flag
+    if(data > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= data;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Subtract the value of B from A.
 // Flags:
 //  -Z: If the result is 0
@@ -2231,6 +2263,161 @@ uint8_t SM83::sub_b() {
     else
         setFlag(C, 0);
     a_reg -= b_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the value of C from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if C > A
+uint8_t SM83::sub_c() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (c_reg & 0xf);
+    // Check for carry flag
+    if(c_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= c_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the value of D from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if D > A
+uint8_t SM83::sub_d() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (d_reg & 0xf);
+    // Check for carry flag
+    if(d_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= d_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the value of E from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if E > A
+uint8_t SM83::sub_e() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (e_reg & 0xf);
+    // Check for carry flag
+    if(e_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= e_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the value of H from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if H > A
+uint8_t SM83::sub_h() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (h_reg & 0xf);
+    // Check for carry flag
+    if(h_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= h_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the value of L from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if L > A
+uint8_t SM83::sub_l() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (l_reg & 0xf);
+    // Check for carry flag
+    if(l_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= l_reg;
     // Zero flag check
     if(a_reg == 0x00)
         setFlag(Z, 1);
