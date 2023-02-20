@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     gb.cpu.sp = 0xfffe;
     gb.cpu.sp = 0xffff;
-    gb.ram[0x0000] = 0x90;
+    gb.ram[0x0000] = 0x97;
     gb.ram[0x0001] = 0x27;
     gb.ram[0x0002] = 0xff;
     gb.ram[0x0003] = 0x3f;
