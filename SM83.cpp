@@ -15,7 +15,8 @@ SM83::SM83() {
             {"LD D,B", &op::ld_d_b, 4, 1}, {"LD D,C", &op::ld_d_c, 4, 1}, {"LD D,D", &op::ld_d_d, 4, 1}, {"LD D,E", &op::ld_d_e, 4, 1}, {"LD D,H", &op::ld_d_h, 4, 1}, {"LD D,L", &op::ld_d_l, 4, 1}, {"LD D,(HL)", &op::ld_d_abs_hl, 8, 1}, {"LD D,A", &op::ld_d_a, 4, 1}, {"LD E,B", &op::ld_e_b, 4, 1}, {"LD E,C", &op::ld_e_c, 4, 1}, {"LD E,D", &op::ld_e_d, 4, 1}, {"LD E,E", &op::ld_e_e, 4, 1}, {"LD E,H", &op::ld_e_h, 4, 1}, {"LD E,L", &op::ld_e_l, 4, 1}, {"LD E,(HL)", &op::ld_e_abs_hl, 8 ,1}, {"LD E,A", &op::ld_e_a, 4, 1},
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
-            {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}
+            {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}, {"ADC A,C", &op::adc_a_c, 4, 1}, {"ADC A,D", &op::adc_a_d, 4, 1}, {"ADC A,E", &op::adc_a_e, 4, 1}, {"ADC A,H", &op::adc_a_h, 4, 1}, {"ADC A,L", &op::adc_a_l, 4, 1}, {"ADC A,(HL)", &op::adc_a_abs_hl, 8, 1}, {"ADC A,A", &op::adc_a_a, 4, 1},
+            {"SUB B", &op::sub_b, 4, 1}
     };
     prefix_lookup =
     {
@@ -364,14 +365,15 @@ uint8_t SM83::add_hl_bc() {
     // Now run the check for the half carry flag
 
     // To break down this check:
-    // First we do the standard check to see if the addition caused bit 3 to overflow into
-    // bit 4 of the H reg. Then we need to see if H overflows. In this case an 8-bit version,
-    // at this point in the code, would be equal to 0. This causes the flag to not be set properly.
-    // To remedy this, we use a 16-bit version to prevent the value from resetting, then check to see
-    // if the value has exceeded the maximum 8-bit uint, being 0xff. Last we check to see if the
-    // value in h_reg equals 0x10. The reason is due to the way the L register can carry into H,
-    // which should cause the flag to be set. Our h_check variable only accounts for when bit 3 overflows into
-    // bit 4 of H when we are adding H and B, not when L overflows into H.
+    // First we need to have the state of the H register before we have modified it for this
+    // function. This is due to the way uint8_t variables work. When their value goes over 0xff,
+    // they will wrap around to 0. This is a problem when checking for the half carry if the result
+    // of the addition should cause the half carry to trigger after it has wrapped around, like when adding
+    // 0xff + 0xff. We then do a check on overflow from bit 3 to 4 on the new and old h_reg (before and after overflow
+    // from L). We also check if h_reg == 0 as this covers the case where overflow from L causes h_reg == 0x10.
+    //-----------------------------------------------------------------------------------------------------------
+    // Note: h_reg != h_old ONLY when l_reg has overflow. This means h_old_check will result the same as h_check
+    // if there is no L overflow, and that means there should not be any unexpected results.
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || h_reg == 0x10)
         setFlag(H, 1);
     else
@@ -511,15 +513,107 @@ uint8_t SM83::add_hl_sp() {
     return 0;
 }
 
+// Add the A register to itself with carry.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_a() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (a_old & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (a_old & 0xf);
+    a_reg += a_old;
+    a_16 += a_old;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the data stored at the absolute address in HL to the A register with carry.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_abs_hl() {
+    // Load the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch the data
+    uint8_t data = fetch();
+
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (data & 0xf);
+    a_reg += data;
+    a_16 += data;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
 // Add the contents of the B register with the A register plus the carry flag.
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition of sets bit 4, if the carry sets bit 4, or if A overflows
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_b() {
     // Create a 16-bit copy of A
     uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
     if(getFlag(C) == 1) {
         a_reg++;
@@ -529,6 +623,7 @@ uint8_t SM83::adc_a_b() {
     uint8_t a_h10 = a_reg;
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) + (b_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (b_reg & 0xf);
     a_reg += b_reg;
     a_16 += b_reg;
     // Zero flag check
@@ -537,7 +632,217 @@ uint8_t SM83::adc_a_b() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || a_16 > 0xff || a_h10 == 0x10)
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the C register with the A register plus the carry flag.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_c() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (c_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (c_reg & 0xf);
+    a_reg += c_reg;
+    a_16 += c_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the D register with the A register plus the carry flag.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_d() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (d_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (d_reg & 0xf);
+    a_reg += d_reg;
+    a_16 += d_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the E register with the A register plus the carry flag.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_e() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (e_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (e_reg & 0xf);
+    a_reg += e_reg;
+    a_16 += e_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the H register with the A register plus the carry flag.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_h() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (h_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (h_reg & 0xf);
+    a_reg += h_reg;
+    a_16 += h_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the contents of the L register with the A register plus the carry flag.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_l() {
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (l_reg & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (l_reg & 0xf);
+    a_reg += l_reg;
+    a_16 += l_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -1908,6 +2213,37 @@ uint8_t SM83::scf() {
 uint8_t SM83::stop_d8() {
     // Need to pause the Game Boy when this opcode is run
     // To exit stop check link: https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
+    return 0;
+}
+
+// Subtract the value of B from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if B > A
+uint8_t SM83::sub_b() {
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (b_reg & 0xf);
+    // Check for carry flag
+    if(b_reg > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= b_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
     return 0;
 }
 
