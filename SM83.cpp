@@ -16,7 +16,7 @@ SM83::SM83() {
             {"LD H,B", &op::ld_h_b, 4 ,1}, {"LD H,C", &op::ld_h_c, 4, 1}, {"LD H,D", &op::ld_h_d, 4, 1}, {"LD H,E", &op::ld_h_e, 4, 1}, {"LD H,H", &op::ld_h_h, 4, 1}, {"LD H,L", &op::ld_h_l, 4, 1}, {"LD H,(HL)", &op::ld_h_abs_hl, 8, 1}, {"LD H,A", &op::ld_h_a, 4, 1}, {"LD L,B", &op::ld_l_b, 4, 1}, {"LD L,C", &op::ld_l_c, 4, 1}, {"LD L,D", &op::ld_l_d, 4, 1}, {"LD L,E", &op::ld_l_e, 4, 1}, {"LD L,H", &op::ld_l_h, 4, 1}, {"LD L,L", &op::ld_l_l, 4, 1}, {"LD L,(HL)", &op::ld_l_abs_hl, 8, 1}, {"LD L,A", &op::ld_l_a, 4, 1},
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
             {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}, {"ADC A,C", &op::adc_a_c, 4, 1}, {"ADC A,D", &op::adc_a_d, 4, 1}, {"ADC A,E", &op::adc_a_e, 4, 1}, {"ADC A,H", &op::adc_a_h, 4, 1}, {"ADC A,L", &op::adc_a_l, 4, 1}, {"ADC A,(HL)", &op::adc_a_abs_hl, 8, 1}, {"ADC A,A", &op::adc_a_a, 4, 1},
-            {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}
+            {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}, {"SBC A,(HL)", &op::sbc_a_abs_hl, 8, 1}
 
     };
     prefix_lookup =
@@ -2204,12 +2204,57 @@ uint8_t SM83::rrca() {
     return 0;
 }
 
+// Subtract the value stored at the absolute address in HL from
+// register A with the carry going into that 8-bit data value.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Set to 1
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if d8 overflows after carry has been added.
+//  -C: Set if (d8 + carry) > A
+uint8_t SM83::sbc_a_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch the data and store
+    uint8_t data = fetch();
+    // Create a copy of operand d8
+    uint8_t cp_d8 = data;
+    // 16-bit copy for overflow check
+    uint16_t cp_d8_16 = data;
+    // Need to see if the carry flag is enabled and inc r8
+    if(getFlag(C) == 1) {
+        cp_d8++;
+        cp_d8_16++;
+    }
+    // Carry check
+    if(cp_d8_16 > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (cp_d8 & 0xf);
+    a_reg -= cp_d8;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_d8_16 > 0xff)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Subtract the value in register B from register A with the carry going into B.
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before B overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if B = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if B overflows after carry has been added.
 //  -C: Set if (B + carry) > A
 uint8_t SM83::sbc_a_b() {
     // Create a copy of operand r8
@@ -2228,8 +2273,6 @@ uint8_t SM83::sbc_a_b() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-   uint8_t h_old_check = (a_reg & 0xf) - (b_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2237,7 +2280,7 @@ uint8_t SM83::sbc_a_b() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || b_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -2250,8 +2293,7 @@ uint8_t SM83::sbc_a_b() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before C overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if C = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if C overflows after carry has been added.
 //  -C: Set if (C + carry) > A
 uint8_t SM83::sbc_a_c() {
     // Create a copy of operand r8
@@ -2270,8 +2312,6 @@ uint8_t SM83::sbc_a_c() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-    uint8_t h_old_check = (a_reg & 0xf) - (c_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2279,7 +2319,7 @@ uint8_t SM83::sbc_a_c() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || c_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -2292,8 +2332,7 @@ uint8_t SM83::sbc_a_c() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before D overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if D = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if D overflows after carry has been added.
 //  -C: Set if (D + carry) > A
 uint8_t SM83::sbc_a_d() {
     // Create a copy of operand r8
@@ -2312,8 +2351,6 @@ uint8_t SM83::sbc_a_d() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-    uint8_t h_old_check = (a_reg & 0xf) - (d_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2321,7 +2358,7 @@ uint8_t SM83::sbc_a_d() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || d_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -2334,8 +2371,7 @@ uint8_t SM83::sbc_a_d() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before E overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if E = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if E overflows after carry has been added.
 //  -C: Set if (E + carry) > A
 uint8_t SM83::sbc_a_e() {
     // Create a copy of operand r8
@@ -2354,8 +2390,6 @@ uint8_t SM83::sbc_a_e() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-    uint8_t h_old_check = (a_reg & 0xf) - (e_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2363,7 +2397,7 @@ uint8_t SM83::sbc_a_e() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || e_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -2376,8 +2410,7 @@ uint8_t SM83::sbc_a_e() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before H overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if H = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if H overflows after carry has been added.
 //  -C: Set if (H + carry) > A
 uint8_t SM83::sbc_a_h() {
     // Create a copy of operand r8
@@ -2396,8 +2429,6 @@ uint8_t SM83::sbc_a_h() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-    uint8_t h_old_check = (a_reg & 0xf) - (h_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2405,7 +2436,7 @@ uint8_t SM83::sbc_a_h() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || h_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);
@@ -2418,8 +2449,7 @@ uint8_t SM83::sbc_a_h() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if the result before L overflow resets bit 4,
-//      if A & 0xf = 0x0f, or if L = 0xff before carry is added.
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if L overflows after carry has been added.
 //  -C: Set if (L + carry) > A
 uint8_t SM83::sbc_a_l() {
     // Create a copy of operand r8
@@ -2438,8 +2468,6 @@ uint8_t SM83::sbc_a_l() {
         setFlag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    // Needed in-case r8 overflows
-    uint8_t h_old_check = (a_reg & 0xf) - (l_reg & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
@@ -2447,7 +2475,7 @@ uint8_t SM83::sbc_a_l() {
     else
         setFlag(Z, 0);
     // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || l_reg == 0xff)
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
         setFlag(H, 1);
     else
         setFlag(H, 0);

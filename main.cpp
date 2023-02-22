@@ -7,11 +7,11 @@
 int main(int argc, char* argv[]) {
     Bus gb;
 
-    gb.cpu.a_reg = 0x99;
+    gb.cpu.a_reg = 0x69;
     gb.cpu.b_reg = 0xff;
     gb.cpu.c_reg = 0x32;
     gb.cpu.h_reg = 0x80;
-    gb.cpu.l_reg = 0xc4;
+    gb.cpu.l_reg = 0x32;
     gb.cpu.d_reg = 0xef;
     gb.cpu.e_reg = 0x2f;
 
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     gb.ram[0x0001] = 0x9d;
 
     gb.ram[0x7fff] = 0x33;
-    gb.ram[0x8000] = 0x12;
+    gb.ram[0x8000] = 0xe9;
 
 
 
