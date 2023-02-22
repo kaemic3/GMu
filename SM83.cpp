@@ -1334,14 +1334,12 @@ uint8_t SM83::halt() {
 //  -Z: Set this flag to 1 if result is 0
 //  -N: Reset this flag to 0
 //  -H: Set this flag to 1 if bit 4 is set after the increment
-
 uint8_t SM83::inc_a() {
     // Used for the half carry bit
     // By &ing the A register with 0xf, we reset the high nibble. Same for 1, but the high nibble
     // for 1 is never set. It is written out here for clarity.
     // When we add these two numbers together, we can check bit 4.
     // If bit 4 is enabled, that means this addition should set the half carry bit.
-
     uint8_t h_check = (a_reg & 0xf) + (1 & 0xf);
     a_reg++;
     // Check for zero
