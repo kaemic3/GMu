@@ -17,7 +17,8 @@ SM83::SM83() {
             {"LD (HL),B", &op::ld_abs_hl_b, 8, 1}, {"LD (HL),C", &op::ld_abs_hl_c, 8, 1}, {"LD (HL),D", &op::ld_abs_hl_d, 8 ,1}, {"LD (HL),E", &op::ld_abs_hl_e, 8, 1}, {"LD (HL),H", &op::ld_abs_hl_h, 8 ,1}, {"LD (HL),L", &op::ld_abs_hl_l, 8, 1}, {"HALT", &op::halt, 4, 1}, {"LD (HL),A", &op::ld_abs_hl_a, 8, 1}, {"LD A,B", &op::ld_a_b, 4 ,1}, {"LD A,C", &op::ld_a_c, 4, 1}, {"LD A,D", &op::ld_a_d, 4 ,1}, {"LD A,E", &op::ld_a_e, 4, 1}, {"LD A,H", &op::ld_a_h, 4, 1}, {"LD A,L", &op::ld_a_l, 4 ,1}, {"LD A,(HL)", &op::ld_a_abs_hl, 8, 1}, {"LD A,A", &op::ld_a_a, 4 ,1},
             {"ADD A,B", &op::add_a_b, 4, 1}, {"ADD A,C", &op::add_a_c, 4, 1}, {"ADD A,D", &op::add_a_d, 4, 1}, {"ADD A,E", &op::add_a_e, 4, 1}, {"ADD A,H", &op::add_a_h, 4, 1}, {"ADD A,L", &op::add_a_l, 4, 1}, {"ADD A,(HL)", &op::add_a_abs_hl, 8, 1}, {"ADD A,A", &op::add_a_a, 4, 1}, {"ADC A,B", &op::adc_a_b, 4, 1}, {"ADC A,C", &op::adc_a_c, 4, 1}, {"ADC A,D", &op::adc_a_d, 4, 1}, {"ADC A,E", &op::adc_a_e, 4, 1}, {"ADC A,H", &op::adc_a_h, 4, 1}, {"ADC A,L", &op::adc_a_l, 4, 1}, {"ADC A,(HL)", &op::adc_a_abs_hl, 8, 1}, {"ADC A,A", &op::adc_a_a, 4, 1},
             {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}, {"SBC A,(HL)", &op::sbc_a_abs_hl, 8, 1}, {"SBC A,A", &op::sbc_a_a, 4, 1},
-            {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}
+            {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
+            {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}
 
     };
     prefix_lookup =
@@ -2270,6 +2271,172 @@ uint8_t SM83::ld_sp_d16() {
     return 0;
 }
 
+// Or the A register with itself. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_a() {
+    a_reg |= a_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A register with the data stored at the absolute address in HL. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store
+    uint8_t data = fetch();
+    a_reg |= data;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and B registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_b() {
+    a_reg |= b_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and C registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_c() {
+    a_reg |= c_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and D registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_d() {
+    a_reg |= d_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and E registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_e() {
+    a_reg |= e_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and H registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_h() {
+    a_reg |= h_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Or the A and L registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_l() {
+    a_reg |= l_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
 // Rotates the bits in A register left. If the carry is enabled, that bit is fed into
 // bit 9.
 // Flags:
@@ -2945,6 +3112,52 @@ uint8_t SM83::sub_l() {
     return 0;
 }
 
+// Exclusive or the A register with itself.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_a() {
+    a_reg ^= a_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Exclusive or the A register with the data stored at the absolute address in HL. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_abs_hl() {
+    // Need to get the data from HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store
+    uint8_t data = fetch();
+    a_reg ^= data;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
 // Exclusive or the A and B registers. Store in A.
 // Flags:
 //  -Z: Set if the result is 0
@@ -2953,11 +3166,116 @@ uint8_t SM83::sub_l() {
 //  -C: Reset to 0
 uint8_t SM83::xor_b() {
     a_reg ^= b_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
     // Reset sign, half carry, and carry flags
     setFlag(N, 0);
     setFlag(H, 0);
     setFlag(C, 0);
+    return 0;
+}
 
+
+// Exclusive or the A and C registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_c() {
+    a_reg ^= c_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Exclusive or the A and D registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_d() {
+    a_reg ^= d_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Exclusive or the A and E registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_e() {
+    a_reg ^= e_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Exclusive or the A and H registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_h() {
+    a_reg ^= h_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Exclusive or the A and L registers. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_l() {
+    a_reg ^= l_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
     return 0;
 }
 
