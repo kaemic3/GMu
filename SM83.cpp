@@ -19,7 +19,8 @@ SM83::SM83() {
             {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}, {"SBC A,(HL)", &op::sbc_a_abs_hl, 8, 1}, {"SBC A,A", &op::sbc_a_a, 4, 1},
             {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
-            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}
+            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}, {"CALL Z,a16", &op::call_z_16, 12, 3}, {"CALL a16", &op::call_a16, 24, 3}, {"ADC A,d8", &op::adc_a_d8, 8, 2}, {"RST 08H", &op::rst_08h, 16, 1},
+            {}
 
     };
     prefix_lookup =
@@ -768,6 +769,50 @@ uint8_t SM83::adc_a_d() {
     return 0;
 }
 
+// Add the immediate 8-bit data with the A register with carry.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Reset to 0
+//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -C: Set if A overflows
+uint8_t SM83::adc_a_d8() {
+    // Get the data
+    uint8_t data = read(pc++);
+    // Create a 16-bit copy of A
+    uint16_t a_16 = a_reg;
+    uint8_t a_old = a_reg;
+    // Need to see if the carry flag is enabled and inc A if so
+    if(getFlag(C) == 1) {
+        a_reg++;
+        a_16++;
+    }
+    // Used in half carry check to see if the carry being added to A causes it to be 0x10
+    uint8_t a_h10 = a_reg;
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
+    uint8_t h_old_check = (a_old & 0xf) + (data & 0xf);
+    a_reg += data;
+    a_16 += data;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_16 > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
 // Add the contents of the E register with the A register plus the carry flag.
 // Flags:
 //  -Z: If the result is 0
@@ -1067,16 +1112,51 @@ uint8_t SM83::and_l() {
     setFlag(C, 0);
     return 0;
 }
+// Push the address of the next instruction to the SP, then update the PC
+// with the 16-bit absolute address.
+uint8_t SM83::call_a16() {
+    // Need to store the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    addr_abs = (highByte << 8) | lowByte;
+    // Push the current PC to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Update the PC
+    pc = addr_abs;
+    return 0;
+}
 
 // Push the address of the next instruction to the SP, then update the PC
 // with the 16-bit absolute address only if the zero flag is not set.
 uint8_t SM83::call_nz_a16() {
-
     // Need to store the address
     uint16_t lowByte = read(pc++);
     uint16_t highByte = read(pc++);
     // Check if the zero flag is set
     if(getFlag(Z))
+        return 0;
+    addr_abs = (highByte << 8) | lowByte;
+    // Push the current PC to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Update the PC
+    pc = addr_abs;
+    return 12;
+}
+
+// Push the address of the next instruction to the SP, then update the PC
+// with the 16-bit absolute address only if the zero flag is set.
+uint8_t SM83::call_z_16() {
+    // Need to store the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if the zero flag is not set
+    if(!getFlag(Z))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
@@ -2954,8 +3034,20 @@ uint8_t SM83::rst_00h() {
     write(sp, (pc >> 8));
     sp--;
     write(sp, (pc & 0xff));
-    // Jump to address 0x000
+    // Jump to address 0x0000
     pc = 0x0000;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0008.
+uint8_t SM83::rst_08h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0008
+    pc = 0x0008;
     return 0;
 }
 

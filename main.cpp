@@ -17,9 +17,8 @@ int main(int argc, char* argv[]) {
 
     gb.cpu.sp = 0xfffe;
     gb.cpu.sp = 0x8000;
-    gb.ram[0x0000] = 0xcb;
-    gb.ram[0x0001] = 0x00;
-    gb.ram[0x0002] = 0x3c;
+    gb.ram[0x0000] = 0xcf;
+
 
 
     gb.ram[0x8000] = 0x33;
@@ -81,7 +80,8 @@ int main(int argc, char* argv[]) {
     zMemoryText test6(&wSDLMain, gb, 0x0060, MEMORY_BASE_OFFSET, test5.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test7(&wSDLMain, gb, 0x0070, MEMORY_BASE_OFFSET, test6.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
 
-    zMemoryText test8(&wSDLMain, gb, 0x7FF0, MEMORY_BASE_OFFSET, test7.getBaseY() + LINE_OFFSET + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test2000(&wSDLMain, gb, 0x2000, MEMORY_BASE_OFFSET, test7.getBaseY() + LINE_OFFSET + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText test8(&wSDLMain, gb, 0x7FF0, MEMORY_BASE_OFFSET, test2000.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test9(&wSDLMain, gb, 0x8000, MEMORY_BASE_OFFSET, test8.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     // Main loop
     while(!quit) {
