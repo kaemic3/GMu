@@ -24,7 +24,7 @@ SM83::SM83() {
     };
     prefix_lookup =
     {
-
+            {"RLC B", &op::rlc_b, 4, 2}
     };
 }
 
@@ -40,7 +40,6 @@ void SM83::write(uint16_t addr, uint8_t data) {
     bus->write(addr, data);
 }
 
-// Need to change for prefix opcodes
 void SM83::clock() {
     // Only execute when the internal cycles count is 0
     if(cycles == 0) {
@@ -2780,8 +2779,14 @@ uint8_t SM83::push_bc() {
 }
 
 // This function is used to access the prefix opcode table.
+// Note: None of the prefixed opcodes are more than 2 bytes (1 after we remove the prefix)
 uint8_t SM83::prefix() {
-
+    // Read the opcode for the prefix function
+    uint8_t prefix_op = read(pc++);
+    // Add the cycles to the current cycle count
+    cycles += prefix_lookup[prefix_op].cycles;
+    // Call the function pointer - will return additional clock cycles
+    cycles += (this->*prefix_lookup[prefix_op].operate)();
     return 0;
 }
 
@@ -2866,7 +2871,7 @@ uint8_t SM83::rla() {
     return 0;
 }
 
-// Rotates the bits in A register left.
+// Rotates the bits in the A register left.
 // Flags:
 //  - Z: Reset to 0
 //  - N: Reset to 0
@@ -2881,6 +2886,30 @@ uint8_t SM83::rlca() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     a_reg = (a_reg << 1) | (a_reg >> 7);
+
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Rotates the bits in the B register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_b() {
+
+    // If bit 7 in B is set, set the carry bit
+    if(b_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    b_reg = (b_reg << 1) | (b_reg >> 7);
 
     // Reset the rest of the flags
     setFlag(Z, 0);
