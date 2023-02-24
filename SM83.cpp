@@ -19,7 +19,7 @@ SM83::SM83() {
             {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}, {"SBC A,(HL)", &op::sbc_a_abs_hl, 8, 1}, {"SBC A,A", &op::sbc_a_a, 4, 1},
             {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
-            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}
+            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}
 
     };
     prefix_lookup =
@@ -1644,8 +1644,6 @@ uint8_t SM83::inc_abs_hl() {
 //  -H: Set this flag to 1 if bit 4 is set after the increment
 
 uint8_t SM83::inc_b() {
-
-
     uint8_t h_check= ((b_reg & 0xf) + (1 & 0xf));
     b_reg++;
     if(b_reg == 0)
@@ -2721,6 +2719,15 @@ uint8_t SM83::pop_bc() {
     // Point the SP to the correct byte
     sp++;
     sp++;
+    return 0;
+}
+
+// Push the BC register pair onto the stack.
+uint8_t SM83::push_bc() {
+    sp--;
+    write(sp, b_reg);
+    sp--;
+    write(sp, c_reg);
     return 0;
 }
 
