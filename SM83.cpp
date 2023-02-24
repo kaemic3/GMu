@@ -19,7 +19,7 @@ SM83::SM83() {
             {"SUB B", &op::sub_b, 4, 1}, {"SUB C", &op::sub_c, 4, 1}, {"SUB D", &op::sub_d, 4, 1}, {"SUB E", &op::sub_e, 4, 1}, {"SUB H", &op::sub_h, 4, 1}, {"SUB L", &op::sub_l, 4, 1}, {"SUB (HL)", &op::sub_abs_hl, 8, 1}, {"SUB A", &op::sub_a, 4, 1}, {"SBC A,B", &op::sbc_a_b, 4, 1},{"SBC A,C", &op::sbc_a_c, 4, 1}, {"SBC A,D", &op::sbc_a_d, 4, 1}, {"SBC A,E", &op::sbc_a_e, 4, 1}, {"SBC A,H", &op::sbc_a_h, 4, 1}, {"SBC A,L", &op::sbc_a_l, 4, 1}, {"SBC A,(HL)", &op::sbc_a_abs_hl, 8, 1}, {"SBC A,A", &op::sbc_a_a, 4, 1},
             {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
-            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}
+            {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}
 
     };
     prefix_lookup =
@@ -40,6 +40,7 @@ void SM83::write(uint16_t addr, uint8_t data) {
     bus->write(addr, data);
 }
 
+// Need to change for prefix opcodes
 void SM83::clock() {
     // Only execute when the internal cycles count is 0
     if(cycles == 0) {
@@ -193,6 +194,40 @@ uint8_t SM83::add_a_c() {
     // Overflow check
     uint16_t a_overflow = a_reg + c_reg;
     a_reg += c_reg;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Carry check
+    if(a_overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Add the immediate 8-bit decimal value to A.
+// Flags:
+//  -Z: Set if the result of the addition is 0
+//  -N: Reset to 0
+//  -H: Set if the result of the addition enables bit 4
+//  -C: Set if A overflows past 0xff
+uint8_t SM83::add_a_d8() {
+    // Get the data
+    uint8_t data = read(pc++);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
+    // Overflow check
+    uint16_t a_overflow = a_reg + data;
+    a_reg += data;
     // Zero flag check
     if(a_reg == 0x00)
         setFlag(Z, 1);
@@ -1037,12 +1072,13 @@ uint8_t SM83::and_l() {
 // Push the address of the next instruction to the SP, then update the PC
 // with the 16-bit absolute address only if the zero flag is not set.
 uint8_t SM83::call_nz_a16() {
-    // Check if the zero flag is set
-    if(getFlag(Z))
-        return 0;
+
     // Need to store the address
     uint16_t lowByte = read(pc++);
     uint16_t highByte = read(pc++);
+    // Check if the zero flag is set
+    if(getFlag(Z))
+        return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
@@ -1827,12 +1863,26 @@ uint8_t SM83::jp_a16() {
 
 // Jump to the absolute 16-bit address if the zero flag is not set.
 uint8_t SM83::jp_nz_a16() {
-    // Check if zero flag is enabled
-    if(getFlag(Z))
-        return 0;
+
     // Load the address from the PC
     uint16_t lowByte = read(pc++);
     uint16_t highByte = read(pc++);
+    // Check if zero flag is enabled
+    if(getFlag(Z))
+        return 0;
+    // Update the PC to point to the new address
+    pc = (highByte << 8) | lowByte;
+    return 4;
+}
+
+// Jump to the absolute 16-bit address if the zero flag is set.
+uint8_t SM83::jp_z_a16() {
+    // Load the address from the PC
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if zero flag is not enabled
+    if(!getFlag(Z))
+        return 0;
     // Update the PC to point to the new address
     pc = (highByte << 8) | lowByte;
     return 4;
@@ -2709,9 +2759,7 @@ uint8_t SM83::or_l() {
 // Pop 2 bytes off of the SP and load them into BC.
 uint8_t SM83::pop_bc() {
     // Load the address that SP points to into addr_abs
-    uint16_t lowByte = sp &0xff;
-    uint16_t highByte = (sp >> 8);
-    addr_abs = (highByte << 8) | lowByte;
+    addr_abs = sp;
     // Fetch the data stored at where the SP is pointing at and at (SP + 1)
     c_reg = fetch();
     addr_abs++;
@@ -2731,16 +2779,52 @@ uint8_t SM83::push_bc() {
     return 0;
 }
 
+// This function is used to access the prefix opcode table.
+uint8_t SM83::prefix() {
+
+    return 0;
+}
+
+// Pop 2 bytes off of the stack and load them into the PC.
+uint8_t SM83::ret() {
+    // Load the address that the SP points to into addr_abs
+    addr_abs = sp;
+    uint16_t pc_l = fetch();
+    addr_abs++;
+    uint16_t pc_h = fetch();
+    // Load the address stored in the SP into PC
+    pc = (pc_h << 8) | pc_l;
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 0;
+}
+
 // Pop 2 bytes off of the stack and load them into the PC, only when the zero flag is not set.
 uint8_t SM83::ret_nz() {
     // Check to see if the zero flag is set
     if(getFlag(Z))
         return 0;
-    // Need to update the PC by popping the data from SP into it
-    uint16_t lowByte = sp & 0xff;
-    uint16_t highByte = (sp >> 8);
     // Load the address that the SP points to into addr_abs
-    addr_abs = (highByte << 8) | lowByte;
+    addr_abs = sp;
+    uint16_t pc_l = fetch();
+    addr_abs++;
+    uint16_t pc_h = fetch();
+    // Load the address stored in the SP into PC
+    pc = (pc_h << 8) | pc_l;
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 12;
+}
+
+// Pop 2 bytes off of the stack and load them into the PC, only when the zero flag is set.
+uint8_t SM83::ret_z() {
+    // Check to see if the zero flag is not set
+    if(!getFlag(Z))
+        return 0;
+    // Load the address that the SP points to into addr_abs
+    addr_abs = sp;
     uint16_t pc_l = fetch();
     addr_abs++;
     uint16_t pc_h = fetch();
@@ -2831,6 +2915,18 @@ uint8_t SM83::rra() {
     setFlag(Z, 0);
     setFlag(N, 0);
     setFlag(H, 0);
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0000.
+uint8_t SM83::rst_00h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x000
+    pc = 0x0000;
     return 0;
 }
 
