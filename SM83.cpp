@@ -21,7 +21,7 @@ SM83::SM83() {
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
             {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}, {"CALL Z,a16", &op::call_z_16, 12, 3}, {"CALL a16", &op::call_a16, 24, 3}, {"ADC A,d8", &op::adc_a_d8, 8, 2}, {"RST 08H", &op::rst_08h, 16, 1},
             {"RET NC", &op::ret_nc, 8, 1}, {"POP DE", &op::pop_de, 12, 1}, {"JP NC,a16", &op::jp_nc_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL NC,a16", &op::call_nc_a16, 12, 3}, {"PUSH DE", &op::push_de, 16, 1}, {"SUB d8", &op::sub_d8, 8, 2}, {"RST 10H", &op::rst_10h, 16, 1}, {"RET C", &op::ret_c, 8, 1}, {"RETI", &op::reti, 16, 1}, {"JP C,a16", &op::jp_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL C,a16", &op::call_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"SBC A,d8", &op::sbc_a_d8, 8, 2}, {"RST 18H", &op::rst_18h, 16, 1},
-            {"LDH (a8),A", &op::ldh_abs_a8_a, 12, 2}, {"POP HL", &op::pop_hl, 12, 1}
+            {"LDH (a8),A", &op::ldh_abs_a8_a, 12, 2}, {"POP HL", &op::pop_hl, 12, 1}, {"LDH (C),A", &op::ldh_abs_c_a, 8, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"PUSH HL", &op::push_hl, 16, 1}, {"AND d8", &op::and_d8, 8, 2}, {"RST 20H", &op::rst_20h, 16, 1}, {"ADD SP,r8", &op::add_sp_r8, 16, 2}, {"JP (HL)", &op::jp_abs_hl, 4, 1}, {"LD (a16),A", &op::ld_abs_a16_a, 16, 3}
 
     };
     prefix_lookup =
@@ -553,6 +553,32 @@ uint8_t SM83::add_hl_sp() {
     return 0;
 }
 
+uint8_t SM83::add_sp_r8() {
+    // SP is an uint16_t
+    // Need to read in the value as a signed int
+    uint8_t data = read(pc++);
+    // Need to have a signed version of the data
+    int8_t sData = data;
+    uint8_t h_check = (sp & 0x000f) + (data & 0xf);
+    uint16_t overflow = (sp & 0x00ff) + data;
+    // Add the signed data
+    sp += sData;
+    // Check for half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Check for carry flag
+    if(overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the zero and sign flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    return 0;
+}
+
 // Add the A register to itself with carry.
 // Flags:
 //  -Z: If the result is 0
@@ -1038,6 +1064,29 @@ uint8_t SM83::and_c() {
 //  -C: Reset to 0
 uint8_t SM83::and_d() {
     a_reg &= d_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set the half carry flag
+    setFlag(H, 1);
+    // Reset the sign and carry flag
+    setFlag(N, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// And the contents of the A register with the immediate 8-bit data. Store the result in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Set to 1
+//  -C: Reset to 0
+uint8_t SM83::and_d8() {
+    // Need to get the data
+    uint8_t data = read(pc++);
+    a_reg &= data;
     // Check for zero flag
     if(a_reg == 0x00)
         setFlag(Z, 1);
@@ -1971,6 +2020,15 @@ uint8_t SM83::inc_sp() {
     return 0;
 }
 
+// Load the program counter with the address stored in HL.
+uint8_t SM83::jp_abs_hl() {
+    // Load the address
+    addr_abs = (h_reg << 8) | l_reg;
+    // Load the address into the PC
+    pc = addr_abs;
+    return 0;
+}
+
 // Jump to the absolute 16-bit address.
 uint8_t SM83::jp_a16() {
     // Load the address from PC
@@ -2196,6 +2254,17 @@ uint8_t SM83::ld_a_abs_hli() {
     addr_abs = (highByte << 8) | lowByte;
     a_reg = fetch();
     inc_hl();
+    return 0;
+}
+
+// Load the A register into the 16-bit absolute address.
+uint8_t SM83::ld_abs_a16_a() {
+    // Load the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    addr_abs = (highByte << 8) | lowByte;
+    // Write the data
+    write(addr_abs, a_reg);
     return 0;
 }
 
@@ -2745,6 +2814,15 @@ uint8_t SM83::ldh_abs_a8_a() {
     return 0;
 }
 
+// Using the C register as an offset from 0xff00, load the A register into that address.
+uint8_t SM83::ldh_abs_c_a() {
+    // Load the address
+    addr_abs = (0xff00 | c_reg);
+    // Write the data to the address
+    write(addr_abs, a_reg);
+    return 0;
+}
+
 // Or the A register with itself. Store in A.
 // Flags:
 //  -Z: Set if the result is 0
@@ -2968,6 +3046,15 @@ uint8_t SM83::push_de() {
     write(sp, d_reg);
     sp--;
     write(sp, e_reg);
+    return 0;
+}
+
+// Push the HL register pair onto the stack.
+uint8_t SM83::push_hl() {
+    sp--;
+    write(sp, h_reg);
+    sp--;
+    write(sp, l_reg);
     return 0;
 }
 
@@ -3237,8 +3324,20 @@ uint8_t SM83::rst_18h() {
     write(sp, (pc >> 8));
     sp--;
     write(sp, (pc & 0xff));
-    // Jump to address 0x0010
+    // Jump to address 0x0018
     pc = 0x0018;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0020.
+uint8_t SM83::rst_20h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0020
+    pc = 0x0020;
     return 0;
 }
 
