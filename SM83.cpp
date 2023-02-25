@@ -20,7 +20,7 @@ SM83::SM83() {
             {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
             {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}, {"CALL Z,a16", &op::call_z_16, 12, 3}, {"CALL a16", &op::call_a16, 24, 3}, {"ADC A,d8", &op::adc_a_d8, 8, 2}, {"RST 08H", &op::rst_08h, 16, 1},
-            {}
+            {"RET NC", &op::ret_nc, 8, 1}, {"POP DE", &op::pop_de, 12, 1}, {"JP NC,a16", &op::jp_nc_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL NC,a16", &op::call_nc_a16, 12, 3}, {"PUSH DE", &op::push_de, 16, 1}, {"SUB d8", &op::sub_d8, 8, 2}, {"RST 10H", &op::rst_10h, 16, 1}, {"RET C", &op::ret_c, 8, 1}, {"RETI", &op::reti, 16, 1}, {"JP C,a16", &op::jp_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL C,a16", &op::call_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"SBC A,d8", &op::sbc_a_d8, 8, 2}, {"RST 18H", &op::rst_18h, 16, 1}
 
     };
     prefix_lookup =
@@ -1130,6 +1130,46 @@ uint8_t SM83::call_a16() {
 }
 
 // Push the address of the next instruction to the SP, then update the PC
+// with the 16-bit absolute address only if the carry flag is set.
+uint8_t SM83::call_c_a16() {
+    // Need to store the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if the carry flag is not set
+    if(!getFlag(C))
+        return 0;
+    addr_abs = (highByte << 8) | lowByte;
+    // Push the current PC to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Update the PC
+    pc = addr_abs;
+    return 12;
+}
+
+// Push the address of the next instruction to the SP, then update the PC
+// with the 16-bit absolute address only if the carry flag is not set.
+uint8_t SM83::call_nc_a16() {
+    // Need to store the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if the carry flag is set
+    if(getFlag(C))
+        return 0;
+    addr_abs = (highByte << 8) | lowByte;
+    // Push the current PC to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Update the PC
+    pc = addr_abs;
+    return 12;
+}
+
+// Push the address of the next instruction to the SP, then update the PC
 // with the 16-bit absolute address only if the zero flag is not set.
 uint8_t SM83::call_nz_a16() {
     // Need to store the address
@@ -1940,9 +1980,34 @@ uint8_t SM83::jp_a16() {
     return 0;
 }
 
+// Jump to the absolute 16-bit address if the carry flag is set.
+uint8_t SM83::jp_c_a16() {
+    // Load the address from the PC
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if carry flag is not enabled
+    if(!getFlag(C))
+        return 0;
+    // Update the PC to point to the new address
+    pc = (highByte << 8) | lowByte;
+    return 4;
+}
+
+// Jump to the absolute 16-bit address if the carry flag is not set.
+uint8_t SM83::jp_nc_a16() {
+    // Load the address from the PC
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    // Check if carry flag is enabled
+    if(getFlag(C))
+        return 0;
+    // Update the PC to point to the new address
+    pc = (highByte << 8) | lowByte;
+    return 4;
+}
+
 // Jump to the absolute 16-bit address if the zero flag is not set.
 uint8_t SM83::jp_nz_a16() {
-
     // Load the address from the PC
     uint16_t lowByte = read(pc++);
     uint16_t highByte = read(pc++);
@@ -2849,12 +2914,35 @@ uint8_t SM83::pop_bc() {
     return 0;
 }
 
+// Pop 2 bytes off of the SP and load them into DE.
+uint8_t SM83::pop_de() {
+    // Load the address that SP points to into addr_abs
+    addr_abs = sp;
+    // Fetch the data stored at where the SP is pointing at and at (SP + 1)
+    e_reg = fetch();
+    addr_abs++;
+    d_reg = fetch();
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 0;
+}
+
 // Push the BC register pair onto the stack.
 uint8_t SM83::push_bc() {
     sp--;
     write(sp, b_reg);
     sp--;
     write(sp, c_reg);
+    return 0;
+}
+
+// Push the DE register pair onto the stack.
+uint8_t SM83::push_de() {
+    sp--;
+    write(sp, d_reg);
+    sp--;
+    write(sp, e_reg);
     return 0;
 }
 
@@ -2883,6 +2971,42 @@ uint8_t SM83::ret() {
     sp++;
     sp++;
     return 0;
+}
+
+// Pop 2 bytes off of the stack and load them into the PC, only when the carry flag is set.
+uint8_t SM83::ret_c() {
+    // Check to see if the carry flag is not set
+    if(!getFlag(C))
+        return 0;
+    // Load the address that the SP points to into addr_abs
+    addr_abs = sp;
+    uint16_t pc_l = fetch();
+    addr_abs++;
+    uint16_t pc_h = fetch();
+    // Load the address stored in the SP into PC
+    pc = (pc_h << 8) | pc_l;
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 12;
+}
+
+// Pop 2 bytes off of the stack and load them into the PC, only when the carry flag is not set.
+uint8_t SM83::ret_nc() {
+    // Check to see if the carry flag is set
+    if(getFlag(C))
+        return 0;
+    // Load the address that the SP points to into addr_abs
+    addr_abs = sp;
+    uint16_t pc_l = fetch();
+    addr_abs++;
+    uint16_t pc_h = fetch();
+    // Load the address stored in the SP into PC
+    pc = (pc_h << 8) | pc_l;
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 12;
 }
 
 // Pop 2 bytes off of the stack and load them into the PC, only when the zero flag is not set.
@@ -2919,6 +3043,24 @@ uint8_t SM83::ret_z() {
     sp++;
     sp++;
     return 12;
+}
+
+// TODO: Enable interrupts after return. Still need to implement interrupts
+uint8_t SM83::reti() {
+    // Load the address that the SP points to into addr_abs
+    addr_abs = sp;
+    uint16_t pc_l = fetch();
+    addr_abs++;
+    uint16_t pc_h = fetch();
+    // Load the address stored in the SP into PC
+    pc = (pc_h << 8) | pc_l;
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+
+    // Need to enable interrupts after return
+
+    return 0;
 }
 
 // Rotates the bits in A register left. If the carry is enabled, that bit is fed into
@@ -3048,6 +3190,30 @@ uint8_t SM83::rst_08h() {
     write(sp, (pc & 0xff));
     // Jump to address 0x0008
     pc = 0x0008;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0010.
+uint8_t SM83::rst_10h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0010
+    pc = 0x0010;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0018.
+uint8_t SM83::rst_18h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0010
+    pc = 0x0018;
     return 0;
 }
 
@@ -3245,6 +3411,47 @@ uint8_t SM83::sbc_a_d() {
     uint8_t cp_r8 = d_reg;
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = d_reg;
+    // Need to see if the carry flag is enabled and inc r8
+    if(getFlag(C) == 1) {
+        cp_r8++;
+        cp_r8_16++;
+    }
+    // Carry check
+    if(cp_r8_16 > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
+    a_reg -= cp_r8;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
+// Subtract the immediate 8-bit data from register A with the carry going into d8.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Set to 1
+//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if d8 overflows after carry has been added.
+//  -C: Set if (d8 + carry) > A
+uint8_t SM83::sbc_a_d8() {
+    // Need to load data
+    uint8_t data = read(pc++);
+    // Create a copy of operand r8
+    uint8_t cp_r8 = data;
+    // 16-bit copy for overflow check
+    uint16_t cp_r8_16 = data;
     // Need to see if the carry flag is enabled and inc r8
     if(getFlag(C) == 1) {
         cp_r8++;
@@ -3550,6 +3757,39 @@ uint8_t SM83::sub_d() {
     return 0;
 }
 
+// Subtract d8 from A.
+// Flags:
+//  -Z: If the result is 0
+//  -N: Set to 1
+//  -H: Set if the result of the subtraction resets bit 4
+//  -C: Set if d8 > A
+uint8_t SM83::sub_d8() {
+    // Need to get the data
+    uint8_t data = read(pc++);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
+    // Check for carry flag
+    if(data > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    a_reg -= data;
+    // Zero flag check
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check - checking to see if the addition enabled bit 4
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
+
 // Subtract the value of E from A.
 // Flags:
 //  -Z: If the result is 0
@@ -3815,3 +4055,7 @@ uint8_t SM83::nop() {
     return 0;
 }
 
+// Illegal opcode
+uint8_t SM83::xxx() {
+    return 0;
+}
