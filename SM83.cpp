@@ -20,7 +20,8 @@ SM83::SM83() {
             {"AND B", &op::and_b, 4, 1}, {"AND C", &op::and_c, 4, 1}, {"AND D", &op::and_d, 4, 1}, {"AND E", &op::and_e, 4, 1}, {"AND H", &op::and_h, 4, 1}, {"AND L", &op::and_l, 4, 1}, {"AND (HL)", &op::and_abs_hl, 8 ,1}, {"AND A", &op::and_a, 4, 1}, {"XOR B", &op::xor_b, 4, 1}, {"XOR C", &op::xor_c, 4, 1}, {"XOR D", &op::xor_d, 4, 1}, {"XOR E", &op::xor_e, 4, 1}, {"XOR H", &op::xor_h, 4, 1}, {"XOR L", &op::xor_l, 4, 1}, {"XOR (HL)", &op::xor_abs_hl, 8 ,1}, {"XOR A", &op::xor_a, 4, 1},
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
             {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}, {"CALL Z,a16", &op::call_z_16, 12, 3}, {"CALL a16", &op::call_a16, 24, 3}, {"ADC A,d8", &op::adc_a_d8, 8, 2}, {"RST 08H", &op::rst_08h, 16, 1},
-            {"RET NC", &op::ret_nc, 8, 1}, {"POP DE", &op::pop_de, 12, 1}, {"JP NC,a16", &op::jp_nc_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL NC,a16", &op::call_nc_a16, 12, 3}, {"PUSH DE", &op::push_de, 16, 1}, {"SUB d8", &op::sub_d8, 8, 2}, {"RST 10H", &op::rst_10h, 16, 1}, {"RET C", &op::ret_c, 8, 1}, {"RETI", &op::reti, 16, 1}, {"JP C,a16", &op::jp_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL C,a16", &op::call_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"SBC A,d8", &op::sbc_a_d8, 8, 2}, {"RST 18H", &op::rst_18h, 16, 1}
+            {"RET NC", &op::ret_nc, 8, 1}, {"POP DE", &op::pop_de, 12, 1}, {"JP NC,a16", &op::jp_nc_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL NC,a16", &op::call_nc_a16, 12, 3}, {"PUSH DE", &op::push_de, 16, 1}, {"SUB d8", &op::sub_d8, 8, 2}, {"RST 10H", &op::rst_10h, 16, 1}, {"RET C", &op::ret_c, 8, 1}, {"RETI", &op::reti, 16, 1}, {"JP C,a16", &op::jp_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL C,a16", &op::call_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"SBC A,d8", &op::sbc_a_d8, 8, 2}, {"RST 18H", &op::rst_18h, 16, 1},
+            {"LDH (a8),A", &op::ldh_abs_a8_a, 12, 2}, {"POP HL", &op::pop_hl, 12, 1}
 
     };
     prefix_lookup =
@@ -2734,6 +2735,16 @@ uint8_t SM83::ld_sp_d16() {
     return 0;
 }
 
+// Using a8 as an offset from address 0xFF00, load the A register into that address.
+uint8_t SM83::ldh_abs_a8_a() {
+    // Load the address
+    uint16_t lowByte = read(pc++);
+    addr_abs = (0xff00 | lowByte);
+    // Write the data to the address
+    write(addr_abs, a_reg);
+    return 0;
+}
+
 // Or the A register with itself. Store in A.
 // Flags:
 //  -Z: Set if the result is 0
@@ -2922,6 +2933,20 @@ uint8_t SM83::pop_de() {
     e_reg = fetch();
     addr_abs++;
     d_reg = fetch();
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 0;
+}
+
+// Pop 2 bytes off of the SP and load them into HL.
+uint8_t SM83::pop_hl() {
+    // Load the address that SP points to into addr_abs
+    addr_abs = sp;
+    // Fetch the data stored at where the SP is pointing at and at (SP + 1)
+    l_reg = fetch();
+    addr_abs++;
+    h_reg = fetch();
     // Point the SP to the correct byte
     sp++;
     sp++;

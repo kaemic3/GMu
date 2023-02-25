@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
     gb.ram[0x0001] = 0xdc;
     gb.ram[0x0002] = 0x00;
     gb.ram[0x0003] = 0x20;
-    gb.ram[0x0004] = 0xde;
-    gb.ram[0x0005] = 0x40;
+    gb.ram[0x0004] = 0xe0;
+    gb.ram[0x0005] = 0x01;
 
     gb.ram[0x2000] = 0x01;
     gb.ram[0x2001] = 0x32;
@@ -94,6 +94,8 @@ int main(int argc, char* argv[]) {
     zMemoryText test2000(&wSDLMain, gb, 0x2000, MEMORY_BASE_OFFSET, test7.getBaseY() + LINE_OFFSET + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test8(&wSDLMain, gb, 0x7FF0, MEMORY_BASE_OFFSET, test2000.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
     zMemoryText test9(&wSDLMain, gb, 0x8000, MEMORY_BASE_OFFSET, test8.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+    zMemoryText testFF00(&wSDLMain, gb, 0xff00, MEMORY_BASE_OFFSET, test9.getBaseY() + LINE_OFFSET, "yellow", "Amstrad CPC", 16);
+
     // Main loop
     while(!quit) {
         // Only run if there are events on the queue
@@ -176,6 +178,8 @@ int main(int argc, char* argv[]) {
         test7.update();
         test8.update();
         test9.update();
+        test2000.update();
+        testFF00.update();
         // Render the text
         wSDLMain.renderText();
 
