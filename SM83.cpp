@@ -21,7 +21,8 @@ SM83::SM83() {
             {"OR B", &op::or_b, 4, 1}, {"OR C", &op::or_c, 4, 1}, {"OR D", &op::or_d, 4, 1}, {"OR E", &op::or_e, 4, 1}, {"OR H", &op::or_h, 4, 1}, {"OR L", &op::or_l, 4, 1}, {"OR (HL)", &op::or_abs_hl, 8, 1}, {"OR A", &op::or_a, 4, 1}, {"CP B", &op::cp_b, 4, 1}, {"CP C", &op::cp_c, 4, 1}, {"CP D", &op::cp_d, 4, 1}, {"CP E", &op::cp_e, 4, 1}, {"CP H", &op::cp_h, 4, 1}, {"CP L", &op::cp_l, 4, 1}, {"CP (HL)", &op::cp_abs_hl, 8, 1}, {"CP A", &op::cp_a, 4, 1},
             {"RET NZ", &op::ret_nz, 8, 1}, {"POP BC", &op::pop_bc, 12, 1}, {"JP NZ,a16", &op::jp_nz_a16, 12, 3}, {"JP a16", &op::jp_a16, 16, 3}, {"CALL NZ,a16", &op::call_nz_a16, 12, 3}, {"PUSH BC", &op::push_bc, 16, 1}, {"ADD A,d8", &op::add_a_d8, 8, 2}, {"RST 00H", &op::rst_00h, 16, 1}, {"RET Z", &op::ret_z, 8, 1}, {"RET", &op::ret, 16, 1}, {"JP Z,a16", &op::jp_z_a16, 12, 3}, {"PREFIX", &op::prefix, 4, 1}, {"CALL Z,a16", &op::call_z_16, 12, 3}, {"CALL a16", &op::call_a16, 24, 3}, {"ADC A,d8", &op::adc_a_d8, 8, 2}, {"RST 08H", &op::rst_08h, 16, 1},
             {"RET NC", &op::ret_nc, 8, 1}, {"POP DE", &op::pop_de, 12, 1}, {"JP NC,a16", &op::jp_nc_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL NC,a16", &op::call_nc_a16, 12, 3}, {"PUSH DE", &op::push_de, 16, 1}, {"SUB d8", &op::sub_d8, 8, 2}, {"RST 10H", &op::rst_10h, 16, 1}, {"RET C", &op::ret_c, 8, 1}, {"RETI", &op::reti, 16, 1}, {"JP C,a16", &op::jp_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"CALL C,a16", &op::call_c_a16, 12, 3}, {"XXX", &op::xxx, 4, 1}, {"SBC A,d8", &op::sbc_a_d8, 8, 2}, {"RST 18H", &op::rst_18h, 16, 1},
-            {"LDH (a8),A", &op::ldh_abs_a8_a, 12, 2}, {"POP HL", &op::pop_hl, 12, 1}, {"LDH (C),A", &op::ldh_abs_c_a, 8, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"PUSH HL", &op::push_hl, 16, 1}, {"AND d8", &op::and_d8, 8, 2}, {"RST 20H", &op::rst_20h, 16, 1}, {"ADD SP,r8", &op::add_sp_r8, 16, 2}, {"JP (HL)", &op::jp_abs_hl, 4, 1}, {"LD (a16),A", &op::ld_abs_a16_a, 16, 3}
+            {"LDH (a8),A", &op::ldh_abs_a8_a, 12, 2}, {"POP HL", &op::pop_hl, 12, 1}, {"LDH (C),A", &op::ldh_abs_c_a, 8, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"PUSH HL", &op::push_hl, 16, 1}, {"AND d8", &op::and_d8, 8, 2}, {"RST 20H", &op::rst_20h, 16, 1}, {"ADD SP,r8", &op::add_sp_r8, 16, 2}, {"JP (HL)", &op::jp_abs_hl, 4, 1}, {"LD (a16),A", &op::ld_abs_a16_a, 16, 3}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"XOR d8", &op::xor_d8, 8, 2}, {"RST 28H", &op::rst_28h, 16, 1},
+            {"LDH A,(a8)", &op::ldh_a_abs_a8, 12, 2}, {"POP AF", &op::pop_af, 12, 1}, {"LDH A,(C)", &op::ldh_a_abs_c, 8, 1}, {"DI", &op::di, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"PUSH AF", &op::push_af, 16, 1}, {"OR d8", &op::or_d8, 8, 2}, {"RST 30H", &op::rst_30h, 16, 1}, {"LD HL,SP + r8", &op::ld_hl_sp_r8, 12, 2}, {"LD SP,HL", &op::ld_sp_hl, 8, 1}, {"LD A,(a16)", &op::ld_a_abs_a16, 16, 3}, {"EI", &op::ei, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"CP d8", &op::cp_d8, 8, 2}, {"RST 38H", &op::rst_38h, 16, 1}
 
     };
     prefix_lookup =
@@ -553,6 +554,12 @@ uint8_t SM83::add_hl_sp() {
     return 0;
 }
 
+// Add immediate signed 8-bit data to SP.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Set if bit 3 overflows
+//  -C: Set if bit 7 overflows
 uint8_t SM83::add_sp_r8() {
     // SP is an uint16_t
     // Need to read in the value as a signed int
@@ -1407,6 +1414,36 @@ uint8_t SM83::cp_d() {
     setFlag(N, 1);
     return 0;
 }
+// Subtract th immediate 8-bit data from the A register, but do not store the result.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Set to 1
+//  -H: Set if bit 4 is set after the subtraction
+//  -C: Set if d8 > A
+uint8_t SM83::cp_d8() {
+    // Need to get the data
+    uint8_t data = read(pc++);
+    // Disable high nibble bits for the half carry check
+    uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
+    // Check for carry flag
+    if(data > a_reg)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Zero flag check
+    if((a_reg - data) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Half carry check
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Set the sign flag
+    setFlag(N, 1);
+    return 0;
+}
 
 // Subtract the E register from the A register, but do not store the result.
 // Flags:
@@ -1776,6 +1813,21 @@ uint8_t SM83::dec_sp() {
     sp--;
     return 0;
 }
+
+// TODO: Need to implement it after finished with interrupts
+// Disable interrupts
+uint8_t SM83::di() {
+
+    return 0;
+}
+
+// TODO: Need to implement it after finished with interrupts
+// Enable interrupts
+uint8_t SM83::ei() {
+
+    return 0;
+}
+
 // TODO: Need to finish this after interrupts have been implemented.
 // Halt the system clock until an interrupt occurs.
 uint8_t SM83::halt() {
@@ -2156,6 +2208,17 @@ uint8_t SM83::jr_z_r8() {
 // Load the A register with itself.
 uint8_t SM83::ld_a_a() {
     a_reg = a_reg;
+    return 0;
+}
+
+// Load the A register using from the data stored at the immediate absolute address.
+uint8_t SM83::ld_a_abs_a16() {
+    // Need to load the address
+    uint16_t lowByte = read(pc++);
+    uint16_t highByte = read(pc++);
+    addr_abs = (highByte << 8) | lowByte;
+    // Fetch and store in A
+    a_reg = fetch();
     return 0;
 }
 
@@ -2733,6 +2796,43 @@ uint8_t SM83::ld_hl_d16() {
     h_reg = read(pc++);
     return 0;
 }
+// Add immediate signed 8-bit data to SP and load into HL. Do not update SP.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Set if bit 3 overflows
+//  -C: Set if bit 7 overflows
+uint8_t SM83::ld_hl_sp_r8() {
+    // SP is an uint16_t
+    // Make a copy of SP
+    uint16_t sp_cp = sp;
+    // Need to read in the value as a signed int
+    uint8_t data = read(pc++);
+    // Need to have a signed version of the data
+    int8_t sData = data;
+    uint8_t h_check = (sp_cp & 0x000f) + (data & 0xf);
+    uint16_t overflow = (sp_cp & 0x00ff) + data;
+    // Add the signed data
+    sp_cp += sData;
+    // Check for half carry
+    if((h_check & 0x10) == 0x10)
+        setFlag(H, 1);
+    else
+        setFlag(H, 0);
+    // Check for carry flag
+    if(overflow > 0xff)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset the zero and sign flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    // Load the SP into HL
+    l_reg = (0x00ff & sp_cp);
+    // Shift the high byte of sp_cp into the low byte
+    h_reg = (sp_cp >> 8);
+    return 0;
+}
 
 // Load the L register with the contents of the A register.
 uint8_t SM83::ld_l_a() {
@@ -2801,6 +2901,35 @@ uint8_t SM83::ld_sp_d16() {
     // Create 16-bit data from low and high bytes read in from PC
     uint16_t data = (highByte << 8) | lowByte;
     sp = data;
+    return 0;
+}
+
+// Load the SP with the HL register pair.
+uint8_t SM83::ld_sp_hl() {
+    // Create a 16 bit version of HL
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    // Store in SP
+    sp = (highByte << 8) | lowByte;
+    return 0;
+}
+
+// Using a8 as an offset from address 0xff00, load the contents at the absolute address into the A register.
+uint8_t SM83::ldh_a_abs_a8() {
+    // Load the address
+    uint16_t lowByte = read(pc++);
+    addr_abs = (0xff00 | lowByte);
+    // Fetch and store in A
+    a_reg = fetch();
+    return 0;
+}
+
+// Using the C register as an offset from 0xff00, load the A register with the data stored at that address.
+uint8_t SM83::ldh_a_abs_c() {
+    // Load the data
+    addr_abs = (0xff00 | c_reg);
+    // Fetch and store the data in A
+    a_reg = fetch();
     return 0;
 }
 
@@ -2929,6 +3058,28 @@ uint8_t SM83::or_d() {
     return 0;
 }
 
+// Or the A register with the immediate 8-bit data. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::or_d8() {
+    // Need to get the data
+    uint8_t data = read(pc++);
+    a_reg |= data;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
 // Or the A and E registers. Store in A.
 // Flags:
 //  -Z: Set if the result is 0
@@ -2989,6 +3140,25 @@ uint8_t SM83::or_l() {
     return 0;
 }
 
+// Pop 2 bytes off of the SP and load them into AF.
+// Flags:
+//  - Z: Set according to the first byte popped off of the stack
+//  - N: Set according to the first byte popped off of the stack
+//  - H: Set according to the first byte popped off of the stack
+//  - C: Set according to the first byte popped off of the stack
+uint8_t SM83::pop_af() {
+    // Load the address that SP points to into addr_abs
+    addr_abs = sp;
+    // Fetch the data stored at where the SP is pointing at and at (SP + 1)
+    f_reg = (0xf0 & fetch());   // Need to reset the lower nibble
+    addr_abs++;
+    a_reg = fetch();
+    // Point the SP to the correct byte
+    sp++;
+    sp++;
+    return 0;
+}
+
 // Pop 2 bytes off of the SP and load them into BC.
 uint8_t SM83::pop_bc() {
     // Load the address that SP points to into addr_abs
@@ -3028,6 +3198,15 @@ uint8_t SM83::pop_hl() {
     // Point the SP to the correct byte
     sp++;
     sp++;
+    return 0;
+}
+
+// Push the AF register pair onto the stack.
+uint8_t SM83::push_af() {
+    sp--;
+    write(sp, a_reg);
+    sp--;
+    write(sp, f_reg);
     return 0;
 }
 
@@ -3338,6 +3517,42 @@ uint8_t SM83::rst_20h() {
     write(sp, (pc & 0xff));
     // Jump to address 0x0020
     pc = 0x0020;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0028.
+uint8_t SM83::rst_28h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0028
+    pc = 0x0028;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0030.
+uint8_t SM83::rst_30h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0030
+    pc = 0x0030;
+    return 0;
+}
+
+// Push the current PC to the stack and jump to 0x0038.
+uint8_t SM83::rst_38h() {
+    // Push the current address to the stack
+    sp--;
+    write(sp, (pc >> 8));
+    sp--;
+    write(sp, (pc & 0xff));
+    // Jump to address 0x0038
+    pc = 0x0038;
     return 0;
 }
 
@@ -4102,6 +4317,27 @@ uint8_t SM83::xor_c() {
 //  -C: Reset to 0
 uint8_t SM83::xor_d() {
     a_reg ^= d_reg;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset sign, half carry, and carry flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+// Exclusive or the A register with the immediate 8-bit data. Store in A.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::xor_d8() {
+    // Need to get the data
+    uint8_t data = read(pc++);
+    a_reg ^= data;
     // Check for zero flag
     if(a_reg == 0x00)
         setFlag(Z, 1);
