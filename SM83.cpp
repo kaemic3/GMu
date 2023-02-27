@@ -25,9 +25,10 @@ SM83::SM83() {
             {"LDH A,(a8)", &op::ldh_a_abs_a8, 12, 2}, {"POP AF", &op::pop_af, 12, 1}, {"LDH A,(C)", &op::ldh_a_abs_c, 8, 1}, {"DI", &op::di, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"PUSH AF", &op::push_af, 16, 1}, {"OR d8", &op::or_d8, 8, 2}, {"RST 30H", &op::rst_30h, 16, 1}, {"LD HL,SP + r8", &op::ld_hl_sp_r8, 12, 2}, {"LD SP,HL", &op::ld_sp_hl, 8, 1}, {"LD A,(a16)", &op::ld_a_abs_a16, 16, 3}, {"EI", &op::ei, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"XXX", &op::xxx, 4, 1}, {"CP d8", &op::cp_d8, 8, 2}, {"RST 38H", &op::rst_38h, 16, 1}
 
     };
+    // Note, the cycle count for these instructions are added to the cycle count of the PREFIX opcode, which is 4 cycles.
     prefix_lookup =
     {
-            {"RLC B", &op::rlc_b, 4, 2}
+            {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}
     };
 }
 
@@ -3407,6 +3408,57 @@ uint8_t SM83::rlca() {
     return 0;
 }
 
+// Rotates the bits in the A register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_a() {
+    // If bit 7 is set, set the carry bit
+    if(a_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    a_reg = (a_reg << 1) | (a_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Rotates the bits in the byte stored at the absolute address in HL, left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // If bit 7 is set, set the carry bit
+    if(data & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    data = (data << 1) | (data >> 7);
+    // Update the data
+    write(addr_abs, data);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
 // Rotates the bits in the B register left.
 // Flags:
 //  - Z: Reset to 0
@@ -3414,8 +3466,7 @@ uint8_t SM83::rlca() {
 //  - H: Reset to 0
 //  - C: When the last bit is enabled, enable the carry bit
 uint8_t SM83::rlc_b() {
-
-    // If bit 7 in B is set, set the carry bit
+    // If bit 7 is set, set the carry bit
     if(b_reg & (1 << 7))
         setFlag(C, 1);
     else
@@ -3423,7 +3474,114 @@ uint8_t SM83::rlc_b() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     b_reg = (b_reg << 1) | (b_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+// Rotates the bits in the C register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_c() {
+    // If bit 7 is set, set the carry bit
+    if(c_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    c_reg = (c_reg << 1) | (c_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+// Rotates the bits in the D register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_d() {
+    // If bit 7 is set, set the carry bit
+    if(d_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    d_reg = (d_reg << 1) | (d_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
 
+// Rotates the bits in the E register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_e() {
+    // If bit 7 is set, set the carry bit
+    if(e_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    e_reg = (e_reg << 1) | (e_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Rotates the bits in the H register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_h() {
+    // If bit 7 is set, set the carry bit
+    if(h_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    h_reg = (h_reg << 1) | (h_reg >> 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Rotates the bits in the L register left.
+// Flags:
+//  - Z: Reset to 0
+//  - N: Reset to 0
+//  - H: Reset to 0
+//  - C: When the last bit is enabled, enable the carry bit
+uint8_t SM83::rlc_l() {
+    // If bit 7 is set, set the carry bit
+    if(l_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    l_reg = (l_reg << 1) | (l_reg >> 7);
     // Reset the rest of the flags
     setFlag(Z, 0);
     setFlag(N, 0);
