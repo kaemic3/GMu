@@ -28,7 +28,7 @@ SM83::SM83() {
     // Note, the cycle count for these instructions are added to the cycle count of the PREFIX opcode, which is 4 cycles.
     prefix_lookup =
     {
-            {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}
+            {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}
     };
 }
 
@@ -3714,7 +3714,7 @@ uint8_t SM83::rst_38h() {
     return 0;
 }
 
-// Rotate the contents of register A right one.
+// Rotate the contents of register A right one bit.
 // Flags:
 //  -Z: Reset to 0
 //  -N: Reset to 0
@@ -3726,16 +3726,35 @@ uint8_t SM83::rrca() {
         setFlag(C, 1);
     else
         setFlag(C, 0);
-
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     a_reg = (a_reg >> 1) | (a_reg << 7);
-
     // Reset the rest of the flags
     setFlag(Z, 0);
     setFlag(H, 0);
     setFlag(N, 0);
+    return 0;
+}
 
+// Rotate the contents of register B right one bit.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is one before the rotation
+uint8_t SM83::rrc_b() {
+    // If bit 0 is set, set the carry bit
+    if(b_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits right 1
+    // First shift all bits right one, then or with all bits shifted right 7.
+    b_reg = (b_reg >> 1) | (b_reg << 7);
+    // Reset the rest of the flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
     return 0;
 }
 
