@@ -3643,19 +3643,33 @@ uint8_t SM83::rlca() {
 
 // Rotates the bits in the A register left.
 // Flags:
-//  - Z: Reset to 0
+//  - Z: Set if the result is 1
 //  - N: Reset to 0
 //  - H: Reset to 0
 //  - C: When the last bit is enabled, enable the carry bit
 uint8_t SM83::rlc_a() {
-    // Functions the same as rlca
-    rlca();
+    // If bit 7 in B is set, set the carry bit
+    if(a_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Rotate bits left 1
+    // First shift all bits left one, then or with all bits shifted right 7.
+    a_reg = (a_reg << 1) | (a_reg >> 7);
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
 // Rotates the bits in the byte stored at the absolute address in HL, left.
 // Flags:
-//  - Z: Reset to 0
+//  - Z: Set to 1 if the result is 0
 //  - N: Reset to 0
 //  - H: Reset to 0
 //  - C: When the last bit is enabled, enable the carry bit
@@ -3673,10 +3687,14 @@ uint8_t SM83::rlc_abs_hl() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     data = (data << 1) | (data >> 7);
-    // Update the data
+    // Write the data to the address
     write(addr_abs, data);
+    // Check for zero flag
+    if(data == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
     // Reset the rest of the flags
-    setFlag(Z, 0);
     setFlag(N, 0);
     setFlag(H, 0);
     return 0;
@@ -3697,10 +3715,15 @@ uint8_t SM83::rlc_b() {
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     b_reg = (b_reg << 1) | (b_reg >> 7);
+    // Check for zero flag
+    if(b_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
     // Reset the rest of the flags
-    setFlag(Z, 0);
     setFlag(N, 0);
     setFlag(H, 0);
+
     return 0;
 }
 // Rotates the bits in the C register left.
