@@ -29,7 +29,7 @@ SM83::SM83() {
     prefix_lookup =
     {
             {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}, {"RRC C", &op::rrc_c, 4, 2}, {"RRC D", &op::rrc_d, 4 ,2}, {"RRC E", &op::rrc_e, 4, 2}, {"RRC H", &op::rrc_h, 4, 2}, {"RRC L", &op::rrc_l, 4, 2}, {"RRC (HL)", &op::rrc_abs_hl, 12, 2}, {"RRC A", &op::rrc_a, 4, 2},
-            {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 4, 2}, {"RL A", &op::rl_a, 4, 2}
+            {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2}
     };
 }
 
@@ -3394,25 +3394,8 @@ uint8_t SM83::rla() {
 //  -H: Reset to 0
 //  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rl_a() {
-    // Check if bit 7 is enabled before rotating
-    uint8_t c_check = a_reg & (1 << 7);
-    // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
-        a_reg = (a_reg << 1);           // Shift left 1
-        a_reg |= 0x01;                  // Set bit 0
-    }
-    else
-        a_reg = (a_reg << 1);
-    // Need to check for carry
-    // Check to see if bit 7 was enabled before rotate
-    if(c_check)
-        setFlag(C, 1);
-    else
-        setFlag(C, 0);
-    // Reset rest of flags
-    setFlag(Z, 0);
-    setFlag(H, 0);
-    setFlag(N, 0);
+    // Functions the same as rla
+    rla();
     return 0;
 }
 
@@ -3514,23 +3497,124 @@ uint8_t SM83::rl_c() {
     return 0;
 }
 
+// Rotates the bits in D register left. If the carry is enabled, that bit is fed into
+// bit 0.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rl_d() {
-
+    // Check if bit 7 is enabled before rotating
+    uint8_t c_check = d_reg & (1 << 7);
+    // Check to see if the carry bit is set
+    if(getFlag(C) == 1) {
+        d_reg = (d_reg << 1);           // Shift left 1
+        d_reg |= 0x01;                  // Set bit 0
+    }
+    else
+        d_reg = (d_reg << 1);
+    // Need to check for carry
+    // Check to see if bit 7 was enabled before rotate
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset rest of flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
     return 0;
 }
 
+
+// Rotates the bits in E register left. If the carry is enabled, that bit is fed into
+// bit 0.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rl_e() {
-
+    // Check if bit 7 is enabled before rotating
+    uint8_t c_check = e_reg & (1 << 7);
+    // Check to see if the carry bit is set
+    if(getFlag(C) == 1) {
+        e_reg = (e_reg << 1);           // Shift left 1
+        e_reg |= 0x01;                  // Set bit 0
+    }
+    else
+        e_reg = (e_reg << 1);
+    // Need to check for carry
+    // Check to see if bit 7 was enabled before rotate
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset rest of flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
     return 0;
 }
 
+// Rotates the bits in H register left. If the carry is enabled, that bit is fed into
+// bit 0.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rl_h() {
-
+    // Check if bit 7 is enabled before rotating
+    uint8_t c_check = h_reg & (1 << 7);
+    // Check to see if the carry bit is set
+    if(getFlag(C) == 1) {
+        h_reg = (h_reg << 1);           // Shift left 1
+        h_reg |= 0x01;                  // Set bit 0
+    }
+    else
+        h_reg = (h_reg << 1);
+    // Need to check for carry
+    // Check to see if bit 7 was enabled before rotate
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset rest of flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
     return 0;
 }
 
+// Rotates the bits in L register left. If the carry is enabled, that bit is fed into
+// bit 0.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 7 is enabled before rotating
 uint8_t SM83::rl_l() {
-
+    // Check if bit 7 is enabled before rotating
+    uint8_t c_check = l_reg & (1 << 7);
+    // Check to see if the carry bit is set
+    if(getFlag(C) == 1) {
+        l_reg = (l_reg << 1);           // Shift left 1
+        l_reg |= 0x01;                  // Set bit 0
+    }
+    else
+        l_reg = (l_reg << 1);
+    // Need to check for carry
+    // Check to see if bit 7 was enabled before rotate
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset rest of flags
+    setFlag(Z, 0);
+    setFlag(H, 0);
+    setFlag(N, 0);
     return 0;
 }
 
@@ -3564,18 +3648,8 @@ uint8_t SM83::rlca() {
 //  - H: Reset to 0
 //  - C: When the last bit is enabled, enable the carry bit
 uint8_t SM83::rlc_a() {
-    // If bit 7 is set, set the carry bit
-    if(a_reg & (1 << 7))
-        setFlag(C, 1);
-    else
-        setFlag(C, 0);
-    // Rotate bits left 1
-    // First shift all bits left one, then or with all bits shifted right 7.
-    a_reg = (a_reg << 1) | (a_reg >> 7);
-    // Reset the rest of the flags
-    setFlag(Z, 0);
-    setFlag(N, 0);
-    setFlag(H, 0);
+    // Functions the same as rlca
+    rlca();
     return 0;
 }
 
@@ -3738,6 +3812,11 @@ uint8_t SM83::rlc_l() {
     return 0;
 }
 
+uint8_t SM83::rr_c() {
+
+    return 0;
+}
+
 // Rotates the bits in A register right. If the carry is enabled, that bit is fed into
 // bit 7.
 // Flags:
@@ -3755,6 +3834,48 @@ uint8_t SM83::rra() {
     }
     else
         a_reg = (a_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Reset other flags
+    setFlag(Z, 0);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Rotates the bits in A register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
+uint8_t SM83::rr_a() {
+    // Functions the same as rra
+    rra();
+    return 0;
+}
+
+// Rotates the bits in B register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
+uint8_t SM83::rr_b() {
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = b_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        b_reg = (b_reg >> 1);       // Shift right one
+        b_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        b_reg = (b_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
         setFlag(C, 1);
@@ -3892,18 +4013,8 @@ uint8_t SM83::rrca() {
 //  -H: Reset to 0
 //  -C: Set if bit 0 is one before the rotation
 uint8_t SM83::rrc_a() {
-    // If bit 0 is set, set the carry bit
-    if(a_reg & 0x01)
-        setFlag(C, 1);
-    else
-        setFlag(C, 0);
-    // Rotate bits right 1
-    // First shift all bits right one, then or with all bits shifted right 7.
-    a_reg = (a_reg >> 1) | (a_reg << 7);
-    // Reset the rest of the flags
-    setFlag(Z, 0);
-    setFlag(H, 0);
-    setFlag(N, 0);
+    // Functions the same as rrca
+    rrca();
     return 0;
 }
 
