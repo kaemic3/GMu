@@ -4037,29 +4037,169 @@ uint8_t SM83::rr_b() {
     setFlag(H, 0);
     return 0;
 }
-//
+
+// Rotates the bits in C register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
 uint8_t SM83::rr_c() {
-
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = c_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        c_reg = (c_reg >> 1);       // Shift right one
+        c_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        c_reg = (c_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Check for the zero flag
+    if(c_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset other flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
+// Rotates the bits in D register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
 uint8_t SM83::rr_d() {
-
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = d_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        d_reg = (d_reg >> 1);       // Shift right one
+        d_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        d_reg = (d_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Check for the zero flag
+    if(d_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset other flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
+// Rotates the bits in E register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
 uint8_t SM83::rr_e() {
-
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = e_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        e_reg = (e_reg >> 1);       // Shift right one
+        e_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        e_reg = (e_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Check for the zero flag
+    if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset other flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
+// Rotates the bits in H register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
 uint8_t SM83::rr_h() {
-
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = h_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        h_reg = (h_reg >> 1);       // Shift right one
+        h_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        h_reg = (h_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Check for the zero flag
+    if(h_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset other flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
+// Rotates the bits in L register right. If the carry is enabled, that bit is fed into
+// bit 7.
+// Flags:
+//  -Z: Reset to 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is enabled before rotating
 uint8_t SM83::rr_l() {
-
+    // Check if bit 0 is enabled before rotating
+    uint8_t c_check = l_reg & 0x01;
+    // Check if the carry bit is enabled
+    if(getFlag(C) == 1) {
+        l_reg = (l_reg >> 1);       // Shift right one
+        l_reg |= (1 << 7);              // Enable bit 7
+    }
+    else
+        l_reg = (l_reg >> 1);
+    // Check if the carry flag needs to be set
+    if(c_check)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Check for the zero flag
+    if(l_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset other flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
