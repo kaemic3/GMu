@@ -30,7 +30,7 @@ SM83::SM83() {
     {
             {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}, {"RRC C", &op::rrc_c, 4, 2}, {"RRC D", &op::rrc_d, 4 ,2}, {"RRC E", &op::rrc_e, 4, 2}, {"RRC H", &op::rrc_h, 4, 2}, {"RRC L", &op::rrc_l, 4, 2}, {"RRC (HL)", &op::rrc_abs_hl, 12, 2}, {"RRC A", &op::rrc_a, 4, 2},
             {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
-            {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}
+            {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}, {"SRA C", &op::sra_c, 4, 2}
 
     };
 }
@@ -5115,6 +5115,16 @@ uint8_t SM83::sla_l() {
     return 0;
 }
 
+uint8_t SM83::sra_a() {
+
+    return 0;
+}
+
+uint8_t SM83::sra_abs_hl() {
+
+    return 0;
+}
+
 // Shift the bits in the B register right 1. Bit 7 will remain unchanged.
 // Flags:
 //  -Z: Set if the result is 0
@@ -5145,6 +5155,31 @@ uint8_t SM83::sra_b() {
     // Reset the rest of the flags
     setFlag(N, 0);
     setFlag(H, 0);
+    return 0;
+}
+
+uint8_t SM83::sra_c() {
+
+    return 0;
+}
+
+uint8_t SM83::sra_d() {
+
+    return 0;
+}
+
+uint8_t SM83::sra_e() {
+
+    return 0;
+}
+
+uint8_t SM83::sra_h() {
+
+    return 0;
+}
+
+uint8_t SM83::sra_l() {
+
     return 0;
 }
 
