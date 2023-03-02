@@ -29,7 +29,8 @@ SM83::SM83() {
     prefix_lookup =
     {
             {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}, {"RRC C", &op::rrc_c, 4, 2}, {"RRC D", &op::rrc_d, 4 ,2}, {"RRC E", &op::rrc_e, 4, 2}, {"RRC H", &op::rrc_h, 4, 2}, {"RRC L", &op::rrc_l, 4, 2}, {"RRC (HL)", &op::rrc_abs_hl, 12, 2}, {"RRC A", &op::rrc_a, 4, 2},
-            {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2}
+            {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
+            {"SLA B", &op::sla_b, 4, 2}
     };
 }
 
@@ -4895,6 +4896,32 @@ uint8_t SM83::sbc_a_l() {
 // Set the carry flag. Reset the sign and half carry flags.
 uint8_t SM83::scf() {
     setFlag(C, 1);
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the B register left 1.
+// Flags:
+// -Z: Set if the result is 0
+// -N: Reset to 0
+// -H: Reset to 0
+// -C: Set if bit 7 is set before the shift
+uint8_t SM83::sla_b() {
+    // Check if bit 7 is set
+    // If so, set carry flag
+    if(b_reg & (1 << 7))
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift the register left 1
+    b_reg = b_reg << 1;
+    // Check for zero flag
+    if(b_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
     setFlag(N, 0);
     setFlag(H, 0);
     return 0;
