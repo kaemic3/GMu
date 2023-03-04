@@ -34,7 +34,7 @@ SM83::SM83() {
             {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}, {"SRL B", &op::srl_b, 4, 2}, {"SRL C", &op::srl_c, 4, 2}, {"SRL D", &op::srl_d, 4, 2}, {"SRL E", &op::srl_e, 4, 2}, {"SRL H", &op::srl_h, 4, 2}, {"SRL L", &op::srl_l, 4, 2}, {"SRL (HL)", &op::srl_abs_hl, 12, 2}, {"SRL A", &op::srl_a, 4, 2},
             {"BIT 0,B", &op::bit_0_b, 4, 2}, {"BIT 0,C", &op::bit_0_c, 4, 2}, {"BIT 0,D", &op::bit_0_d, 4, 2}, {"BIT 0,E", &op::bit_0_e, 4, 2}, {"BIT 0,H", &op:: bit_0_h, 4, 2},{"BIT 0,L", &op::bit_0_l, 4, 2}, {"BIT 0,(HL)", &op::bit_0_abs_hl, 12, 2}, {"BIT 0,A", &op::bit_0_a, 4, 2}, {"BIT 1,B", &op::bit_1_b, 4, 2}, {"BIT 1,C", &op::bit_1_c, 4, 2}, {"BIT 1,D", &op::bit_1_d, 4, 2}, {"BIT 1,E", &op::bit_1_e, 4, 2}, {"BIT 1,H", &op::bit_1_h, 4, 2}, {"BIT 1,L", &op::bit_1_l, 4, 2}, {"BIT 1,(HL)", &op::bit_1_abs_hl, 12, 2}, {"BIT 1,A", &op::bit_1_a, 4, 2},
             {"BIT 2,B", &op::bit_2_b, 4, 2}, {"BIT 2,C", &op::bit_2_c, 4, 2}, {"BIT 2,D", &op::bit_2_d, 4, 2}, {"BIT 2,E", &op::bit_2_e, 4, 2}, {"BIT 2,H", &op::bit_2_h, 4, 2}, {"BIT 2,L", &op::bit_2_l, 4, 2}, {"BIT 2,(HL)", &op::bit_2_abs_hl, 12, 2}, {"BIT 2,A", &op::bit_2_a, 4, 2}, {"BIT 3,B", &op::bit_3_b, 4, 2}, {"BIT 3,C", &op::bit_3_c, 4, 2}, {"BIT 3,D", &op::bit_3_d, 4, 2}, {"BIT 3,E", &op::bit_3_e, 4, 2}, {"BIT 3,H", &op::bit_3_h,4, 2}, {"BIT 3,L", &op::bit_3_l, 4, 2}, {"BIT 3,(HL)", &op::bit_3_abs_hl, 12, 2}, {"BIT 3,A", &op::bit_3_a, 4, 2},
-            {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}
+            {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}, {"BIT 5,B", &op::bit_5_b, 4, 2}
     };
 }
 
@@ -1912,6 +1912,24 @@ uint8_t SM83::bit_4_h() {
 uint8_t SM83::bit_4_l() {
     // Check for zero flag
     if((l_reg & (1 << 4)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 5 in register B.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_5_b() {
+    // Check for zero flag
+    if((b_reg & (1 << 5)) == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
