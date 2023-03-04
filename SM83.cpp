@@ -31,7 +31,7 @@ SM83::SM83() {
             {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}, {"RRC C", &op::rrc_c, 4, 2}, {"RRC D", &op::rrc_d, 4 ,2}, {"RRC E", &op::rrc_e, 4, 2}, {"RRC H", &op::rrc_h, 4, 2}, {"RRC L", &op::rrc_l, 4, 2}, {"RRC (HL)", &op::rrc_abs_hl, 12, 2}, {"RRC A", &op::rrc_a, 4, 2},
             {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
             {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}, {"SRA C", &op::sra_c, 4, 2}, {"SRA D", &op::sra_d, 4, 2}, {"SRA E", &op::sra_e, 4, 2}, {"SRA H", &op::sra_h, 4, 2}, {"SRA L", &op::sra_l,4, 2}, {"SRA (HL)", &op::sra_abs_hl, 12, 2}, {"SRA A", &op::sra_a, 4, 2},
-            {"SWAP B", &op::swap_b, 4, 2}
+            {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}
     };
 }
 
@@ -5663,6 +5663,54 @@ uint8_t SM83::sub_l() {
     setFlag(N, 1);
     return 0;
 }
+
+// Swap the upper 4 bits in register A with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_a() {
+    a_reg = ((a_reg & 0x0f) << 4 | (a_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in the data stored at the absolute address in HL with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    data = ((data & 0x0f) << 4 | (data & 0xf0) >> 4);
+    // Write the data
+    write(addr_abs, data);
+    // Check for zero flag
+    if(data == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
 // Swap the upper 4 bits in register B with the lower 4.
 // Flags:
 //  -Z: Set if the result is 0
@@ -5673,6 +5721,106 @@ uint8_t SM83::swap_b() {
     b_reg = ((b_reg & 0x0f) << 4 | (b_reg & 0xf0) >> 4);
     // Check for zero flag
     if(b_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in register C with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_c() {
+    c_reg = ((c_reg & 0x0f) << 4 | (c_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(c_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in register D with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_d() {
+    d_reg = ((d_reg & 0x0f) << 4 | (d_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(d_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in register E with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_e() {
+    e_reg = ((e_reg & 0x0f) << 4 | (e_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in register H with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_h() {
+    h_reg = ((h_reg & 0x0f) << 4 | (h_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(h_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    setFlag(C, 0);
+    return 0;
+}
+
+// Swap the upper 4 bits in register L with the lower 4.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Reset to 0
+uint8_t SM83::swap_l() {
+    l_reg = ((l_reg & 0x0f) << 4 | (l_reg & 0xf0) >> 4);
+    // Check for zero flag
+    if(l_reg == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
