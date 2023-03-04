@@ -32,7 +32,7 @@ SM83::SM83() {
             {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
             {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}, {"SRA C", &op::sra_c, 4, 2}, {"SRA D", &op::sra_d, 4, 2}, {"SRA E", &op::sra_e, 4, 2}, {"SRA H", &op::sra_h, 4, 2}, {"SRA L", &op::sra_l,4, 2}, {"SRA (HL)", &op::sra_abs_hl, 12, 2}, {"SRA A", &op::sra_a, 4, 2},
             {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}, {"SRL B", &op::srl_b, 4, 2}, {"SRL C", &op::srl_c, 4, 2}, {"SRL D", &op::srl_d, 4, 2}, {"SRL E", &op::srl_e, 4, 2}, {"SRL H", &op::srl_h, 4, 2}, {"SRL L", &op::srl_l, 4, 2}, {"SRL (HL)", &op::srl_abs_hl, 12, 2}, {"SRL A", &op::srl_a, 4, 2},
-            {}
+            {"BIT 0,B", &op::bit_0_b, 4, 2}
     };
 }
 
@@ -1174,6 +1174,20 @@ uint8_t SM83::and_l() {
     setFlag(C, 0);
     return 0;
 }
+
+uint8_t SM83::bit_0_b() {
+    // Check for zero flag
+    if((b_reg & 0x01) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
 // Push the address of the next instruction to the SP, then update the PC
 // with the 16-bit absolute address.
 uint8_t SM83::call_a16() {
