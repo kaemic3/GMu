@@ -31,7 +31,8 @@ SM83::SM83() {
             {"RLC B", &op::rlc_b, 4, 2}, {"RLC C", &op::rlc_c, 4, 2}, {"RLC D", &op::rlc_d, 4, 2}, {"RLC E", &op::rlc_e, 4, 2}, {"RLC H", &op::rlc_h, 4, 2}, {"RLC L", &op::rlc_l, 4, 2}, {"RLC (HL)", &op::rlc_abs_hl, 12, 2}, {"RLC A", &op::rlc_a, 4, 2}, {"RRC B", &op::rrc_b, 4, 2}, {"RRC C", &op::rrc_c, 4, 2}, {"RRC D", &op::rrc_d, 4 ,2}, {"RRC E", &op::rrc_e, 4, 2}, {"RRC H", &op::rrc_h, 4, 2}, {"RRC L", &op::rrc_l, 4, 2}, {"RRC (HL)", &op::rrc_abs_hl, 12, 2}, {"RRC A", &op::rrc_a, 4, 2},
             {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
             {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}, {"SRA C", &op::sra_c, 4, 2}, {"SRA D", &op::sra_d, 4, 2}, {"SRA E", &op::sra_e, 4, 2}, {"SRA H", &op::sra_h, 4, 2}, {"SRA L", &op::sra_l,4, 2}, {"SRA (HL)", &op::sra_abs_hl, 12, 2}, {"SRA A", &op::sra_a, 4, 2},
-            {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}, {"SRL B", &op::srl_b, 4, 2}
+            {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}, {"SRL B", &op::srl_b, 4, 2}, {"SRL C", &op::srl_c, 4, 2}, {"SRL D", &op::srl_d, 4, 2}, {"SRL E", &op::srl_e, 4, 2}, {"SRL H", &op::srl_h, 4, 2}, {"SRL L", &op::srl_l, 4, 2}, {"SRL (HL)", &op::srl_abs_hl, 12, 2}, {"SRL A", &op::srl_a, 4, 2},
+            {}
     };
 }
 
@@ -5386,6 +5387,65 @@ uint8_t SM83::sra_l() {
     return 0;
 }
 
+// Shift the bits in the A register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_a() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(a_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    a_reg = a_reg >> 1;
+    // Check for zero flag
+    if(a_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the data stored at the absolute address in HL right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(data & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    data = data >> 1;
+    // Write the data
+    write(addr_abs, data);
+    // Check for zero flag
+    if(data == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
 // Shift the bits in the B register right 1. Bit 7 resets to 0.
 // Flags:
 //  -Z: Set if the result is 0
@@ -5403,6 +5463,136 @@ uint8_t SM83::srl_b() {
     b_reg = b_reg >> 1;
     // Check for zero flag
     if(b_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the C register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_c() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(c_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    c_reg = c_reg >> 1;
+    // Check for zero flag
+    if(c_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the D register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_d() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(d_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    d_reg = d_reg >> 1;
+    // Check for zero flag
+    if(d_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the E register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_e() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(e_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    e_reg = e_reg >> 1;
+    // Check for zero flag
+    if(e_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the H register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_h() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(h_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    h_reg = h_reg >> 1;
+    // Check for zero flag
+    if(h_reg == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Reset the rest of the flags
+    setFlag(N, 0);
+    setFlag(H, 0);
+    return 0;
+}
+
+// Shift the bits in the L register right 1. Bit 7 resets to 0.
+// Flags:
+//  -Z: Set if the result is 0
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Set if bit 0 is set before the shift
+uint8_t SM83::srl_l() {
+    // Check if bit 0 is set
+    // If so, set carry flag
+    if(l_reg & 0x01)
+        setFlag(C, 1);
+    else
+        setFlag(C, 0);
+    // Shift right one bit
+    l_reg = l_reg >> 1;
+    // Check for zero flag
+    if(l_reg == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
