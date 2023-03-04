@@ -35,7 +35,8 @@ SM83::SM83() {
             {"BIT 0,B", &op::bit_0_b, 4, 2}, {"BIT 0,C", &op::bit_0_c, 4, 2}, {"BIT 0,D", &op::bit_0_d, 4, 2}, {"BIT 0,E", &op::bit_0_e, 4, 2}, {"BIT 0,H", &op:: bit_0_h, 4, 2},{"BIT 0,L", &op::bit_0_l, 4, 2}, {"BIT 0,(HL)", &op::bit_0_abs_hl, 12, 2}, {"BIT 0,A", &op::bit_0_a, 4, 2}, {"BIT 1,B", &op::bit_1_b, 4, 2}, {"BIT 1,C", &op::bit_1_c, 4, 2}, {"BIT 1,D", &op::bit_1_d, 4, 2}, {"BIT 1,E", &op::bit_1_e, 4, 2}, {"BIT 1,H", &op::bit_1_h, 4, 2}, {"BIT 1,L", &op::bit_1_l, 4, 2}, {"BIT 1,(HL)", &op::bit_1_abs_hl, 12, 2}, {"BIT 1,A", &op::bit_1_a, 4, 2},
             {"BIT 2,B", &op::bit_2_b, 4, 2}, {"BIT 2,C", &op::bit_2_c, 4, 2}, {"BIT 2,D", &op::bit_2_d, 4, 2}, {"BIT 2,E", &op::bit_2_e, 4, 2}, {"BIT 2,H", &op::bit_2_h, 4, 2}, {"BIT 2,L", &op::bit_2_l, 4, 2}, {"BIT 2,(HL)", &op::bit_2_abs_hl, 12, 2}, {"BIT 2,A", &op::bit_2_a, 4, 2}, {"BIT 3,B", &op::bit_3_b, 4, 2}, {"BIT 3,C", &op::bit_3_c, 4, 2}, {"BIT 3,D", &op::bit_3_d, 4, 2}, {"BIT 3,E", &op::bit_3_e, 4, 2}, {"BIT 3,H", &op::bit_3_h,4, 2}, {"BIT 3,L", &op::bit_3_l, 4, 2}, {"BIT 3,(HL)", &op::bit_3_abs_hl, 12, 2}, {"BIT 3,A", &op::bit_3_a, 4, 2},
             {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}, {"BIT 5,B", &op::bit_5_b, 4, 2}, {"BIT 5,C", &op::bit_5_c, 4, 2}, {"BIT 5,D", &op::bit_5_d, 4, 2}, {"BIT 5,E", &op::bit_5_e, 4, 2}, {"BIT 5,H", &op::bit_5_h, 4, 2}, {"BIT 5,L", &op::bit_5_l, 4, 2}, {"BIT 5,(HL)", &op::bit_5_abs_hl, 12, 2}, {"BIT 5,A", &op::bit_5_a, 4, 2},
-            {"BIT 6,B", &op::bit_6_b, 4, 2}, {"BIT 6,C", &op::bit_6_c, 4, 2}, {"BIT 6,D", &op::bit_6_d, 4, 2}, {"BIT 6,E", &op::bit_6_e, 4, 2}, {"BIT 6,H", &op::bit_6_h, 4, 2}, {"BIT 6,L", &op::bit_6_l, 4, 2}, {"BIT 6,(HL)", &op::bit_6_abs_hl, 12, 2}, {"BIT 6,A", &op::bit_6_a, 4, 2}
+            {"BIT 6,B", &op::bit_6_b, 4, 2}, {"BIT 6,C", &op::bit_6_c, 4, 2}, {"BIT 6,D", &op::bit_6_d, 4, 2}, {"BIT 6,E", &op::bit_6_e, 4, 2}, {"BIT 6,H", &op::bit_6_h, 4, 2}, {"BIT 6,L", &op::bit_6_l, 4, 2}, {"BIT 6,(HL)", &op::bit_6_abs_hl, 12, 2}, {"BIT 6,A", &op::bit_6_a, 4, 2}, {"BIT 7,B", &op::bit_7_b, 4, 2}, {"BIT 7,C", &op::bit_7_c, 4, 2}, {"BIT 7,D", &op::bit_7_d, 4, 2}, {"BIT 7,E", &op::bit_7_e, 4, 2}, {"BIT 7,H", &op::bit_7_h, 4, 2}, {"BIT 7,L", &op::bit_7_l, 4, 2}, {"BIT 7,(HL)", &op::bit_7_abs_hl, 4, 2}, {"BIT 7,A", &op::bit_7_a, 4, 2},
+            {}
     };
 }
 
@@ -2211,6 +2212,155 @@ uint8_t SM83::bit_6_h() {
 uint8_t SM83::bit_6_l() {
     // Check for zero flag
     if((l_reg & (1 << 6)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register A.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_a() {
+    // Check for zero flag
+    if((a_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in the data stored in the absolute address in HL.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // Check for zero flag
+    if((data & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register B.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_b() {
+    // Check for zero flag
+    if((b_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register C.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_c() {
+    // Check for zero flag
+    if((c_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register D.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_d() {
+    // Check for zero flag
+    if((d_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register E.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_e() {
+    // Check for zero flag
+    if((e_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register H.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_h() {
+    // Check for zero flag
+    if((h_reg & (1 << 7)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 7 in register L.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_7_l() {
+    // Check for zero flag
+    if((l_reg & (1 << 7)) == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
