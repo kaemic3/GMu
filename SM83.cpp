@@ -32,7 +32,9 @@ SM83::SM83() {
             {"RL B", &op::rl_b, 4, 2}, {"RL C", &op::rl_c, 4, 2}, {"RL D", &op::rl_d, 4, 2}, {"RL E", &op::rl_e, 4, 2}, {"RL H", &op::rl_h, 4, 2}, {"RL L", &op::rl_l, 4, 2}, {"RL (HL)", &op::rl_abs_hl, 12, 2}, {"RL A", &op::rl_a, 4, 2}, {"RR B", &op::rr_b, 4, 2}, {"RR C", &op::rr_c, 4, 2}, {"RR D", &op::rr_d, 4, 2}, {"RR E", &op::rr_e, 4, 2}, {"RR H", &op::rr_h, 4, 2}, {"RR L", &op::rr_l, 4, 2}, {"RR (HL)", &op::rr_abs_hl, 12, 2}, {"RR A", &op::rr_a, 4, 2},
             {"SLA B", &op::sla_b, 4, 2}, {"SLA C", &op::sla_c, 4, 2}, {"SLA D", &op::sla_d, 4, 2}, {"SLA E", &op::sla_e, 4, 2}, {"SLA H", &op::sla_h, 4, 2}, {"SLA L", &op::sla_l, 4, 2}, {"SLA (HL)", &op::sla_abs_hl, 12, 4}, {"SLA A", &op::sla_a, 4, 2}, {"SRA B", &op::sra_b, 4, 2}, {"SRA C", &op::sra_c, 4, 2}, {"SRA D", &op::sra_d, 4, 2}, {"SRA E", &op::sra_e, 4, 2}, {"SRA H", &op::sra_h, 4, 2}, {"SRA L", &op::sra_l,4, 2}, {"SRA (HL)", &op::sra_abs_hl, 12, 2}, {"SRA A", &op::sra_a, 4, 2},
             {"SWAP B", &op::swap_b, 4, 2}, {"SWAP C", &op::swap_c, 4, 2}, {"SWAP D", &op::swap_d, 4, 2}, {"SWAP E", &op::swap_e, 4, 2}, {"SWAP H", &op::swap_h, 4, 2}, {"SWAP L", &op::swap_l, 4, 2}, {"SWAP (HL)", &op::swap_abs_hl, 12, 2}, {"SWAP A", &op::swap_a, 4, 2}, {"SRL B", &op::srl_b, 4, 2}, {"SRL C", &op::srl_c, 4, 2}, {"SRL D", &op::srl_d, 4, 2}, {"SRL E", &op::srl_e, 4, 2}, {"SRL H", &op::srl_h, 4, 2}, {"SRL L", &op::srl_l, 4, 2}, {"SRL (HL)", &op::srl_abs_hl, 12, 2}, {"SRL A", &op::srl_a, 4, 2},
-            {"BIT 0,B", &op::bit_0_b, 4, 2}, {"BIT 0,C", &op::bit_0_c, 4, 2}, {"BIT 0,D", &op::bit_0_d, 4, 2}, {"BIT 0,E", &op::bit_0_e, 4, 2}, {"BIT 0,H", &op:: bit_0_h, 4, 2},{"BIT 0,L", &op::bit_0_l, 4, 2}, {"BIT 0,(HL)", &op::bit_0_abs_hl, 12, 2}, {"BIT 0,A", &op::bit_0_a, 4, 2}, {"BIT 1,B", &op::bit_1_b, 4, 2}, {"BIT 1,C", &op::bit_1_c, 4, 2}, {"BIT 1,D", &op::bit_1_d, 4, 2}, {"BIT 1,E", &op::bit_1_e, 4, 2}, {"BIT 1,H", &op::bit_1_h, 4, 2}, {"BIT 1,L", &op::bit_1_l, 4, 2}, {"BIT 1,(HL)", &op::bit_1_abs_hl, 12, 2}, {"BIT 1,A", &op::bit_1_a, 4, 2}
+            {"BIT 0,B", &op::bit_0_b, 4, 2}, {"BIT 0,C", &op::bit_0_c, 4, 2}, {"BIT 0,D", &op::bit_0_d, 4, 2}, {"BIT 0,E", &op::bit_0_e, 4, 2}, {"BIT 0,H", &op:: bit_0_h, 4, 2},{"BIT 0,L", &op::bit_0_l, 4, 2}, {"BIT 0,(HL)", &op::bit_0_abs_hl, 12, 2}, {"BIT 0,A", &op::bit_0_a, 4, 2}, {"BIT 1,B", &op::bit_1_b, 4, 2}, {"BIT 1,C", &op::bit_1_c, 4, 2}, {"BIT 1,D", &op::bit_1_d, 4, 2}, {"BIT 1,E", &op::bit_1_e, 4, 2}, {"BIT 1,H", &op::bit_1_h, 4, 2}, {"BIT 1,L", &op::bit_1_l, 4, 2}, {"BIT 1,(HL)", &op::bit_1_abs_hl, 12, 2}, {"BIT 1,A", &op::bit_1_a, 4, 2},
+            {"BIT 2,B", &op::bit_2_b, 4, 2}, {"BIT 2,C", &op::bit_2_c, 4, 2}, {"BIT 2,D", &op::bit_2_d, 4, 2}, {"BIT 2,E", &op::bit_2_e, 4, 2}, {"BIT 2,H", &op::bit_2_h, 4, 2}, {"BIT 2,L", &op::bit_2_l, 4, 2}, {"BIT 2,(HL)", &op::bit_2_abs_hl, 12, 2}, {"BIT 2,A", &op::bit_2_a, 4, 2}, {"BIT 3,B", &op::bit_3_b, 4, 2}, {"BIT 3,C", &op::bit_3_c, 4, 2}, {"BIT 3,D", &op::bit_3_d, 4, 2}, {"BIT 3,E", &op::bit_3_e, 4, 2}, {"BIT 3,H", &op::bit_3_h,4, 2}, {"BIT 3,L", &op::bit_3_l, 4, 2}, {"BIT 3,(HL)", &op::bit_3_abs_hl, 12, 2}, {"BIT 3,A", &op::bit_3_a, 4, 2},
+            {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}
     };
 }
 
@@ -1463,6 +1465,322 @@ uint8_t SM83::bit_1_h() {
 uint8_t SM83::bit_1_l() {
     // Check for zero flag
     if((l_reg & (1 << 1)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register A.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_a() {
+    // Check for zero flag
+    if((a_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in the data stored at the absolute address in HL.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // Check for zero flag
+    if((data & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register B.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_b() {
+    // Check for zero flag
+    if((b_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register C.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_c() {
+    // Check for zero flag
+    if((c_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register D.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_d() {
+    // Check for zero flag
+    if((d_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register E.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_e() {
+    // Check for zero flag
+    if((e_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register H.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_h() {
+    // Check for zero flag
+    if((h_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 2 in register L.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_2_l() {
+    // Check for zero flag
+    if((l_reg & (1 << 2)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register A.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_a() {
+    // Check for zero flag
+    if((a_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in the data stored at the absolute address in HL.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_abs_hl() {
+    // Need to get the data
+    uint16_t lowByte = l_reg;
+    uint16_t highByte = h_reg;
+    addr_abs = (highByte << 8) | lowByte;
+    uint8_t data = fetch();
+    // Check for zero flag
+    if((data & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register B.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_b() {
+    // Check for zero flag
+    if((b_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register C.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_c() {
+    // Check for zero flag
+    if((c_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register D.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_d() {
+    // Check for zero flag
+    if((d_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register E.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_e() {
+    // Check for zero flag
+    if((e_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register H.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_h() {
+    // Check for zero flag
+    if((h_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 3 in register L.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_3_l() {
+    // Check for zero flag
+    if((l_reg & (1 << 3)) == 0x00)
+        setFlag(Z, 1);
+    else
+        setFlag(Z, 0);
+    // Set half carry flag
+    setFlag(H, 1);
+    // Reset sign flag
+    setFlag(N, 0);
+    return 0;
+}
+
+// Check bit 4 in register B.
+// Flags:
+//  -Z: Set if bit 0 is not set.
+//  -N: Reset to 0
+//  -H: Set to 1
+uint8_t SM83::bit_4_b() {
+    // Check for zero flag
+    if((b_reg & (1 << 4)) == 0x00)
         setFlag(Z, 1);
     else
         setFlag(Z, 0);
