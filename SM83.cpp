@@ -36,7 +36,7 @@ SM83::SM83() {
             {"BIT 2,B", &op::bit_2_b, 4, 2}, {"BIT 2,C", &op::bit_2_c, 4, 2}, {"BIT 2,D", &op::bit_2_d, 4, 2}, {"BIT 2,E", &op::bit_2_e, 4, 2}, {"BIT 2,H", &op::bit_2_h, 4, 2}, {"BIT 2,L", &op::bit_2_l, 4, 2}, {"BIT 2,(HL)", &op::bit_2_abs_hl, 12, 2}, {"BIT 2,A", &op::bit_2_a, 4, 2}, {"BIT 3,B", &op::bit_3_b, 4, 2}, {"BIT 3,C", &op::bit_3_c, 4, 2}, {"BIT 3,D", &op::bit_3_d, 4, 2}, {"BIT 3,E", &op::bit_3_e, 4, 2}, {"BIT 3,H", &op::bit_3_h,4, 2}, {"BIT 3,L", &op::bit_3_l, 4, 2}, {"BIT 3,(HL)", &op::bit_3_abs_hl, 12, 2}, {"BIT 3,A", &op::bit_3_a, 4, 2},
             {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}, {"BIT 5,B", &op::bit_5_b, 4, 2}, {"BIT 5,C", &op::bit_5_c, 4, 2}, {"BIT 5,D", &op::bit_5_d, 4, 2}, {"BIT 5,E", &op::bit_5_e, 4, 2}, {"BIT 5,H", &op::bit_5_h, 4, 2}, {"BIT 5,L", &op::bit_5_l, 4, 2}, {"BIT 5,(HL)", &op::bit_5_abs_hl, 12, 2}, {"BIT 5,A", &op::bit_5_a, 4, 2},
             {"BIT 6,B", &op::bit_6_b, 4, 2}, {"BIT 6,C", &op::bit_6_c, 4, 2}, {"BIT 6,D", &op::bit_6_d, 4, 2}, {"BIT 6,E", &op::bit_6_e, 4, 2}, {"BIT 6,H", &op::bit_6_h, 4, 2}, {"BIT 6,L", &op::bit_6_l, 4, 2}, {"BIT 6,(HL)", &op::bit_6_abs_hl, 12, 2}, {"BIT 6,A", &op::bit_6_a, 4, 2}, {"BIT 7,B", &op::bit_7_b, 4, 2}, {"BIT 7,C", &op::bit_7_c, 4, 2}, {"BIT 7,D", &op::bit_7_d, 4, 2}, {"BIT 7,E", &op::bit_7_e, 4, 2}, {"BIT 7,H", &op::bit_7_h, 4, 2}, {"BIT 7,L", &op::bit_7_l, 4, 2}, {"BIT 7,(HL)", &op::bit_7_abs_hl, 4, 2}, {"BIT 7,A", &op::bit_7_a, 4, 2},
-            {}
+            {"RES 0,B", &op::res_0_b, 4, 2}
     };
 }
 
@@ -4403,6 +4403,18 @@ uint8_t SM83::pop_hl() {
     return 0;
 }
 
+// This function is used to access the prefix opcode table.
+// Note: None of the prefixed opcodes are more than 2 bytes (1 after we remove the prefix)
+uint8_t SM83::prefix() {
+    // Read the opcode for the prefix function
+    uint8_t prefix_op = read(pc++);
+    // Add the cycles to the current cycle count
+    cycles += prefix_lookup[prefix_op].cycles;
+    // Call the function pointer - will return additional clock cycles
+    cycles += (this->*prefix_lookup[prefix_op].operate)();
+    return 0;
+}
+
 // Push the AF register pair onto the stack.
 uint8_t SM83::push_af() {
     sp--;
@@ -4438,16 +4450,9 @@ uint8_t SM83::push_hl() {
     write(sp, l_reg);
     return 0;
 }
-
-// This function is used to access the prefix opcode table.
-// Note: None of the prefixed opcodes are more than 2 bytes (1 after we remove the prefix)
-uint8_t SM83::prefix() {
-    // Read the opcode for the prefix function
-    uint8_t prefix_op = read(pc++);
-    // Add the cycles to the current cycle count
-    cycles += prefix_lookup[prefix_op].cycles;
-    // Call the function pointer - will return additional clock cycles
-    cycles += (this->*prefix_lookup[prefix_op].operate)();
+// Reset bit 0 in the B register.
+uint8_t SM83::res_0_b() {
+    b_reg &= ~(1 << 0);
     return 0;
 }
 
