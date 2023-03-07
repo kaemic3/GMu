@@ -36,7 +36,7 @@ SM83::SM83() {
             {"BIT 2,B", &op::bit_2_b, 4, 2}, {"BIT 2,C", &op::bit_2_c, 4, 2}, {"BIT 2,D", &op::bit_2_d, 4, 2}, {"BIT 2,E", &op::bit_2_e, 4, 2}, {"BIT 2,H", &op::bit_2_h, 4, 2}, {"BIT 2,L", &op::bit_2_l, 4, 2}, {"BIT 2,(HL)", &op::bit_2_abs_hl, 12, 2}, {"BIT 2,A", &op::bit_2_a, 4, 2}, {"BIT 3,B", &op::bit_3_b, 4, 2}, {"BIT 3,C", &op::bit_3_c, 4, 2}, {"BIT 3,D", &op::bit_3_d, 4, 2}, {"BIT 3,E", &op::bit_3_e, 4, 2}, {"BIT 3,H", &op::bit_3_h,4, 2}, {"BIT 3,L", &op::bit_3_l, 4, 2}, {"BIT 3,(HL)", &op::bit_3_abs_hl, 12, 2}, {"BIT 3,A", &op::bit_3_a, 4, 2},
             {"BIT 4,B", &op::bit_4_b, 4, 2}, {"BIT 4,C", &op::bit_4_c, 4, 2}, {"BIT 4,D", &op::bit_4_d, 4, 2}, {"BIT 4,E", &op::bit_4_e, 4, 2}, {"BIT 4,H", &op::bit_4_h, 4, 2}, {"BIT 4,L", &op::bit_4_l, 4, 2}, {"BIT 4,(HL)", &op::bit_4_abs_hl, 12, 2}, {"BIT 4,A", &op::bit_4_a, 4, 2}, {"BIT 5,B", &op::bit_5_b, 4, 2}, {"BIT 5,C", &op::bit_5_c, 4, 2}, {"BIT 5,D", &op::bit_5_d, 4, 2}, {"BIT 5,E", &op::bit_5_e, 4, 2}, {"BIT 5,H", &op::bit_5_h, 4, 2}, {"BIT 5,L", &op::bit_5_l, 4, 2}, {"BIT 5,(HL)", &op::bit_5_abs_hl, 12, 2}, {"BIT 5,A", &op::bit_5_a, 4, 2},
             {"BIT 6,B", &op::bit_6_b, 4, 2}, {"BIT 6,C", &op::bit_6_c, 4, 2}, {"BIT 6,D", &op::bit_6_d, 4, 2}, {"BIT 6,E", &op::bit_6_e, 4, 2}, {"BIT 6,H", &op::bit_6_h, 4, 2}, {"BIT 6,L", &op::bit_6_l, 4, 2}, {"BIT 6,(HL)", &op::bit_6_abs_hl, 12, 2}, {"BIT 6,A", &op::bit_6_a, 4, 2}, {"BIT 7,B", &op::bit_7_b, 4, 2}, {"BIT 7,C", &op::bit_7_c, 4, 2}, {"BIT 7,D", &op::bit_7_d, 4, 2}, {"BIT 7,E", &op::bit_7_e, 4, 2}, {"BIT 7,H", &op::bit_7_h, 4, 2}, {"BIT 7,L", &op::bit_7_l, 4, 2}, {"BIT 7,(HL)", &op::bit_7_abs_hl, 4, 2}, {"BIT 7,A", &op::bit_7_a, 4, 2},
-            {"RES 0,B", &op::res_0_b, 4, 2}
+            {"RES 0,B", &op::res_n_r8, 4, 2,{&b_reg}, 0}, {"RES 0,C", &op::res_n_r8, 4, 2, {&c_reg}, 0}, {"RES 0,D", &op::res_n_r8, 4, 2, {&d_reg}, 0}, {"RES 0,E", &op::res_n_r8, 4, 2, {&e_reg}, 0}, {"RES 0,H", &op::res_n_r8, 4, 2, {&h_reg}, 0}, {"RES 0,L", &op::res_n_r8, 4, 2, {&l_reg}, 0}, {"RES 0,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 0}, {"RES 0,A", &op::res_n_r8, 4, 2, {&a_reg}, 0}
     };
 }
 
@@ -4450,9 +4450,32 @@ uint8_t SM83::push_hl() {
     write(sp, l_reg);
     return 0;
 }
-// Reset bit 0 in the B register.
-uint8_t SM83::res_0_b() {
-    b_reg &= ~(1 << 0);
+
+// Generic function to reset bit n in register r8.
+uint8_t SM83::res_n_r8() {
+    // Get the opcode of the instruction that is to be executed
+    uint8_t prev_opcode = read(pc - 1);
+    // Access the prefix opcode table as this function is for a prefixed opcode
+    uint8_t n = prefix_lookup[prev_opcode].n;
+    // Need to check the size of the operand vector
+    // The only way the size of the vector will be 2 is if we are working with
+    // the HL register pair, and need to get the absolute address stored in it.
+    if(prefix_lookup[prev_opcode].operands.size() == 2) {
+        // Grab the data from the H & L pointers from the operands vector
+        // Operands are little endian
+        uint8_t lowByte = *prefix_lookup[prev_opcode].operands[0];
+        uint8_t highByte = *prefix_lookup[prev_opcode].operands[1];
+        addr_abs = (highByte << 8) | lowByte;
+        uint8_t data = fetch();
+        data &= ~(1 << n);
+        // Write the data
+        write(addr_abs, data);
+        return 0;
+    }
+    // If we are here, that means only 1 operand
+    uint8_t *r8 = prefix_lookup[prev_opcode].operands[0];
+    // Reset bit n in register r8
+    *r8 &= ~(1 << n);
     return 0;
 }
 
