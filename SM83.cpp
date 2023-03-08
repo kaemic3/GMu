@@ -40,7 +40,7 @@ SM83::SM83() {
             {"RES 2,B", &op::res_n_r8, 4, 2, {&b_reg}, 2}, {"RES 2,C", &op::res_n_r8, 4, 2, {&c_reg}, 2}, {"RES 2,D", &op::res_n_r8, 4, 2, {&d_reg}, 2}, {"RES 2,E", &op::res_n_r8, 4, 2, {&e_reg}, 2}, {"RES 2,H", &op::res_n_r8, 4, 2, {&h_reg}, 2}, {"RES 2,L", &op::res_n_r8, 4, 2, {&l_reg}, 2}, {"RES 2,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 2}, {"RES 2,A", &op::res_n_r8, 4, 2, {&a_reg}, 2}, {"RES 3,B", &op::res_n_r8, 4, 2, {&b_reg}, 3}, {"RES 3,C", &op::res_n_r8, 4, 2, {&c_reg}, 3}, {"RES 3,D", &op::res_n_r8, 4, 2, {&d_reg}, 3}, {"RES 3,E", &op::res_n_r8, 4, 2, {&e_reg}, 3}, {"RES 3,H", &op::res_n_r8, 4, 2, {&h_reg}, 3}, {"RES 3,L", &op::res_n_r8, 4, 2, {&l_reg}, 3}, {"RES 3,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 3}, {"RES 3,A", &op::res_n_r8, 4, 2, {&a_reg}, 3},
             {"RES 4,B", &op::res_n_r8, 4, 2, {&b_reg}, 4}, {"RES 4,C", &op::res_n_r8, 4, 2, {&c_reg}, 4}, {"RES 4,D", &op::res_n_r8, 4, 2, {&d_reg}, 4}, {"RES 4,E", &op::res_n_r8, 4, 2, {&e_reg}, 4}, {"RES 4,H", &op::res_n_r8, 4, 2, {&h_reg}, 4}, {"RES 4,L", &op::res_n_r8, 4, 2, {&l_reg}, 4}, {"RES 4,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 4}, {"RES 4,A", &op::res_n_r8, 4, 2, {&a_reg}, 4}, {"RES 5,B", &op::res_n_r8, 4, 2, {&b_reg}, 5}, {"RES 5,C", &op::res_n_r8, 4, 2, {&c_reg}, 5}, {"RES 5,D", &op::res_n_r8, 4, 2, {&d_reg}, 5}, {"RES 5,E", &op::res_n_r8, 4, 2, {&e_reg}, 5}, {"RES 5,H", &op::res_n_r8, 4, 2, {&h_reg}, 5}, {"RES 5,L", &op::res_n_r8, 4, 2, {&l_reg}, 5}, {"RES 5,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 5}, {"RES 5,A", &op::res_n_r8, 4, 2, {&a_reg}, 5},
             {"RES 6,B", &op::res_n_r8, 4, 2, {&b_reg}, 6}, {"RES 6,C", &op::res_n_r8, 4, 2, {&c_reg}, 6}, {"RES 6,D", &op::res_n_r8, 4, 2, {&d_reg}, 6}, {"RES 6,E", &op::res_n_r8, 4, 2, {&e_reg}, 6}, {"RES 6,H", &op::res_n_r8, 4, 2, {&h_reg}, 6}, {"RES 6,L", &op::res_n_r8, 4, 2, {&l_reg}, 6}, {"RES 6,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 6}, {"RES 6,A", &op::res_n_r8, 4, 2, {&a_reg}, 6}, {"RES 7,B", &op::res_n_r8, 4, 2, {&b_reg}, 7}, {"RES 7,C", &op::res_n_r8, 4, 2, {&c_reg}, 7}, {"RES 7,D", &op::res_n_r8, 4, 2, {&d_reg}, 7}, {"RES 7,E", &op::res_n_r8, 4, 2, {&e_reg}, 7}, {"RES 7,H", &op::res_n_r8, 4, 2, {&h_reg}, 7}, {"RES 7,L", &op::res_n_r8, 4, 2, {&l_reg}, 7}, {"RES 7,(HL)", &op::res_n_r8, 12, 2, {&l_reg, &h_reg}, 7}, {"RES 7,A", &op::res_n_r8, 4, 2, {&a_reg}, 7},
-            {}
+            {"SET 0,B", &op::set_n_r8, 4, 2, {&b_reg}, 0}
     };
 }
 
@@ -6129,6 +6129,34 @@ uint8_t SM83::scf() {
     setFlag(C, 1);
     setFlag(N, 0);
     setFlag(H, 0);
+    return 0;
+}
+
+// Generic function to set bit n in register r8.
+uint8_t SM83::set_n_r8() {
+    // Get the opcode of the instruction that is to be executed
+    uint8_t prev_opcode = read(pc - 1);
+    // Access the prefix opcode table as this function is for a prefixed opcode
+    uint8_t n = prefix_lookup[prev_opcode].n;
+    // Need to check the size of the operand vector
+    // The only way the size of the vector will be 2 is if we are working with
+    // the HL register pair, and need to get the absolute address stored in it.
+    if(prefix_lookup[prev_opcode].operands.size() == 2) {
+        // Grab the data from the H & L pointers from the operands vector
+        // Operands are little endian
+        uint8_t lowByte = *prefix_lookup[prev_opcode].operands[0];
+        uint8_t highByte = *prefix_lookup[prev_opcode].operands[1];
+        addr_abs = (highByte << 8) | lowByte;
+        uint8_t data = fetch();
+        data |= (1 << n);
+        // Write the data
+        write(addr_abs, data);
+        return 0;
+    }
+    // If we are here, that means only 1 operand
+    uint8_t *r8 = prefix_lookup[prev_opcode].operands[0];
+    // Reset bit n in register r8
+    *r8 |= (1 << n);
     return 0;
 }
 
