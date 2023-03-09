@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     //gb.cpu.sp = 0x8000;
     // Test program
     gb.ram[0x0000] = 0xcb;
-    gb.ram[0x0001] = 0xc8;
+    gb.ram[0x0001] = 0xce;
 
     gb.ram[0x2000] = 0x01;
     gb.ram[0x2001] = 0x07;
