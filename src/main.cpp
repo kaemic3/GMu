@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::LoadBinaryFile("../gb_snek.gb");
+    //GMu::LoadBinaryFile("../gb_snek.gb");
     // While app is running
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
@@ -49,15 +49,17 @@ int main(int argc, char *argv[]) {
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateDown);
                         break;
                     case SDLK_m:
-                        GMu::gb.ram[0xffff]++;
+                        GMu::gb.wram[0xffff]++;
                         break;
                     case SDLK_n:
-                        GMu::gb.ram[0x0000]++;
+                        GMu::gb.wram[0x0000]++;
                         break;
                     case SDLK_RETURN:
                         // Do an instruction
-                        GMu::gb.cpu.cycles = 0;
-                        GMu::gb.cpu.clock();
+                        do { GMu::gb.cpu.clock(); } while (!GMu::gb.cpu.complete());
+                        // CPU clock runs slower than system clock, so it may complete additional clock cycles.
+                        // Drain those out
+                        do { GMu::gb.cpu.clock(); } while (GMu::gb.cpu.complete());
                         break;
                 }
             }

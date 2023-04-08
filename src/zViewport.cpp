@@ -379,6 +379,9 @@ namespace GMu {
     }
 
     void zMemoryViewport::CreateText() {
+        // Check if the base address is > 0x2000 (8KiB)
+        if(base_address > 0x2000 - 0x200)
+            base_address = 0x2000 - 0x200;
         // Return if base address is not divisible by 0x10
         if(base_address % 0x10 != 0)
             return;
@@ -399,12 +402,16 @@ namespace GMu {
         std::stringstream stream;
         stream << "$" << ToHexString(address, true) << ": ";
         for (auto i = 0; i < 0x10; ++i) {
-            stream << ToHexString(p_bus->ram[address + i], false) << " ";
+            stream << ToHexString(p_bus->wram[address + i], false) << " ";
         }
         return stream.str();
     }
-
+    // Currently broken, will need to reimplement when the memory map
+    // has been implemented properly
     void zMemoryViewport::UpdateText() {
+        // Check if the base address is > 0x2000 (8KiB)
+        if(base_address > (0x2000 - 0x200))
+            base_address = 0x2000 - 0x200;
         // Return if the base address is divisible by 0x10
         if(base_address % 0x10)
             return;

@@ -51,19 +51,19 @@ SM83::~SM83() {
 
 }
 
-uint8_t SM83::read(uint16_t addr, bool bReadOnly) {
-    return bus->read(addr, bReadOnly);
+uint8_t SM83::cpu_read(uint16_t addr, bool bReadOnly) {
+    return bus->cpu_read(addr, bReadOnly);
 }
 
-void SM83::write(uint16_t addr, uint8_t data) {
-    bus->write(addr, data);
+void SM83::cpu_write(uint16_t addr, uint8_t data) {
+    bus->cpu_write(addr, data);
 }
 
 void SM83::clock() {
     // Only execute when the internal cycles count is 0
     if(cycles == 0) {
         // Read opcode - PC will be pointing to it
-        opcode = read(pc);
+        opcode = cpu_read(pc);
         // Inc the PC to point to the next byte of the instruction
         pc++;
         // get the number of cycles for the instruction
@@ -92,7 +92,7 @@ void SM83::setFlag(SM83_FLAGS f, bool v) {
 
 // Fetch the data located at addr_abs.
 uint8_t SM83::fetch() {
-    fetched = read(addr_abs);
+    fetched = cpu_read(addr_abs);
     return fetched;
 }
 // Instructions in alphabetical order
@@ -240,7 +240,7 @@ uint8_t SM83::add_a_c() {
 //  -C: Set if A overflows past 0xff
 uint8_t SM83::add_a_d8() {
     // Get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
     // Overflow check
@@ -579,7 +579,7 @@ uint8_t SM83::add_hl_sp() {
 uint8_t SM83::add_sp_r8() {
     // SP is an uint16_t
     // Need to read in the value as a signed int
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Need to have a signed version of the data
     int8_t sData = data;
     uint8_t h_check = (sp & 0x000f) + (data & 0xf);
@@ -827,7 +827,7 @@ uint8_t SM83::adc_a_d() {
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_d8() {
     // Get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Create a 16-bit copy of A
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
@@ -1108,7 +1108,7 @@ uint8_t SM83::and_d() {
 //  -C: Reset to 0
 uint8_t SM83::and_d8() {
     // Need to get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     a_reg &= data;
     // Check for zero flag
     if(a_reg == 0x00)
@@ -2382,14 +2382,14 @@ uint8_t SM83::bit_7_l() {
 // with the 16-bit absolute address.
 uint8_t SM83::call_a16() {
     // Need to store the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Update the PC
     pc = addr_abs;
     return 0;
@@ -2399,17 +2399,17 @@ uint8_t SM83::call_a16() {
 // with the 16-bit absolute address only if the carry flag is set.
 uint8_t SM83::call_c_a16() {
     // Need to store the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if the carry flag is not set
     if(!getFlag(C))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2419,17 +2419,17 @@ uint8_t SM83::call_c_a16() {
 // with the 16-bit absolute address only if the carry flag is not set.
 uint8_t SM83::call_nc_a16() {
     // Need to store the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if the carry flag is set
     if(getFlag(C))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2439,17 +2439,17 @@ uint8_t SM83::call_nc_a16() {
 // with the 16-bit absolute address only if the zero flag is not set.
 uint8_t SM83::call_nz_a16() {
     // Need to store the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if the zero flag is set
     if(getFlag(Z))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2459,17 +2459,17 @@ uint8_t SM83::call_nz_a16() {
 // with the 16-bit absolute address only if the zero flag is set.
 uint8_t SM83::call_z_16() {
     // Need to store the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if the zero flag is not set
     if(!getFlag(Z))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2631,7 +2631,7 @@ uint8_t SM83::cp_d() {
 //  -C: Set if d8 > A
 uint8_t SM83::cp_d8() {
     // Need to get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
@@ -2844,7 +2844,7 @@ uint8_t SM83::dec_abs_hl() {
         setFlag(H, 0);
     // Set sign flag
     setFlag(N, 1);
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     return 0;
 }
 
@@ -3099,7 +3099,7 @@ uint8_t SM83::inc_abs_hl() {
         setFlag(H, 0);
     // Reset sign flag
     setFlag(N, 0);
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     return 0;
 }
 
@@ -3293,8 +3293,8 @@ uint8_t SM83::jp_abs_hl() {
 // Jump to the absolute 16-bit address.
 uint8_t SM83::jp_a16() {
     // Load the address from PC
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Update the PC
     pc = (highByte << 8) | lowByte;
     return 0;
@@ -3303,8 +3303,8 @@ uint8_t SM83::jp_a16() {
 // Jump to the absolute 16-bit address if the carry flag is set.
 uint8_t SM83::jp_c_a16() {
     // Load the address from the PC
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if carry flag is not enabled
     if(!getFlag(C))
         return 0;
@@ -3316,8 +3316,8 @@ uint8_t SM83::jp_c_a16() {
 // Jump to the absolute 16-bit address if the carry flag is not set.
 uint8_t SM83::jp_nc_a16() {
     // Load the address from the PC
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if carry flag is enabled
     if(getFlag(C))
         return 0;
@@ -3329,8 +3329,8 @@ uint8_t SM83::jp_nc_a16() {
 // Jump to the absolute 16-bit address if the zero flag is not set.
 uint8_t SM83::jp_nz_a16() {
     // Load the address from the PC
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if zero flag is enabled
     if(getFlag(Z))
         return 0;
@@ -3342,8 +3342,8 @@ uint8_t SM83::jp_nz_a16() {
 // Jump to the absolute 16-bit address if the zero flag is set.
 uint8_t SM83::jp_z_a16() {
     // Load the address from the PC
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Check if zero flag is not enabled
     if(!getFlag(Z))
         return 0;
@@ -3360,7 +3360,7 @@ uint8_t SM83::jp_z_a16() {
 // in the offset.
 uint8_t SM83::jr_r8() {
     // Use a signed 8-bit int
-    int8_t offset = read(pc++);
+    int8_t offset = cpu_read(pc++);
     pc += offset;
     return 0;
 }
@@ -3370,7 +3370,7 @@ uint8_t SM83::jr_r8() {
 // met.
 uint8_t SM83::jr_c_r8() {
     // Use a signed 8-bit int
-    int8_t offset = read(pc++);
+    int8_t offset = cpu_read(pc++);
     if(!getFlag(C))
         return 0;
     pc += offset;
@@ -3382,7 +3382,7 @@ uint8_t SM83::jr_c_r8() {
 // met.
 uint8_t SM83::jr_nc_r8() {
     // Use a signed 8-bit int
-    int8_t offset = read(pc++);
+    int8_t offset = cpu_read(pc++);
     if(getFlag(C))
         return 0;
     pc += offset;
@@ -3394,7 +3394,7 @@ uint8_t SM83::jr_nc_r8() {
 // met.
 uint8_t SM83::jr_nz_r8() {
     // Used a signed 8-bit int
-    int8_t offset = read(pc++);
+    int8_t offset = cpu_read(pc++);
     // Check if zero flag is set
     if(getFlag(Z))
         return 0;
@@ -3406,7 +3406,7 @@ uint8_t SM83::jr_nz_r8() {
 // of the PC only if the zero flag is set. Add 4 clock cycles if the condition is
 // met.
 uint8_t SM83::jr_z_r8() {
-    int8_t offset = read(pc++);
+    int8_t offset = cpu_read(pc++);
     // Check if the Z flag is not set
     if(!getFlag(Z))
         return 0;
@@ -3423,8 +3423,8 @@ uint8_t SM83::ld_a_a() {
 // Load the A register using from the data stored at the immediate absolute address.
 uint8_t SM83::ld_a_abs_a16() {
     // Need to load the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     addr_abs = (highByte << 8) | lowByte;
     // Fetch and store in A
     a_reg = fetch();
@@ -3462,7 +3462,7 @@ uint8_t SM83::ld_a_d() {
 
 // Load A with the immediate 8-bit data.
 uint8_t SM83::ld_a_d8() {
-    a_reg = read(pc++);
+    a_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -3532,24 +3532,24 @@ uint8_t SM83::ld_a_abs_hli() {
 // Load the A register into the 16-bit absolute address.
 uint8_t SM83::ld_abs_a16_a() {
     // Load the address
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     addr_abs = (highByte << 8) | lowByte;
     // Write the data
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
 }
 
 // Load the 16-bit value in the SP into the 16-bit little endian absolute address.
 uint8_t SM83::ld_abs_a16_sp() {
     // Load the absolute address into addr_abs
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     addr_abs = (highByte << 8) | lowByte;
 
     // Write the SP to the absolute address in little-endian
-    write(addr_abs++, sp);
-    write(addr_abs, (sp >> 8));
+    cpu_write(addr_abs++, sp);
+    cpu_write(addr_abs, (sp >> 8));
     return 0;
 }
 
@@ -3558,7 +3558,7 @@ uint8_t SM83::ld_abs_bc_a() {
     uint16_t lowByte = c_reg;
     uint16_t highByte = b_reg;
     addr_abs = (highByte << 8) | lowByte;
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
 }
 
@@ -3567,7 +3567,7 @@ uint8_t SM83::ld_abs_de_a() {
     uint16_t lowByte = e_reg;
     uint16_t  highByte = d_reg;
     addr_abs = (highByte << 8) | lowByte;
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
 }
 
@@ -3578,7 +3578,7 @@ uint8_t SM83::ld_abs_hl_a() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in B into the address stored in HL
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
     return 0;
 }
@@ -3590,7 +3590,7 @@ uint8_t SM83::ld_abs_hl_b() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in B into the address stored in HL
-    write(addr_abs, b_reg);
+    cpu_write(addr_abs, b_reg);
     return 0;
 }
 
@@ -3601,7 +3601,7 @@ uint8_t SM83::ld_abs_hl_c() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    write(addr_abs, c_reg);
+    cpu_write(addr_abs, c_reg);
 
     return 0;
 }
@@ -3614,7 +3614,7 @@ uint8_t SM83::ld_abs_hl_d() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    write(addr_abs, d_reg);
+    cpu_write(addr_abs, d_reg);
 
     return 0;
 }
@@ -3625,8 +3625,8 @@ uint8_t SM83::ld_abs_hl_d8() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    uint8_t data = read(pc++);
-    write(addr_abs, data);
+    uint8_t data = cpu_read(pc++);
+    cpu_write(addr_abs, data);
     return 0;
 }
 
@@ -3637,7 +3637,7 @@ uint8_t SM83::ld_abs_hl_e() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    write(addr_abs, e_reg);
+    cpu_write(addr_abs, e_reg);
 
     return 0;
 }
@@ -3649,7 +3649,7 @@ uint8_t SM83::ld_abs_hl_h() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    write(addr_abs, h_reg);
+    cpu_write(addr_abs, h_reg);
 
     return 0;
 }
@@ -3661,7 +3661,7 @@ uint8_t SM83::ld_abs_hl_l() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    write(addr_abs, l_reg);
+    cpu_write(addr_abs, l_reg);
 
     return 0;
 }
@@ -3671,7 +3671,7 @@ uint8_t SM83::ld_abs_hli_a() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     inc_hl();
     return 0;
 }
@@ -3681,7 +3681,7 @@ uint8_t SM83::ld_abs_hld_a() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     dec_hl();
     return 0;
 }
@@ -3724,7 +3724,7 @@ uint8_t SM83::ld_b_d() {
 
 // Load the B register with an immediate 8-bit data value.
 uint8_t SM83::ld_b_d8() {
-    b_reg = read(pc++);
+    b_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -3748,8 +3748,8 @@ uint8_t SM83::ld_b_l() {
 
 // Load register pair BC with an immediate little-endian 16-bit data value.
 uint8_t SM83::ld_bc_d16() {
-    c_reg = read(pc++);
-    b_reg = read(pc++);
+    c_reg = cpu_read(pc++);
+    b_reg = cpu_read(pc++);
     // No additional clocks, return 0
     return 0;
 }
@@ -3791,7 +3791,7 @@ uint8_t SM83::ld_c_d() {
 
 // Load the C register with the immediate 8-bit data value.
 uint8_t SM83::ld_c_d8() {
-    c_reg = read(pc++);
+    c_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -3870,14 +3870,14 @@ uint8_t SM83::ld_d_l() {
 
 // Load the D register with the immediate 8-bit data value.
 uint8_t SM83::ld_d_d8() {
-    d_reg = read(pc++);
+    d_reg = cpu_read(pc++);
     return 0;
 }
 
 // Load the DE register pair with the immediate 16-bit data value.
 uint8_t SM83::ld_de_d16() {
-    e_reg = read(pc++);
-    d_reg = read(pc++);
+    e_reg = cpu_read(pc++);
+    d_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -3901,7 +3901,7 @@ uint8_t SM83::ld_e_d() {
 
 // Load E register with the immediate 8-bit data value.
 uint8_t SM83::ld_e_d8() {
-    e_reg = read(pc++);
+    e_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -3977,7 +3977,7 @@ uint8_t SM83::ld_h_d() {
 
 // Load H register with the immediate 8-bit data value.
 uint8_t SM83::ld_h_d8() {
-    h_reg = read(pc++);
+    h_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -4001,8 +4001,8 @@ uint8_t SM83::ld_h_l() {
 
 // Load the HL register pair with the immediate 16-bit value.
 uint8_t SM83::ld_hl_d16() {
-    l_reg = read(pc++);
-    h_reg = read(pc++);
+    l_reg = cpu_read(pc++);
+    h_reg = cpu_read(pc++);
     return 0;
 }
 // Add immediate signed 8-bit data to SP and load into HL. Do not update SP.
@@ -4016,7 +4016,7 @@ uint8_t SM83::ld_hl_sp_r8() {
     // Make a copy of SP
     uint16_t sp_cp = sp;
     // Need to read in the value as a signed int
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Need to have a signed version of the data
     int8_t sData = data;
     uint8_t h_check = (sp_cp & 0x000f) + (data & 0xf);
@@ -4081,7 +4081,7 @@ uint8_t SM83::ld_l_d() {
 
 // Load L register with the immediate 8-bit data value.
 uint8_t SM83::ld_l_d8() {
-    l_reg = read(pc++);
+    l_reg = cpu_read(pc++);
     return 0;
 }
 
@@ -4105,8 +4105,8 @@ uint8_t SM83::ld_l_l() {
 
 // Load the SP with the immediate 16-bit value.
 uint8_t SM83::ld_sp_d16() {
-    uint16_t lowByte = read(pc++);
-    uint16_t highByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
+    uint16_t highByte = cpu_read(pc++);
     // Create 16-bit data from low and high bytes read in from PC
     uint16_t data = (highByte << 8) | lowByte;
     sp = data;
@@ -4126,7 +4126,7 @@ uint8_t SM83::ld_sp_hl() {
 // Using a8 as an offset from address 0xff00, load the contents at the absolute address into the A register.
 uint8_t SM83::ldh_a_abs_a8() {
     // Load the address
-    uint16_t lowByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
     addr_abs = (0xff00 | lowByte);
     // Fetch and store in A
     a_reg = fetch();
@@ -4145,10 +4145,10 @@ uint8_t SM83::ldh_a_abs_c() {
 // Using a8 as an offset from address 0xFF00, load the A register into that address.
 uint8_t SM83::ldh_abs_a8_a() {
     // Load the address
-    uint16_t lowByte = read(pc++);
+    uint16_t lowByte = cpu_read(pc++);
     addr_abs = (0xff00 | lowByte);
     // Write the data to the address
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
 }
 
@@ -4157,7 +4157,7 @@ uint8_t SM83::ldh_abs_c_a() {
     // Load the address
     addr_abs = (0xff00 | c_reg);
     // Write the data to the address
-    write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg);
     return 0;
 }
 
@@ -4275,7 +4275,7 @@ uint8_t SM83::or_d() {
 //  -C: Reset to 0
 uint8_t SM83::or_d8() {
     // Need to get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     a_reg |= data;
     // Check for zero flag
     if(a_reg == 0x00)
@@ -4414,7 +4414,7 @@ uint8_t SM83::pop_hl() {
 // Note: None of the prefixed opcodes are more than 2 bytes (1 after we remove the prefix)
 uint8_t SM83::prefix() {
     // Read the opcode for the prefix function
-    uint8_t prefix_op = read(pc++);
+    uint8_t prefix_op = cpu_read(pc++);
     // Add the cycles to the current cycle count
     cycles += prefix_lookup[prefix_op].cycles;
     // Call the function pointer - will return additional clock cycles
@@ -4425,43 +4425,43 @@ uint8_t SM83::prefix() {
 // Push the AF register pair onto the stack.
 uint8_t SM83::push_af() {
     sp--;
-    write(sp, a_reg);
+    cpu_write(sp, a_reg);
     sp--;
-    write(sp, f_reg);
+    cpu_write(sp, f_reg);
     return 0;
 }
 
 // Push the BC register pair onto the stack.
 uint8_t SM83::push_bc() {
     sp--;
-    write(sp, b_reg);
+    cpu_write(sp, b_reg);
     sp--;
-    write(sp, c_reg);
+    cpu_write(sp, c_reg);
     return 0;
 }
 
 // Push the DE register pair onto the stack.
 uint8_t SM83::push_de() {
     sp--;
-    write(sp, d_reg);
+    cpu_write(sp, d_reg);
     sp--;
-    write(sp, e_reg);
+    cpu_write(sp, e_reg);
     return 0;
 }
 
 // Push the HL register pair onto the stack.
 uint8_t SM83::push_hl() {
     sp--;
-    write(sp, h_reg);
+    cpu_write(sp, h_reg);
     sp--;
-    write(sp, l_reg);
+    cpu_write(sp, l_reg);
     return 0;
 }
 
 // Generic function to reset bit n in register r8.
 uint8_t SM83::res_n_r8() {
     // Get the opcode of the instruction that is to be executed
-    uint8_t prev_opcode = read(pc - 1);
+    uint8_t prev_opcode = cpu_read(pc - 1);
     // Access the prefix opcode table as this function is for a prefixed opcode
     uint8_t n = prefix_lookup[prev_opcode].n;
     // Need to check the size of the operand vector
@@ -4476,7 +4476,7 @@ uint8_t SM83::res_n_r8() {
         uint8_t data = fetch();
         data &= ~(1 << n);
         // Write the data
-        write(addr_abs, data);
+        cpu_write(addr_abs, data);
         return 0;
     }
     // If we are here, that means only 1 operand
@@ -4679,7 +4679,7 @@ uint8_t SM83::rl_abs_hl() {
     else
         data = (data << 1);
     // Write the data back into the address
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
@@ -4971,7 +4971,7 @@ uint8_t SM83::rlc_abs_hl() {
     // First shift all bits left one, then or with all bits shifted right 7.
     data = (data << 1) | (data >> 7);
     // Write the data to the address
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -5223,7 +5223,7 @@ uint8_t SM83::rr_abs_hl() {
     else
         data = (data >> 1);
     // Write the data at the address
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check if the carry flag needs to be set
     if(c_check)
         setFlag(C, 1);
@@ -5442,9 +5442,9 @@ uint8_t SM83::rr_l() {
 uint8_t SM83::rst_00h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0000
     pc = 0x0000;
     return 0;
@@ -5454,9 +5454,9 @@ uint8_t SM83::rst_00h() {
 uint8_t SM83::rst_08h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0008
     pc = 0x0008;
     return 0;
@@ -5466,9 +5466,9 @@ uint8_t SM83::rst_08h() {
 uint8_t SM83::rst_10h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0010
     pc = 0x0010;
     return 0;
@@ -5478,9 +5478,9 @@ uint8_t SM83::rst_10h() {
 uint8_t SM83::rst_18h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0018
     pc = 0x0018;
     return 0;
@@ -5490,9 +5490,9 @@ uint8_t SM83::rst_18h() {
 uint8_t SM83::rst_20h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0020
     pc = 0x0020;
     return 0;
@@ -5502,9 +5502,9 @@ uint8_t SM83::rst_20h() {
 uint8_t SM83::rst_28h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0028
     pc = 0x0028;
     return 0;
@@ -5514,9 +5514,9 @@ uint8_t SM83::rst_28h() {
 uint8_t SM83::rst_30h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0030
     pc = 0x0030;
     return 0;
@@ -5526,9 +5526,9 @@ uint8_t SM83::rst_30h() {
 uint8_t SM83::rst_38h() {
     // Push the current address to the stack
     sp--;
-    write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8));
     sp--;
-    write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff));
     // Jump to address 0x0038
     pc = 0x0038;
     return 0;
@@ -5604,7 +5604,7 @@ uint8_t SM83::rrc_abs_hl() {
     // First shift all bits right one, then or with all bits shifted right 7.
     data = (data >> 1) | (data << 7);
     // Write the data back to the address
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -5977,7 +5977,7 @@ uint8_t SM83::sbc_a_d() {
 //  -C: Set if (d8 + carry) > A
 uint8_t SM83::sbc_a_d8() {
     // Need to load data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Create a copy of operand r8
     uint8_t cp_r8 = data;
     // 16-bit copy for overflow check
@@ -6138,7 +6138,7 @@ uint8_t SM83::scf() {
 // Generic function to set bit n in register r8.
 uint8_t SM83::set_n_r8() {
     // Get the opcode of the instruction that is to be executed
-    uint8_t prev_opcode = read(pc - 1);
+    uint8_t prev_opcode = cpu_read(pc - 1);
     // Access the prefix opcode table as this function is for a prefixed opcode
     uint8_t n = prefix_lookup[prev_opcode].n;
     // Need to check the size of the operand vector
@@ -6153,7 +6153,7 @@ uint8_t SM83::set_n_r8() {
         uint8_t data = fetch();
         data |= (1 << n);
         // Write the data
-        write(addr_abs, data);
+        cpu_write(addr_abs, data);
         return 0;
     }
     // If we are here, that means only 1 operand
@@ -6437,7 +6437,7 @@ uint8_t SM83::sra_abs_hl() {
     else
         data = data>> 1;
     // Write the data
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -6694,7 +6694,7 @@ uint8_t SM83::srl_abs_hl() {
     // Shift right one bit
     data = data >> 1;
     // Write the data
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -7022,7 +7022,7 @@ uint8_t SM83::sub_d() {
 //  -C: Set if d8 > A
 uint8_t SM83::sub_d8() {
     // Need to get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
@@ -7174,7 +7174,7 @@ uint8_t SM83::swap_abs_hl() {
     uint8_t data = fetch();
     data = ((data & 0x0f) << 4 | (data & 0xf0) >> 4);
     // Write the data
-    write(addr_abs, data);
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -7421,7 +7421,7 @@ uint8_t SM83::xor_d() {
 //  -C: Reset to 0
 uint8_t SM83::xor_d8() {
     // Need to get the data
-    uint8_t data = read(pc++);
+    uint8_t data = cpu_read(pc++);
     a_reg ^= data;
     // Check for zero flag
     if(a_reg == 0x00)

@@ -372,7 +372,7 @@ namespace GMu {
         printf("File %s has been closed.\n", file_path.c_str());
         // Copy the contents of mem_block into gb.ram
         for (int i = 0; i < size; ++i) {
-            gb.ram[i] = mem_block[i];
+            gb.wram[i] = mem_block[i];
         }
         // Delete mem_block
     }
