@@ -1,5 +1,5 @@
-#ifndef VIEWPORT_TEST_GMU_H
-#define VIEWPORT_TEST_GMU_H
+#ifndef GMU_GMU_H
+#define GMU_GMU_H
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -377,4 +377,4 @@ namespace GMu {
         // Delete mem_block
     }
 }
-#endif //VIEWPORT_TEST_GMU_H
+#endif //GMU_GMU_H
