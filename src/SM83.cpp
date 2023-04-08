@@ -51,8 +51,8 @@ SM83::~SM83() {
 
 }
 
-uint8_t SM83::cpu_read(uint16_t addr, bool bReadOnly) {
-    return bus->cpu_read(addr, bReadOnly);
+uint8_t SM83::cpu_read(uint16_t addr, bool read_only) {
+    return bus->cpu_read(addr, read_only);
 }
 
 void SM83::cpu_write(uint16_t addr, uint8_t data) {
