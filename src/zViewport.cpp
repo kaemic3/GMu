@@ -380,8 +380,8 @@ namespace GMu {
 
     void zMemoryViewport::CreateText() {
         // Check if the base address is > 0x2000 (8KiB)
-        if(base_address > 0x2000 - 0x200)
-            base_address = 0x2000 - 0x200;
+        if(base_address > 0x2000 - 0x110)
+            base_address = 0x2000 - 0x110;
         // Return if base address is not divisible by 0x10
         if(base_address % 0x10 != 0)
             return;
@@ -410,8 +410,8 @@ namespace GMu {
     // has been implemented properly
     void zMemoryViewport::UpdateText() {
         // Check if the base address is > 0x2000 (8KiB)
-        if(base_address > (0x2000 - 0x200))
-            base_address = 0x2000 - 0x200;
+        if(base_address > (0x2000 - 0x110))
+            base_address = 0x2000 - 0x110;
         // Return if the base address is divisible by 0x10
         if(base_address % 0x10)
             return;
