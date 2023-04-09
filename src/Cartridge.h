@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "Mapper.h"
 
 class Cartridge {
 public:
@@ -13,7 +14,11 @@ public:
 
     // Communication with the Main Bus
     bool cpu_write(uint16_t addr, uint8_t data);
-    bool cpu_read(uint16_t addr, bool read_only);
+    bool cpu_read(uint16_t addr, uint8_t &data);
+
+    // Helper function for memory viewport
+    // Will probably need to use the mapper to get the correct data from the rom
+    uint8_t viewport_get_data(uint16_t addr);
 private:
     // Containers for the rom and ram. They are vectors since their size is unknown until the
     // cartridge header information is obtained.
@@ -24,6 +29,9 @@ private:
     uint8_t mapper_id = 0x00;
     uint8_t rom_banks = 0x00;
     uint8_t ram_banks = 0x00;
+
+    // Pointer to the mapper for this cartridge
+    std::shared_ptr<Mapper> p_mapper = nullptr;
 
 };
 
