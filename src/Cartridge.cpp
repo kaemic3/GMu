@@ -92,32 +92,51 @@ Cartridge::Cartridge(const std::string &directory) {
             break;
     }
 
+    // Point the ifstream to the beginning of the file
+    input_file.seekg(0, std::ios::beg);
+    // Resize the ROM - Keep in mind banks are 16 KiB
+    cart_rom.resize(rom_banks * 16384);
+    // Read in the ROM
+    input_file.read((char*)cart_rom.data(), cart_rom.size());
+
     // Save the mapper id into the according member
     mapper_id = header.cart_type;
-
-    // Information could be assumed by this alone... I think
+    // Load the correct mapper
     switch (mapper_id) {
         // ROM only, no mapper present
         case 0x00:
-            // Point the ifstream to the beginning of the file
-            input_file.seekg(0, std::ios::beg);
-            // Resize the ROM - Keep in mind banks are 16 KiB
-            cart_rom.resize(rom_banks * 16384);
-            // Read in the ROM
-            input_file.read((char*)cart_rom.data(), cart_rom.size());
+            // Construct the appropriate mapper according to the mapper_id
+            p_mapper = std::make_shared<Mapper_00>(rom_banks, ram_banks);
             break;
+
         default:
             break;
     }
-    // Close the ROM file
 
+    // Close the ROM file
     input_file.close();
 }
 
 bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
+    uint32_t mapped_addr = 0;
+    if(p_mapper->cpu_map_write(addr, mapped_addr)) {
+        cart_rom[mapped_addr] = data;
+        return true;
+    }
     return false;
 }
 
-bool Cartridge::cpu_read(uint16_t addr, bool read_only) {
+bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
+    uint32_t mapped_addr = 0;
+    if(p_mapper->cpu_map_read(addr, mapped_addr)) {
+        data = cart_rom[mapped_addr];
+        return true;
+    }
     return false;
+}
+
+uint8_t Cartridge::viewport_get_data(uint16_t addr) {
+    uint8_t data = 0x00;
+
+    return data;
 }
