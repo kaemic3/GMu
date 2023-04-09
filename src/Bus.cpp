@@ -41,6 +41,7 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
         data = wram[addr & 0x1fff];
     }
     // Check if the passed address is for VRAM
+    // TODO: Add check so the PPU can block access to VRAM
     else if (addr >= 0x8000 && addr <= 0x9fff) {
         // Mask the passed address so it is offset to 0x0000
         data = ppu.cpu_read(addr & 0x1fff, read_only);
