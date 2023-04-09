@@ -19,6 +19,9 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
         // Mask the passed address so it is offset to 0x0000
         ppu.cpu_write(addr & 0x1fff, data);
     }
+    else {
+        printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
+    }
 }
 
 uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
@@ -37,6 +40,12 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
         return 0x00;
 }
 
-void Bus::insert_cartridge(std::shared_ptr<Cartridge> &cartridge) {
+void Bus::reset() {
+    // CPU reset not yet implemented
+    cpu.reset();
+    system_clock_counter = 0;
+}
+
+void Bus::insert_cartridge(const std::shared_ptr<Cartridge> &cartridge) {
     cart = cartridge;
 }
