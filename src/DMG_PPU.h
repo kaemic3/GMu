@@ -16,7 +16,7 @@ public:
 
     // Clock function
     void clock();
-
+private:
     // Initialize 8 KiB VRAM
     std::array<uint8_t, 8 * 1024> vram = {};
     // Initialize OAM
