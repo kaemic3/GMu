@@ -77,6 +77,9 @@ void SM83::clock() {
 bool SM83::complete() {
     return cycles == 0;
 }
+void SM83::reset() {
+    // Reset all registers to initial values
+}
 // Returns 1 if the flag bit is set and 0 if reset
 uint8_t SM83::getFlag(SM83_FLAGS f) {
     // If the specified bit is set return 1 else return 0
