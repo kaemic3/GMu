@@ -13,6 +13,7 @@
 #include <memory>
 #include "SM83.h"
 #include "Bus.h"
+#include "Cartridge.h"
 
 namespace GMu {
     class zWindow;
@@ -35,6 +36,7 @@ namespace GMu {
     static zWindow *rom_select;
     // Bus object for emulator
     static Bus gb;
+    static std::shared_ptr<Cartridge> gb_cart;
 
     // Classes
 
@@ -238,6 +240,7 @@ namespace GMu {
         std::unique_ptr<zText> sp_value;
     };
 
+    // Needs to be re-written for the memory map implementation
     class zMemoryViewport : public zTextViewport {
     public:
         zMemoryViewport(GMu::zMainWindow *window, Bus *bus);
