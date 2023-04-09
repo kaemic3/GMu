@@ -44,6 +44,9 @@ int main(int argc, char *argv[]) {
                     case SDLK_s:
                         GMu::gb.cpu.sp++;
                         break;
+                    case SDLK_p:
+                        GMu::gb.cpu.pc = 0x0100;
+                        break;
                     case SDLK_UP:
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateUp);
                         break;
