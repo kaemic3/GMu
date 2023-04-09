@@ -13,7 +13,9 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    //GMu::LoadBinaryFile("../gb_snek.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../gb_snek.gb");
+    // Insert the cartridge into the bus
+    GMu::gb.insert_cartridge(GMu::gb_cart);
     // While app is running
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
@@ -49,10 +51,10 @@ int main(int argc, char *argv[]) {
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateDown);
                         break;
                     case SDLK_m:
-                        GMu::gb.wram[0xffff]++;
+                        GMu::gb.cpu_write(0xdfff, (GMu::gb.cpu_read(0xdfff) + 1));
                         break;
                     case SDLK_n:
-                        GMu::gb.wram[0x0000]++;
+                        GMu::gb.cpu_write(0xe000, (GMu::gb.cpu_read(0xc000) + 1));
                         break;
                     case SDLK_RETURN:
                         // Do an instruction
