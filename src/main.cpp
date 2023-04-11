@@ -16,6 +16,10 @@ int main(int argc, char *argv[]) {
     GMu::gb_cart = std::make_shared<Cartridge>("../gb_snek.gb");
     // Insert the cartridge into the bus
     GMu::gb.insert_cartridge(GMu::gb_cart);
+    // TODO: Need to load the boot rom
+    // For now set pc to 0x0100 and sp to 0xfffe
+    GMu::gb.cpu.pc = 0x0100;
+    GMu::gb.cpu.sp = 0xfffe;
     // While app is running
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
@@ -39,7 +43,7 @@ int main(int argc, char *argv[]) {
                         break;
                     case SDLK_SPACE:
                         // Step one clock cycle
-                        GMu::gb.cpu.clock();
+                        GMu::gb.clock();
                         break;
                     case SDLK_s:
                         GMu::gb.cpu.sp++;
@@ -61,10 +65,10 @@ int main(int argc, char *argv[]) {
                         break;
                     case SDLK_RETURN:
                         // Do an instruction
-                        do { GMu::gb.cpu.clock(); } while (!GMu::gb.cpu.complete());
+                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
                         // CPU clock runs slower than system clock, so it may complete additional clock cycles.
                         // Drain those out
-                        do { GMu::gb.cpu.clock(); } while (GMu::gb.cpu.complete());
+                        do { GMu::gb.clock(); } while (GMu::gb.cpu.complete());
                         break;
                 }
             }
