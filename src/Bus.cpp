@@ -3,6 +3,7 @@
 Bus::Bus() {
     // Clear RAM
     for(uint8_t i : wram) i = 0x00;
+    for(uint8_t i : hram) i = 0x00;
 
     // connect cpu to bus
     cpu.ConnectBus(this);
@@ -19,10 +20,15 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
         // and so the offset of the passed address is 0x0000
         wram[addr & 0x1fff] = data;
     }
+    // Check if the passed address is for HRAM
+    else if(addr >= 0xff80 && addr <= 0xfffe) {
+        // Apply the mask to the address
+       hram[addr & 0x007f] = data;
+    }
+
     // Check if the passed address is for VRAM
-    else if (addr >= 0x8000 && addr <= 0x9fff) {
-        // Mask the passed address so it is offset to 0x0000
-        ppu.cpu_write(addr & 0x1fff, data);
+   // Mask the passed address to set the offset to 0x0000
+    else if (ppu.cpu_write(addr, data)) {
     }
     else {
         printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
@@ -40,14 +46,24 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
         // and so the offset of the passed address is 0x0000
         data = wram[addr & 0x1fff];
     }
+    // Check if the passed address is for HRAM
+    else if(addr >= 0xff80 && addr <= 0xfffe) {
+        // Apply the mask to the address
+        data = hram[addr & 0x007f];
+    }
     // Check if the passed address is for VRAM
     // TODO: Add check so the PPU can block access to VRAM
-    else if (addr >= 0x8000 && addr <= 0x9fff) {
-        // Mask the passed address so it is offset to 0x0000
-        data = ppu.cpu_read(addr & 0x1fff, read_only);
+    else if (ppu.cpu_read(addr, data)) {
     }
     // If the address in not valid, return 0
     return data;
+}
+
+void Bus::clock() {
+    ppu.clock();
+    cpu.clock();
+
+    system_clock_counter++;
 }
 
 void Bus::reset() {
