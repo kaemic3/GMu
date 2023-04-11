@@ -3580,9 +3580,8 @@ uint8_t SM83::ld_abs_hl_a() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    // Write the data in B into the address stored in HL
+    // Write the data in A into the address stored in HL
     cpu_write(addr_abs, a_reg);
-    return 0;
     return 0;
 }
 
