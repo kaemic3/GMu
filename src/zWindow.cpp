@@ -38,7 +38,7 @@ namespace GMu {
         w_width = SCREEN_WIDTH;
         w_height = SCREEN_HEIGHT;
         // Create renderer
-        p_renderer = SDL_CreateRenderer(p_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        p_renderer = SDL_CreateRenderer(p_window, -1, SDL_RENDERER_ACCELERATED);
         if(p_renderer == nullptr) {
             printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
             SDL_DestroyWindow(p_window);
