@@ -157,13 +157,16 @@ namespace GMu {
             // Check for 16-bit value
             if(t.first->t_u16)
                 t.first->t_string = ToHexString(*((uint16_t *) t.second), true);\
-        // Check for binary
+            // Check for binary
             else if(t.first->t_binary)
                 t.first->t_string = ToBinaryString(*((uint8_t *) t.second));
-                // 8-bit hex
-            else if(!t.first->t_binary && !t.first->t_u16)
+            // Check for decimal
+            else if(t.first->t_dec)
+                t.first->t_string = std::to_string(*((uint32_t *) t.second));
+            // 8-bit hex
+            else if(!t.first->t_binary && !t.first->t_u16 && !t.first->t_dec)
                 t.first->t_string = ToHexString(*(uint8_t *) t.second, false);
-                // Error, should be impossible to get here
+            // Error, should be impossible to get here
             else {
                 printf("Error:void* in mutable_text vector for zText: %s is unknown.\n",t.first->t_string.c_str());
                 return;
@@ -292,8 +295,15 @@ namespace GMu {
         all_text.push_back(sp_value.get());
         mutable_text.emplace_back(sp_value.get(), &p_bus->cpu.sp);
 
-        // SP grouping
+        // Clock count
+        clock_count_text = std::make_unique<zText>("Clocks:", BORDER_OFFSET + FONT_SIZE, sp_value->t_y + (FONT_SIZE * 2), &viewport_font_color, viewport_font);
+        all_text.push_back(clock_count_text.get());
+        GenerateTextTexture(clock_count_text.get());
 
+        clock_count_value = std::make_unique<zText>(std::to_string(GMu::gb.system_clock_counter), clock_count_text->t_x + (FONT_SIZE * 7), clock_count_text->t_y, &viewport_font_color, viewport_font, false, false, true);
+        all_text.push_back(clock_count_value.get());
+        mutable_text.emplace_back(clock_count_value.get(), &p_bus->system_clock_counter);
+        GenerateTextTexture(clock_count_value.get());
     }
 
 
