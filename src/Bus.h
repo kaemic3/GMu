@@ -20,6 +20,7 @@ public:
 
     // Initialize ram - Note need the {} for it to default initialize
     std::array<uint8_t, 8 * 1024> wram{};
+    std::array<uint8_t, 127> hram{};
     // Helper functions for reading and writing RAM
     void cpu_write(uint16_t addr, uint8_t data);
     uint8_t cpu_read(uint16_t addr, bool read_only = false);
