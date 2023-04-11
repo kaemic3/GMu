@@ -225,6 +225,7 @@ namespace GMu {
         std::unique_ptr<zText> flags_key;
         std::unique_ptr<zText> pc_text;
         std::unique_ptr<zText> sp_text;
+        std::unique_ptr<zText> clock_count_text;
 
         // Mutable
         std::unique_ptr<zText> a_value;
@@ -238,6 +239,7 @@ namespace GMu {
         std::unique_ptr<zText> f_binary;
         std::unique_ptr<zText> pc_value;
         std::unique_ptr<zText> sp_value;
+        std::unique_ptr<zText> clock_count_value;
     };
 
     // Needs to be re-written for the memory map implementation
@@ -294,8 +296,8 @@ namespace GMu {
         friend class zDebugViewport;
         friend class zMemoryViewport;
     public:
-        zText(const std::string &string, int x, int y, SDL_Color *color, TTF_Font *font, bool p16Bit = false, bool binary = false, int fontSize = 16) :
-                t_string(string), t_x(x), t_y(y), t_color(color), t_font(font), t_u16(p16Bit), t_binary(binary), t_font_size(fontSize), t_width(0), t_height(0)
+        zText(const std::string &string, int x, int y, SDL_Color *color, TTF_Font *font, bool p16Bit = false, bool binary = false, bool dec = false, int fontSize = 16) :
+                t_string(string), t_x(x), t_y(y), t_color(color), t_font(font), t_u16(p16Bit), t_binary(binary), t_dec(dec), t_font_size(fontSize), t_width(0), t_height(0)
         {  }
         ~zText() = default;
     private:
@@ -307,6 +309,7 @@ namespace GMu {
         std::string t_string;
         bool t_u16;
         bool t_binary;
+        bool t_dec;
         SDL_Color* t_color = nullptr;
         SDL_Texture *t_texture = nullptr;
         TTF_Font *t_font = nullptr;
