@@ -28,6 +28,8 @@ public:
     // Current scanline
     // uint32_t to make it easier to draw to the debug viewport
     uint32_t ly = 0;
+
+    bool frame_complete = false;
 private:
     // Initialize 8 KiB VRAM
     std::array<uint8_t, 8 * 1024> vram = {};

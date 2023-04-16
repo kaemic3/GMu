@@ -52,6 +52,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 // This website was instrumental to the creation of this clock function
 
 void DMG_PPU::clock() {
+    frame_complete = false;
     switch (state) {
         case OAMSearch:
             // Need to get the data for upto 10 sprites on this scanline
@@ -96,6 +97,7 @@ void DMG_PPU::clock() {
                 if (ly == 153) {
                     ly = 0;
                     state = OAMSearch;
+                    frame_complete = true;
                 }
             }
             break;
