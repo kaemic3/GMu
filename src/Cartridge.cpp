@@ -80,6 +80,7 @@ Cartridge::Cartridge(const std::string &directory) {
             break;
     }
     // Get RAM bank count
+    // Each case refers to the code specified in the pan docs
     switch (header.ram_size) {
         case 0x00:
             ram_banks = 0x00;
