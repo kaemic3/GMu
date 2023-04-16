@@ -16,11 +16,26 @@ public:
 
     // Clock function
     void clock();
+
+    // An enum that contains the different states of the PPU
+    enum PPUState {
+        OAMSearch,
+        PixelTransfer,
+        HBlank,
+        VBlank
+    } state;
+
+    // Current scanline
+    // uint32_t to make it easier to draw to the debug viewport
+    uint32_t ly = 0;
 private:
     // Initialize 8 KiB VRAM
     std::array<uint8_t, 8 * 1024> vram = {};
     // Initialize OAM
     std::array<uint8_t, 160> oam = {};
+
+    // Clock count
+    uint32_t clock_count = 0;
 };
 
 
