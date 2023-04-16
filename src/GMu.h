@@ -226,6 +226,7 @@ namespace GMu {
         std::unique_ptr<zText> pc_text;
         std::unique_ptr<zText> sp_text;
         std::unique_ptr<zText> clock_count_text;
+        std::unique_ptr<zText> ly_register_text;
 
         // Mutable
         std::unique_ptr<zText> a_value;
@@ -240,6 +241,7 @@ namespace GMu {
         std::unique_ptr<zText> pc_value;
         std::unique_ptr<zText> sp_value;
         std::unique_ptr<zText> clock_count_value;
+        std::unique_ptr<zText> ly_register_value;
     };
 
     // Needs to be re-written for the memory map implementation

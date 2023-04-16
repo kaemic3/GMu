@@ -304,6 +304,16 @@ namespace GMu {
         all_text.push_back(clock_count_value.get());
         mutable_text.emplace_back(clock_count_value.get(), &p_bus->system_clock_counter);
         GenerateTextTexture(clock_count_value.get());
+
+        // LY register
+        ly_register_text = std::make_unique<zText>("LY:", BORDER_OFFSET + FONT_SIZE, clock_count_value->t_y + (FONT_SIZE * 2), &viewport_font_color, viewport_font);
+        all_text.push_back(ly_register_text.get());
+        GenerateTextTexture(ly_register_text.get());
+
+        ly_register_value = std::make_unique<zText>(std::to_string(GMu::gb.ppu.ly), ly_register_text->t_x + (FONT_SIZE * 3), ly_register_text->t_y, &viewport_font_color, viewport_font, false, false, true);
+        all_text.push_back(ly_register_value.get());
+        mutable_text.emplace_back(ly_register_value.get(), &p_bus->ppu.ly);
+        GenerateTextTexture(ly_register_value.get());
     }
 
 
