@@ -22,6 +22,8 @@ int main(int argc, char *argv[]) {
     GMu::gb.cpu.sp = 0xfffe;
     // While app is running
     while(!quit) {
+
+
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
             if (e.type == SDL_QUIT)
@@ -42,8 +44,8 @@ int main(int argc, char *argv[]) {
                         GMu::gb.cpu.f_reg++;
                         break;
                     case SDLK_SPACE:
-                        // Step one clock cycle
-                        GMu::gb.clock();
+                        // Run until one complete instruction has run
+                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
                         break;
                     case SDLK_s:
                         GMu::gb.cpu.sp++;
@@ -64,11 +66,8 @@ int main(int argc, char *argv[]) {
                         GMu::gb.cpu_write(0xe000, (GMu::gb.cpu_read(0xc000) + 1));
                         break;
                     case SDLK_RETURN:
-                        // Do an instruction
-                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
-                        // CPU clock runs slower than system clock, so it may complete additional clock cycles.
-                        // Drain those out
-                        do { GMu::gb.clock(); } while (GMu::gb.cpu.complete());
+                        // Run until a complete frame
+                        do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
                         break;
                 }
             }
@@ -83,7 +82,8 @@ int main(int argc, char *argv[]) {
         GMu::main_window->RenderViewports();
         // Show window renderer
         GMu::window_list[0]->ShowRenderer();
-        // Check to see if main window is closed
+        // Check to see if main window is closed - Need to change so the program kills only on the close event,
+        // rather than if the window is minimized/closed
         if(!GMu::main_window->IsShown())
             quit = true;
         // Check to see if any sub windows were closed
