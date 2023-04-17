@@ -8,6 +8,13 @@ DMG_PPU::DMG_PPU() {
 
     // Default state of the PPU
     state = OAMSearch;
+    // Initialize palettes
+    bgp = {0, 0, 0, 0};
+    obp0 = {0, 0, 0, 0};
+    obp1 = {0, 0, 0, 0};
+    // Initialize registers
+    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 0};
+    stat = {0, 0, 0, 0, 0, 0, 0};
 }
 
 // Need to add checks for when the PPU is accessing RAM directly since the
