@@ -47,7 +47,7 @@ public:
     };
 
     // Connect the bus pointer of the CPU to an actual bus object
-    void ConnectBus(Bus *n) { bus = n; }
+    void connect_bus(Bus *p_bus) { bus = p_bus; }
 
     // Need to write functions for each opcode
     // https://gbdev.io/gb-opcodes/optables/
