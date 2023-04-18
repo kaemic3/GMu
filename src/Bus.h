@@ -25,7 +25,11 @@ public:
     void cpu_write(uint16_t addr, uint8_t data);
     uint8_t cpu_read(uint16_t addr, bool read_only = false);
 
-
+    // Interrupts?? Should they go here??
+    // https://gbdev.io/pandocs/Interrupts.html
+    uint8_t ime = 0x00;     // Interrupt master enable flag - 0 =  Disable all interrupts, 1 = Enable all interrupts in IE reg
+    uint8_t ie_reg = 0x00;  // Interrupt enable register @ 0xFFFF
+    uint8_t if_reg = 0x00;
     // Total clock count
     uint32_t system_clock_counter = 0;
     // System functions
