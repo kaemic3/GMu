@@ -29,12 +29,6 @@ public:
     uint16_t sp = 0x0000;   // SP should only work in RAM, not ROM
     uint16_t pc = 0x0000;
 
-    // Interrupts
-    // https://gbdev.io/pandocs/Interrupts.html
-
-    uint8_t ime = 0x00;     // Interrupt master enable flag - 0 =  Disable all interrupts, 1 = Enable all interrupts in IE reg
-    uint8_t ie_reg = 0x00;  // Interrupt enable register @ 0xFFFF
-    uint8_t if_reg = 0x00;
 
     // Use f_reg for flags
     enum SM83_FLAGS{
