@@ -1,4 +1,5 @@
 #include "DMG_PPU.h"
+#include "Bus.h"
 
 DMG_PPU::DMG_PPU() {
     // Clear VRAM
@@ -8,10 +9,6 @@ DMG_PPU::DMG_PPU() {
 
     // Default state of the PPU
     state = OAMSearch;
-    // Initialize palettes
-    bgp = {0, 0, 0, 0};
-    obp0 = {0, 0, 0, 0};
-    obp1 = {0, 0, 0, 0};
     // Initialize registers
     lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 0};
     stat = {0, 0, 0, 0, 0, 0, 0};
@@ -31,6 +28,56 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data) {
         oam[addr & 0x009f] = data;
         return true;
     }
+    // Check for LCDC register
+    else if (addr == 0xff40) {
+        lcdc.data = data;
+        return true;
+    }
+    // Check for STAT register
+    else if (addr == 0xff41) {
+        stat.data = data;
+        return true;
+    }
+    // Check for write to SCY register
+    else if (addr == 0xff42) {
+        scy = data;
+        return true;
+    }
+    // Check for write to SCX register
+    else if (addr == 0xff43) {
+        scx = data;
+        return true;
+    }
+    // Check for write to LYC register
+    else if (addr == 0xff45) {
+        lyc = data;
+        return true;
+    }
+    // Check if writing to BGP
+    else if (addr == 0xff47) {
+        bgp = data;
+        return true;
+    }
+    // Check if writing to OBP0
+    else if (addr == 0xff48) {
+        obp0 = data;
+        return true;
+    }
+    // Check if writing to OBP1
+    else if (addr == 0xff49) {
+        obp1 = data;
+        return true;
+    }
+    // Check for write to WY register
+    else if (addr == 0xff4a) {
+        wy = data;
+        return true;
+    }
+    // Check for write to WX register
+    else if (addr == 0xff4b) {
+        wx = data;
+        return true;
+    }
     return false;
 }
 
@@ -48,9 +95,59 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
         data = oam[addr & 0x009f];
         return true;
     }
+    // Check for LCDC register
+    else if (addr == 0xff40) {
+        data = lcdc.data ;
+        return true;
+    }
+    // Check for STAT register
+    else if (addr == 0xff41) {
+        data = stat.data;
+        return true;
+    }
+    // Check for SCY register
+    else if (addr == 0xff42) {
+        data = scy;
+        return true;
+    }
+    // Check for SCX register
+    else if (addr == 0xff43) {
+        data = scx;
+        return true;
+    }
     // Check for LY register read
     else if (addr == 0xff44) {
         data = ly;
+        return true;
+    }
+    // Check for LYC register read
+    else if (addr == 0xff45) {
+        data = lyc;
+        return true;
+    }
+    // Check if reading the BGP
+    else if (addr == 0xff47) {
+        data = bgp;
+        return true;
+    }
+    // Check if reading OBP0
+    else if (addr == 0xff48) {
+        data = obp0;
+        return true;
+    }
+    // Check if reading OBP1
+    else if (addr == 0xff49) {
+        data = obp1;
+        return true;
+    }
+    // Check for WYUregister
+    else if (addr == 0xff4a) {
+        data = wy;
+        return true;
+    }
+    // Check for WX register
+    else if (addr == 0xff4b) {
+        data = wx;
         return true;
     }
     return false;
@@ -72,7 +169,13 @@ void DMG_PPU::clock() {
         case PixelTransfer:
             // Push pixel data to the screen
             // Need to implement the pixel FIFO and pixel fetcher for the bg/win and the sprites
-            state = HBlank;
+
+            // Increment the position of the pixel output
+            x++;
+            if (x == 160){
+                x = 0;
+                state = HBlank;
+            }
             break;
         case HBlank:
             // Check to see if the entire scanline has been completed by looking at the number of clocks
