@@ -6,7 +6,8 @@ Bus::Bus() {
     for(uint8_t i : hram) i = 0x00;
 
     // connect cpu to bus
-    cpu.ConnectBus(this);
+    cpu.connect_bus(this);
+    ppu.connect_bus(this);
 }
 
 void Bus::cpu_write(uint16_t addr, uint8_t data) {
@@ -60,8 +61,8 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
 }
 
 void Bus::clock() {
-    ppu.clock();
     cpu.clock();
+    ppu.clock();
 
     system_clock_counter++;
 }
