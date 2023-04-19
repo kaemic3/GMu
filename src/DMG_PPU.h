@@ -5,6 +5,8 @@
 #include <array>
 #include <queue>
 
+// Forward declare Bus and Fetcher
+
 class Bus;
 class Fetcher;
 

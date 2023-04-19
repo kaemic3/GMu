@@ -95,7 +95,7 @@ Cartridge::Cartridge(const std::string &directory) {
 
     // Point the ifstream to the beginning of the file
     input_file.seekg(0, std::ios::beg);
-    // Resize the ROM - Keep in mind banks are 16 KiB
+    // Resize the ROM - Keep in mind banks are 16 KiB <- Need to double-check this
     cart_rom.resize(rom_banks * 16384);
     // Read in the ROM
     input_file.read((char*)cart_rom.data(), cart_rom.size());
@@ -120,6 +120,7 @@ Cartridge::Cartridge(const std::string &directory) {
 
 bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
     uint32_t mapped_addr = 0;
+    // Check if the mapper needs to handle the write call
     if(p_mapper->cpu_map_write(addr, mapped_addr)) {
         cart_rom[mapped_addr] = data;
         return true;
@@ -129,6 +130,7 @@ bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
 
 bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
     uint32_t mapped_addr = 0;
+    // Check if the mapper needs to handle the read call
     if(p_mapper->cpu_map_read(addr, mapped_addr)) {
         data = cart_rom[mapped_addr];
         return true;
@@ -136,6 +138,8 @@ bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
     return false;
 }
 
+// May not be needed?? Should implement something in the Bus that the front end can grab rather than
+// directly access the Cartridge class
 uint8_t Cartridge::viewport_get_data(uint16_t addr) {
     uint8_t data = 0x00;
 

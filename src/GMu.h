@@ -15,6 +15,8 @@
 #include "Bus.h"
 #include "Cartridge.h"
 
+// Need to move the Bus gb, the Cartridge, and the zWindows to the main file
+// This way we should be able to make headers for the SDL stuff
 namespace GMu {
     class zWindow;
     class zViewport;
