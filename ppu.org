@@ -2,4 +2,5 @@
 
 Plan for the PPU implementation
 
-*
+* 1. Get Tile ID
++
