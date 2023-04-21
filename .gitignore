@@ -9,4 +9,5 @@
 /dataSources.local.xml
 
 /cmake-build-debug/
+/cmake-build-release/
 CMakeLists.txt
