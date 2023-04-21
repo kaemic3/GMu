@@ -76,6 +76,9 @@ void Bus::reset() {
     // Need to implement a PPU reset
     system_clock_counter = 0;
 }
+void Bus::push_pixel(uint8_t pixel, uint32_t index) {
+    screen[index] = pixel;
+}
 
 void Bus::insert_cartridge(const std::shared_ptr<Cartridge> &cartridge) {
     cart = cartridge;

@@ -8,6 +8,8 @@
 #include "DMG_PPU.h"
 #include "Cartridge.h"
 
+
+
 class Bus {
 public:
     Bus();
@@ -22,6 +24,8 @@ public:
     std::array<uint8_t, 8 * 1024> wram{};
     std::array<uint8_t, 127> hram{};
 
+    // Screen data
+    std::array<uint8_t, 160 * 144> screen{};
     // Helper functions for reading and writing RAM
     void cpu_write(uint16_t addr, uint8_t data);
     uint8_t cpu_read(uint16_t addr, bool read_only = false);
@@ -36,6 +40,8 @@ public:
     // System functions
     void clock();
     void reset();
+    // Push a pixel to the screen array
+    void push_pixel(uint8_t pixel, uint32_t index);
     // Function to load a cartridge into the Bus class
     void insert_cartridge(const std::shared_ptr<Cartridge> &cartridge);
 };
