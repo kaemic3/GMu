@@ -4,13 +4,14 @@
 #include <cstdint>
 #include <array>
 #include <queue>
+#include "Pixel.h"
+#include "Fetcher.h"
 
-// Forward declare Bus and Fetcher
-
+// Forward declare Bus
 class Bus;
-class Fetcher;
 
 class DMG_PPU {
+friend struct Fetcher;
 public:
     DMG_PPU();
     ~DMG_PPU() = default;
@@ -34,21 +35,12 @@ public:
         VBlank
     } state;
 
-    // Data the FIFO will need
-    struct Pixel {
-        uint8_t color;
-        uint8_t palette;
-        uint8_t bg_priority;
-    };
+
 
     // Color palettes
     uint8_t bgp = 0;
     uint8_t obp0 = 0;
     uint8_t obp1 = 0;
-
-    // Pixel FIFOS - these need to be 16 in size
-    std::queue<Pixel> fifo_bg;
-    std::queue<Pixel> fifo_obj;
 
     // Set to true if the frame has been completed
     bool frame_complete = false;
@@ -63,6 +55,28 @@ public:
     uint8_t lyc = 0;
 
 private:
+    // This will act as the pixel FIFO fetcher
+    Fetcher fetch;
+    // Used in the pixel transfer state
+
+    uint16_t tilemap_address = 0x0000;
+    uint16_t tiledata_address = 0x0000;
+    uint8_t tile_id = 0x00;
+    uint8_t tile_x = 0;
+    uint8_t tile_y = 0;
+    uint8_t tile_line = 0;
+    uint8_t tile_low = 0;
+    uint8_t tile_high = 0;
+    uint8_t tile_color = 0;
+
+
+    // Pixel FIFOS - these need to be 16 in size
+    std::queue<Pixel> fifo_bg;
+    std::queue<Pixel> fifo_obj;
+    // FIFO push
+    void fifo_push(std::array<Pixel, 8> pixels);
+    // Clear's a FIFO
+    static void clear_fifo(std::queue<Pixel> &q);
     // Bus pointer
     Bus *bus = nullptr;
     // Initialize 8 KiB VRAM
@@ -78,14 +92,14 @@ private:
     // LCD control register - top to bottom bit 0 - 7
     union lcdc_register {
         struct {
-            unsigned int bg_window_enable        : 1;
-            unsigned int obj_enable              : 1;
-            unsigned int obj_size                : 1;
-            unsigned int bg_tile_map_area        : 1;
-            unsigned int bg_win_tile_data_area   : 1;
-            unsigned int win_enable              : 1;
-            unsigned int win_tile_map_area       : 1;
-            unsigned int lcd_ppu_enable          : 1;
+            uint8_t bg_window_enable        : 1;
+            uint8_t obj_enable              : 1;
+            uint8_t obj_size                : 1;
+            uint8_t bg_tile_map_area        : 1;
+            uint8_t bg_win_tile_data_area   : 1;
+            uint8_t win_enable              : 1;
+            uint8_t win_tile_map_area       : 1;
+            uint8_t lcd_ppu_enable          : 1;
         };
         uint8_t data;
     } lcdc;
@@ -93,13 +107,13 @@ private:
     // Stat register - top to bottom bit 0 - 7
     union stat_register {
         struct {
-            unsigned int mode_flag      : 2;    // Read only
-            unsigned int lyc_ly_flag    : 1;    // Read only
-            unsigned int hblank_int_src : 1;
-            unsigned int vblank_int_src : 1;
-            unsigned int oam_int_src    : 1;
-            unsigned int lyc_int_src    : 1;
-            unsigned int unused         : 1;
+            uint8_t mode_flag      : 2;    // Read only
+            uint8_t lyc_ly_flag    : 1;    // Read only
+            uint8_t hblank_int_src : 1;
+            uint8_t vblank_int_src : 1;
+            uint8_t oam_int_src    : 1;
+            uint8_t lyc_int_src    : 1;
+            uint8_t unused         : 1;
         };
         uint8_t data;
     } stat;
@@ -110,11 +124,8 @@ private:
     // Window registers
     uint8_t wx = 0;
     uint8_t wy = 0;
-};
-
-// This will act as the pixel FIFO fetcher
-class Fetcher {
 
 };
+
 
 #endif //GMU_DMG_PPU_H

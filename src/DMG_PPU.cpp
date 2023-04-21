@@ -157,8 +157,10 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 
 void DMG_PPU::clock() {
     frame_complete = false;
+    // Need to make sure we are updating the stat mode flag
     switch (state) {
         case OAMSearch:
+            stat.mode_flag = 0;
             // Need to get the data for upto 10 sprites on this scanline
             // This always takes 40 clocks to complete
             if (clock_count == 40) {
@@ -167,14 +169,26 @@ void DMG_PPU::clock() {
             }
             break;
         case PixelTransfer:
+            // Set the fetcher x and y - pulled from the pan docs
+            fetch.x = (((scx + x) / 8)) & 0x1f;
+            fetch.y = (ly + scy) & 0xff;
+            // Run a clock of the fetcher
+            fetch.clock(this);
+
             // Push pixel data to the screen
             // Need to implement the pixel FIFO and pixel fetcher for the bg/win and the sprites
-
-            // Increment the position of the pixel output
-            x++;
+            if(!fifo_bg.empty()) {
+                // Push a pixel to the screen from bg FIFO
+                bus->push_pixel(fifo_bg.front().color, x + (ly * 160));
+                fifo_bg.pop();
+                // Increment the position of the pixel output
+                x++;
+            }
             if (x == 160){
                 x = 0;
                 state = HBlank;
+                // Clear the fifo
+                clear_fifo(fifo_bg);
             }
             break;
         case HBlank:
@@ -216,4 +230,17 @@ void DMG_PPU::clock() {
     }
     // Increment the clock count at the end of the clock call
     clock_count++;
+}
+// Take a copy of the pixels and push them into the fifo
+void DMG_PPU::fifo_push(std::array<Pixel, 8> pixels) {
+    for(auto i : pixels)  {
+        fifo_bg.push(i);
+    }
+}
+
+void DMG_PPU::clear_fifo(std::queue<Pixel> &q) {
+    // Make an empty queue
+    std::queue<Pixel> empty;
+    // Swap the contents of the queues
+    std::swap(q, empty);
 }
