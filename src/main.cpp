@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../gb_snek.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMs/gb_snek.gb");
     // Insert the cartridge into the bus
     GMu::gb.insert_cartridge(GMu::gb_cart);
     // TODO: Need to load the boot rom
@@ -22,8 +22,6 @@ int main(int argc, char *argv[]) {
     GMu::gb.cpu.sp = 0xfffe;
     // While app is running
     while(!quit) {
-
-
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
             if (e.type == SDL_QUIT)
@@ -68,6 +66,8 @@ int main(int argc, char *argv[]) {
                     case SDLK_RETURN:
                         // Run until a complete frame
                         do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+                        // Need to grab the screen state
+
                         break;
                 }
             }
