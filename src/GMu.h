@@ -292,6 +292,9 @@ namespace GMu {
         void Render() override;
         void Update() override;
         void Input(ViewportEvent event) override;
+
+        // Screen memory
+
     };
 
 

@@ -66,8 +66,6 @@ int main(int argc, char *argv[]) {
                     case SDLK_RETURN:
                         // Run until a complete frame
                         do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
-                        // Need to grab the screen state
-
                         break;
                 }
             }

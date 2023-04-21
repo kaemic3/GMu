@@ -474,6 +474,57 @@ namespace GMu {
         SDL_SetRenderDrawColor(p_window->p_renderer, 139, 208, 125, 0xff);
         SDL_RenderFillRect(p_window->p_renderer, &background);
 
+        // Render PPU
+
+        // Current pixel position
+        uint16_t x = 2;
+        uint16_t y = 2;
+
+        for(uint32_t i = 0; i < p_bus->screen.size(); i++) {
+            // GB only has 4 colors
+            // Screen size is 160 x 144 pixels
+            switch (p_bus->screen[i]) {
+                // White
+                case 0x00:
+                    // Set render color to white
+                    SDL_SetRenderDrawColor(p_window->p_renderer, 255, 255, 255, 255);
+                    // Set the render scale
+                    SDL_RenderSetScale(p_window->p_renderer, 4, 4);
+                    break;
+                case 0x01:
+                    // Set render color to gray
+                    SDL_SetRenderDrawColor(p_window->p_renderer, 169, 169, 169, 255);
+                    // Set the render scale
+                    SDL_RenderSetScale(p_window->p_renderer, 4, 4);
+                    break;
+                case 0x02:
+                    // Set render color to dark gray
+                    SDL_SetRenderDrawColor(p_window->p_renderer, 84, 84, 84, 255);
+                    // Set the render scale
+                    SDL_RenderSetScale(p_window->p_renderer, 4, 4);
+                    break;
+                case 0x03:
+                    // Set render color to black
+                    SDL_SetRenderDrawColor(p_window->p_renderer, 0, 0, 0, 255);
+                    // Set the render scale
+                    SDL_RenderSetScale(p_window->p_renderer, 4, 4);
+                    break;
+                default:
+                    break;
+            }
+            // Draw the pixel
+            SDL_RenderDrawPoint(p_window->p_renderer, (x), (y));
+            // Reset the scale
+            SDL_RenderSetScale(p_window->p_renderer, 1, 1);
+            // Change x and y
+            x++;
+            if(x == 162) {
+                y++;
+                x = 2;
+            }
+
+        }
+
     }
 
     void zPPUViewport::Update() {
