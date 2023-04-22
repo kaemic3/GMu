@@ -21,6 +21,8 @@ public:
     bool cpu_read(uint16_t addr, uint8_t &data);
     // No need for ppu_r/w functions since there is no PPU bus
 
+    // Allow cpu
+    bool cpu_access = false;
     // Connect the Bus to the PPU
     void connect_bus(Bus *p_bus) { bus = p_bus; }
 
@@ -34,8 +36,6 @@ public:
         HBlank,
         VBlank
     } state;
-
-
 
     // Color palettes
     uint8_t bgp = 0;
