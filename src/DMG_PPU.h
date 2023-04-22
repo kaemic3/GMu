@@ -58,23 +58,9 @@ private:
     // This will act as the pixel FIFO fetcher
     Fetcher fetch;
     // Used in the pixel transfer state
-
-    uint16_t tilemap_address = 0x0000;
-    uint16_t tiledata_address = 0x0000;
-    uint8_t tile_id = 0x00;
-    uint8_t tile_x = 0;
-    uint8_t tile_y = 0;
     uint8_t tile_line = 0;
-    uint8_t tile_low = 0;
-    uint8_t tile_high = 0;
-    uint8_t tile_color = 0;
+    uint16_t tilemap_row_addr = 0x0000;
 
-
-    // Pixel FIFOS - these need to be 16 in size
-    std::queue<Pixel> fifo_bg;
-    std::queue<Pixel> fifo_obj;
-    // FIFO push
-    void fifo_push(std::array<Pixel, 8> pixels);
     // Clear's a FIFO
     static void clear_fifo(std::queue<Pixel> &q);
     // Bus pointer

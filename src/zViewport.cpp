@@ -469,16 +469,11 @@ namespace GMu {
         SDL_SetRenderDrawColor(p_window->p_renderer, 31, 41, 41, 0xff);
         SDL_Rect outline = {0, 0, viewport_rect.w, viewport_rect.h};
         SDL_RenderFillRect(p_window->p_renderer, &outline);
-        // Background
-        SDL_Rect background = {10, 10, outline.w-20, outline.h-20};
-        SDL_SetRenderDrawColor(p_window->p_renderer, 139, 208, 125, 0xff);
-        SDL_RenderFillRect(p_window->p_renderer, &background);
 
         // Render PPU
-
         // Current pixel position
-        uint16_t x = 2;
-        uint16_t y = 2;
+        uint16_t x = 3;
+        uint16_t y = 3;
 
         for(uint32_t i = 0; i < p_bus->screen.size(); i++) {
             // GB only has 4 colors
@@ -518,13 +513,12 @@ namespace GMu {
             SDL_RenderSetScale(p_window->p_renderer, 1, 1);
             // Change x and y
             x++;
-            if(x == 162) {
+            if(x == 163) {
                 y++;
-                x = 2;
+                x = 3;
             }
 
         }
-
     }
 
     void zPPUViewport::Update() {

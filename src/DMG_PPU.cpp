@@ -156,6 +156,8 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 // This website was instrumental to the creation of this clock function
 
 void DMG_PPU::clock() {
+    //if (lcdc.data == 0x00 || lcdc.lcd_ppu_enable == 0)
+        //return;
     frame_complete = false;
     // Need to make sure we are updating the stat mode flag
     switch (state) {
@@ -164,31 +166,35 @@ void DMG_PPU::clock() {
             // Need to get the data for upto 10 sprites on this scanline
             // This always takes 40 clocks to complete
             if (clock_count == 40) {
+                // Init pixel transfer
+                x = 0;
+                // Get the line of pixels to be rendered
+                tile_line = ly % 8;
+                // Find the address to the current tile row in the tilemap
+                // For now assume 0x9800 is the tilemap
+                // Need to mask the address:
+                //  - Tile map is 0x7ff in size, and it starts 0x1800 from starting point of VRAM 0x8000
+                tilemap_row_addr = (0x9800 & 0x7ff + 0x1800) + (ly / 8 * 32); // <- ly / 8 * 32 gives us the Y position
+                fetch.init(tilemap_row_addr, tile_line);
+
                 state = PixelTransfer;
-                printf("Changing state to pixel transfer\n");
             }
             break;
         case PixelTransfer:
-            // Set the fetcher x and y - pulled from the pan docs
-            fetch.x = (((scx + x) / 8)) & 0x1f;
-            fetch.y = (ly + scy) & 0xff;
-            // Run a clock of the fetcher
+            // Clock the fetcher: Only clocks every 2 PPU clocks
             fetch.clock(this);
 
-            // Push pixel data to the screen
-            // Need to implement the pixel FIFO and pixel fetcher for the bg/win and the sprites
-            if(!fifo_bg.empty()) {
-                // Push a pixel to the screen from bg FIFO
-                bus->push_pixel(fifo_bg.front().color, x + (ly * 160));
-                fifo_bg.pop();
+            // Need to call bus pixel push function if there are any in the fifo
+            if(!fetch.fifo.empty()) {
+                // For now just push the color
+                bus->push_pixel(fetch.fifo.front().color, x + (ly * 160));
+                // Pop off of the FIFO
+                fetch.fifo.pop();
                 // Increment the position of the pixel output
                 x++;
             }
             if (x == 160){
-                x = 0;
                 state = HBlank;
-                // Clear the fifo
-                clear_fifo(fifo_bg);
             }
             break;
         case HBlank:
@@ -230,12 +236,6 @@ void DMG_PPU::clock() {
     }
     // Increment the clock count at the end of the clock call
     clock_count++;
-}
-// Take a copy of the pixels and push them into the fifo
-void DMG_PPU::fifo_push(std::array<Pixel, 8> pixels) {
-    for(auto i : pixels)  {
-        fifo_bg.push(i);
-    }
 }
 
 void DMG_PPU::clear_fifo(std::queue<Pixel> &q) {
