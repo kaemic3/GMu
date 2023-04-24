@@ -180,20 +180,25 @@ void DMG_PPU::clock() {
     // Need to make sure we are updating the stat mode flag
     switch (state) {
         case OAMSearch:
+            // OAM search always takes 40 clocks to complete
             stat.mode_flag = 0;
             // Need to get the data for upto 10 sprites on this scanline
-            // This always takes 40 clocks to complete
             if (clock_count == 40) {
                 // Init pixel transfer
-                x = 0;
+                pixel_count = 0;
+                pixel_x = scx / 8;
+                pixel_y = scy + ly;
                 // Get the line of pixels to be rendered
-                tile_line = ly % 8;
+                tile_line = pixel_y % 8;
                 // Find the address to the current tile row in the tilemap
+
+                // Need to determine if the current scanline should render window, or bg
+
                 // For now assume 0x9800 is the tilemap
                 // Need to mask the address:
                 //  - Tile map is 0x7ff in size, and it starts 0x1800 from starting point of VRAM 0x8000
-                tilemap_row_addr = (0x9800 & 0x7ff + 0x1800) + (ly / 8 * 32); // <- ly / 8 * 32 gives us the Y position
-                fetch.init(tilemap_row_addr, tile_line);
+                tilemap_row_addr = (0x9800 & 0x7ff + 0x1800) + (pixel_y / 8 * 32); // <- ly / 8 * 32 gives us the Y position
+                fetch.init(tilemap_row_addr, tile_line, pixel_x);
 
                 state = PixelTransfer;
             }
@@ -207,15 +212,16 @@ void DMG_PPU::clock() {
                 // Check if screen is enabled
                 if (lcdc.lcd_ppu_enable != 0) {
                     // For now just push the color
-                    bus->push_pixel(fetch.fifo.front().color, x + (ly * 160));
+                    // Need to map the color to a real color using the palette
+                    bus->push_pixel(map_color(fetch.fifo.front().color, fetch.fifo.front().palette), pixel_count + (ly * 160));
                     // Pop off of the FIFO
                     fetch.fifo.pop();
                 }
 
                 // Increment the position of the pixel output
-                x++;
+                pixel_count++;
             }
-            if (x == 160){
+            if (pixel_count == 160){
                 state = HBlank;
             }
             break;
@@ -268,9 +274,17 @@ void DMG_PPU::clock() {
         cpu_access = true;
 }
 
-void DMG_PPU::clear_fifo(std::queue<Pixel> &q) {
-    // Make an empty queue
-    std::queue<Pixel> empty;
-    // Swap the contents of the queues
-    std::swap(q, empty);
+uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {
+    // The GB has 4 colors, 0-3
+    // Palette is contains 4 2-bit values
+
+    // The color parameter contains the index of the pixel's
+    // color in the palette.
+    // First we multiply the color by 2, or shift it left 1 (both are the same).
+    // Next we shift the palette right n bits. N (the result of color << 1).
+    // Color will be a value of 0-3, so we need to multiply it by 2 to get the number of
+    // bits to shift right in palette. This effectively selects the colpr
+    // from the palette, and sets it as the bit 0 & 1.
+    // We then & the result with 3, keeping the 2 lowest bits and discarding the rest.
+    return (palette >> (color << 1)) & 0b11;
 }

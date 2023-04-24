@@ -1,8 +1,8 @@
 #include "Fetcher.h"
 #include "DMG_PPU.h"
 
-void Fetcher::init(uint16_t addr, uint8_t line) {
-    tile_index = 0;
+void Fetcher::init(uint16_t addr, uint8_t line, uint8_t offset) {
+    tile_index = offset;
     tilemap_address = addr;
     tile_line = line;
     state = GetTileId;

@@ -1,5 +1,14 @@
 #+title: ppu
 
-* Tilemap 0x9800 - 0x9fff
-* VRAM 0x8000 - 0x9fff
-Tilemap starts +0x1800 in VRAM
+* Done:
++ BG rendering
++ Some vertical scrolling
++ PPU output to the screen via SDL
+
+* Need to do:
++ Add window detection
++ Add sprite fifo
++ Add buffer that will combine pixel data from the BG/Win fifo and the sprite fifo, which is then sent to the screen
+
+** Window tiles
+The BG/Win FIFO needs to choose between the BG and Win tilemaps depending on LCDC register

@@ -14,6 +14,9 @@ int main(int argc, char *argv[]) {
     SDL_Event e;
     // Load the example ROM into memory
     GMu::gb_cart = std::make_shared<Cartridge>("../ROMs/gb_snek.gb");
+    // Load the GB boot rom into the GB
+    // Need to figure out how to load this independently of the cartridge, probably
+    //GMu::gb_cart->load_boot_rom();
     // Insert the cartridge into the bus
     GMu::gb.insert_cartridge(GMu::gb_cart);
     // TODO: Need to load the boot rom

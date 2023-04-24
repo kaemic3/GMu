@@ -138,6 +138,13 @@ bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
     return false;
 }
 
+void Cartridge::load_boot_rom(const std::string &directory) {
+    std::ifstream boot_rom;
+    // Open the boot rom in binary mode
+    boot_rom.open(directory, std::ifstream::binary);
+    boot_rom.read((char*)cart_rom.data(), 0x100);
+}
+
 // May not be needed?? Should implement something in the Bus that the front end can grab rather than
 // directly access the Cartridge class
 uint8_t Cartridge::viewport_get_data(uint16_t addr) {

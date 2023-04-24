@@ -42,14 +42,21 @@ public:
     uint8_t obp0 = 0;
     uint8_t obp1 = 0;
 
+    // Convert color to match with palette
+    static uint8_t map_color(uint8_t color, uint8_t palette);
+
     // Set to true if the frame has been completed
     bool frame_complete = false;
 
     // Current scanline
     // uint32_t to make it easier to draw to the debug viewport
     uint32_t ly = 0;
-    // X position on the current scanline
-    uint8_t x = 0;
+    // count of pixels pushed to the screen
+    uint8_t pixel_count = 0;
+    // X and Y position on the current scanline
+    uint8_t pixel_x = 0;
+    uint8_t pixel_y = 0;
+
 
     // LYC register
     uint8_t lyc = 0;
@@ -61,8 +68,6 @@ private:
     uint8_t tile_line = 0;
     uint16_t tilemap_row_addr = 0x0000;
 
-    // Clear's a FIFO
-    static void clear_fifo(std::queue<Pixel> &q);
     // Bus pointer
     Bus *bus = nullptr;
     // Initialize 8 KiB VRAM

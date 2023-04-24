@@ -26,6 +26,8 @@ public:
 
     // Screen data
     std::array<uint8_t, 160 * 144> screen{};
+    // Clear the screen
+    void clear_screen();
     // Helper functions for reading and writing RAM
     void cpu_write(uint16_t addr, uint8_t data);
     uint8_t cpu_read(uint16_t addr, bool read_only = false);
@@ -35,6 +37,8 @@ public:
     uint8_t ime = 0x00;     // Interrupt master enable flag - 0 =  Disable all interrupts, 1 = Enable all interrupts in IE reg
     uint8_t ie_reg = 0x00;  // Interrupt enable register @ 0xFFFF
     uint8_t if_reg = 0x00;
+    // Misc IO registers
+    uint8_t joypad_input = 0x00;
     // Total clock count
     uint32_t system_clock_counter = 0;
     // System functions

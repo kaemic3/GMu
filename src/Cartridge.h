@@ -16,6 +16,8 @@ public:
     bool cpu_write(uint16_t addr, uint8_t data);
     bool cpu_read(uint16_t addr, uint8_t &data);
 
+    // Load boot rom
+    void load_boot_rom(const std::string &directory = "../ROMs/dmg.bin");
     // Helper function for memory viewport
     // Will probably need to use the mapper to get the correct data from the rom
     uint8_t viewport_get_data(uint16_t addr);

@@ -11,7 +11,7 @@ struct Fetcher {
     ~Fetcher() = default;
 
     // Function to initialize the fetcher
-    void init(uint16_t addr, uint8_t line);
+    void init(uint16_t addr, uint8_t line, uint8_t offset);
 
     // Tile info
     uint16_t tilemap_address = 0x0000;
