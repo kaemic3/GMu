@@ -1,10 +1,14 @@
 #include "Fetcher.h"
 #include "DMG_PPU.h"
 
-void Fetcher::init(uint16_t addr, uint8_t line, uint8_t offset) {
-    tile_index = offset;
-    tilemap_address = addr;
+void Fetcher::init(uint16_t map_addr, uint16_t data_addr, uint8_t line, uint8_t offset, bool signed_mode, bool win_collision) {
+    tilemap_address = map_addr;
+    tiledata_base_address = data_addr;
     tile_line = line;
+    tile_index = offset;
+    signed_addressing = signed_mode;
+    window_collision = win_collision;
+
     state = GetTileId;
 
     // Clear the FIFO
@@ -30,7 +34,15 @@ void Fetcher::clock(DMG_PPU *ppu) {
 
             // Look in VRAM for the tile in the tile map
             // Masking should be applied in the PPU clock function
-            tile_id = ppu->vram[tilemap_address + tile_index];
+
+            // Make sure to check if signed addressing is needed
+            if(!signed_addressing)
+                tile_id = ppu->vram[tilemap_address + tile_index];
+            else
+                // Cast signed int if signed addressing is used. For 0x8800 mode only
+                tile_id = ppu->vram[tilemap_address + (int8_t) tile_index];
+
+
             state = GetTileLow;
             break;
 
@@ -38,7 +50,7 @@ void Fetcher::clock(DMG_PPU *ppu) {
             // Find the tile data address
             // The tile data starting address will need to be masked to 0x0000 and the offset added for 0x8800 method
             // Tile id needs to be multiplied by 0x10 or 16 to get the correct 16 byte line in tile data.
-            tiledata_address = (0x8000 & 0x0000 + 0x1000) + (tile_id * 0x10);
+            tiledata_address = tiledata_base_address + (tile_id * 0x10);
 
             // Add the offset of where the line to be fetched is
             // Keep in mind each line is 2 bytes
@@ -57,8 +69,7 @@ void Fetcher::clock(DMG_PPU *ppu) {
 
         case GetTileHigh:
             // Read in the high byte
-
-            tiledata_address = ((0x8000 & 0x0000) + 0x1000) + (tile_id * 0x10);
+            tiledata_address = tiledata_base_address + (tile_id * 0x10);
 
             // Add the offset of where the line to be fetched is
             // Keep in mind each line is 2 bytes

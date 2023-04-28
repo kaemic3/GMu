@@ -67,6 +67,14 @@ private:
     // Used in the pixel transfer state
     uint8_t tile_line = 0;
     uint16_t tilemap_row_addr = 0x0000;
+    uint16_t tiledata_addr = 0x0000;
+    bool signed_mode = false;
+    // For when the window is on
+    uint8_t win_ly = 0;
+    bool window_draw = false;
+    // For when the window is on, and there is a collision between the BG and window during a scanline
+    bool win_collision = false;
+    uint8_t win_collision_offset = 0;
 
     // Bus pointer
     Bus *bus = nullptr;

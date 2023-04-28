@@ -184,21 +184,115 @@ void DMG_PPU::clock() {
             stat.mode_flag = 0;
             // Need to get the data for upto 10 sprites on this scanline
             if (clock_count == 40) {
-                // Init pixel transfer
+                 // Init pixel transfer
+                 // Reset values for a new scanline
                 pixel_count = 0;
-                pixel_x = scx / 8;
-                pixel_y = scy + ly;
+                signed_mode = false;
+                win_collision = false;
+                win_collision_offset = 0;
+                window_draw = false;
+
+                // Set the tile data address - Window and BG share a tile data area
+                switch (lcdc.bg_win_tile_data_area) {
+                    // If lcdc.4 is not set, load 0x1000 into tiledata_addr and used signed addressing
+                    case 0:
+                        tiledata_addr = 0x1000;
+                        signed_mode = true;
+                        break;
+                        // If lcdc.4 is set, load 0x0000 into tiledata_addr
+                    case 1:
+                        tiledata_addr = 0x0000;
+                        break;
+                }
+
                 // Get the line of pixels to be rendered
-                tile_line = pixel_y % 8;
-                // Find the address to the current tile row in the tilemap
+                // Check if the window can be ignored
+                if(lcdc.win_enable == 1 && wx <= 166 && wy < 144 && (wy <= ly)) {
+                    window_draw = true;
+                    if (wx == 0 || wx == 166) {
+                        // Draw the window ignoring the first tile in the tile map
 
-                // Need to determine if the current scanline should render window, or bg
+                        // Select the correct tilemap for the window
+                        // In this case, we can completely ignore the bg for this scanline,
+                        // and all future scanlines
 
-                // For now assume 0x9800 is the tilemap
-                // Need to mask the address:
-                //  - Tile map is 0x7ff in size, and it starts 0x1800 from starting point of VRAM 0x8000
-                tilemap_row_addr = (0x9800 & 0x7ff + 0x1800) + (pixel_y / 8 * 32); // <- ly / 8 * 32 gives us the Y position
-                fetch.init(tilemap_row_addr, tile_line, pixel_x);
+                        // Set the tilemap address
+                        switch (lcdc.win_tile_map_area) {
+                            case 0:
+                                // If lcdc.6 not set, set the tilemap to 0x1800
+                                // + 1 to ignore the first tile
+                                tilemap_row_addr = 0x1800 + 1;
+                                break;
+                            case 1:
+                                // If lcdc.6 is set, set the tilemap to 0x1c00
+                                // + 1 to ignore the first tile
+                                tilemap_row_addr = 0x1c00 + 1;
+                                break;
+                        }
+                        // Now we need to add the offset for y axis
+                        tilemap_row_addr += (win_ly / 8 * 32);
+                        // Determine the tile_line using only ly
+                        tile_line = ly % 8;
+                        // Set pixel_x
+                        pixel_x = wx / 8;
+                    }
+                    else if (wx > 0 && wx < 7) {
+                        // Draw the first tile of the window at an offset
+                        // At this stage, we just need to set some offsets for later
+                    }
+                    else if (wx >=7 && wx <= 165) {
+                        // Pre-staging for a normal window position
+
+                        // First check for a collision, then save the pixel it will occur at
+                        // No collision if the window is at WCX = 7
+                        if (wx == 7) {
+                            // Set the tilemap address
+                            switch (lcdc.win_tile_map_area) {
+                                case 0:
+                                    // If lcdc.6 not set, set the tilemap to 0x1800
+                                    tilemap_row_addr = 0x1800;
+                                    break;
+                                case 1:
+                                    // If lcdc.6 is set, set the tilemap to 0x1c00
+                                    // + 1 to ignore the first tile
+                                    tilemap_row_addr = 0x1c00;
+                                    break;
+                            }
+                            // Now we need to add the offset for y axis
+                            tilemap_row_addr += (win_ly / 8 * 32);
+                            // Determine the tile_line using only ly
+                            tile_line = win_ly % 8;
+                            // Set pixel_x
+                            pixel_x = 0;
+                        }
+                        // All window tiles are aligned to the tilemap grid
+                        else if ((wx - 7) % 8 == 0) {
+
+                        }
+                        // If we get here, then there will be a mid-tile collision
+                        else {
+
+                        }
+
+                    }
+                }
+                else {
+                    // Ignore the window
+
+                    pixel_x = scx / 8;
+                    pixel_y = scy + ly;
+                    tile_line = pixel_y % 8;
+                    // Find the address to the current tile row in the tilemap
+
+                    // Need to determine if the current scanline should render window, or bg
+
+                    // For now assume 0x9800 is the tilemap
+                    // Need to mask the address:
+                    //  - Tile map is 0x7ff in size, and it starts 0x1800 from starting point of VRAM 0x8000
+                    tilemap_row_addr = (0x1800) + (pixel_y / 8 * 32); // <- ly / 8 * 32 gives us the Y position
+                }
+
+                fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_collision);
 
                 state = PixelTransfer;
             }
@@ -235,6 +329,9 @@ void DMG_PPU::clock() {
                 clock_count = 0;
                 // Increment the scanline register
                 ly++;
+                // Check if window is drawing
+                if(window_draw)
+                    win_ly++;
                 // If the new scanline is 144, then switch to VBlank
                 if (ly == 144)
                     state = VBlank;
@@ -258,6 +355,7 @@ void DMG_PPU::clock() {
                 // If we have reached the last scanline for VBlank, return to the start of the pixel drawing process
                 if (ly == 153) {
                     ly = 0;
+                    win_ly = 0;
                     state = OAMSearch;
                     frame_complete = true;
                     cpu_access = false;
