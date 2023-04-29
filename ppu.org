@@ -11,4 +11,97 @@
 + Add buffer that will combine pixel data from the BG/Win fifo and the sprite fifo, which is then sent to the screen
 
 ** Window tiles
-The BG/Win FIFO needs to choose between the BG and Win tilemaps depending on LCDC register
+The BG/Win FIFO needs to choose between the BG and Win tilemaps depending on LCDC register state:
+
++ Register states:
+  - if LCDC.5 is set, then the window is enabled
+  - if LCDC.6 is set, then the window uses 0x9c00-0x9fff, otherwise 0x9800-0x9bff is used.
+  - if LCDC.4 is set then the tile data area is 0x8000-0x8fff, otherwise tile data is located at 0x8800-0x97ff.
+    * Note the window and BG share tile data.
+
+*** This needs to be done for EACH tile in the scanline
+*Currently, the tile_index and tilemap_address are determined right before the PPU state changes from OAM search to TileTransfer. This will need to be changed so that the tile_index and tilemap_address are checked for every 8 pixels that the fetcher fetches in its state machine loop.*
+
+**** Fetcher Steps with Window added to the BG FIFO:
+***** Branch 1: Window is enabled
+1. We first need to check if the window is enabled.
+
+   If the window is not enabled:
+   * We only need to check LCDC.3 and LCDC.4 for the location of the BG tilemap, and the BG/Win tiledata. Look at Branch 2.
+
+2. Next we need to check LCDC.6 for the window tile map area.
+   * LCDC.6: 0 = 0x9800-0x9bff, 1 = 0x9c00-0x9fff
+3. Then check the WX and WY registers. These registers provide the location of the top left pixel of the Window tilemap. These registers have a range of: WX = 0-166, WY = 0-143.
+   *This means that they exist relative to the viewport, or relative to SCX and SCY.*
+   * In gb_snek, the window is positioned at WX = 7 WY = 119
+   * Keep in mind that the window is not bound to the 8x8 tile grid, and can be postitioned on any pixel in both X and Y directions.
+4. To account for the "floating" nature of the window, we need to check which tilemap we are pulling the tiles from each scanline.
+   + To do this we will:
+     - Compare the current scanline count (ly) to the WY value (Y position of the window). If ly is >= WY, then we might need to pull a tile from the window tilemap. Otherwise, for that scanline, we can ignore the window entirely.
+
+     - We will also need to keep track of when the window tile will need to be drawn. Since the window can be positioned on an individual pixel basis, that means that the window may need to be drawn in the middle of a BG tile.
+       * If the window is positioned at WCX = 8 WCY = 0, then 1 pixel of the BG will appear at the beginning of each scanline with the rest being from the window.
+         * Applying this formula to the WCX register: (WCX - 7) % 8 - will give us the number of pixels the bg will show for within the context of the tile that has the collision between the window and the BG.
+         * To find where the collision occurs:
+           1. First compare the WCY register with the LY register and wait until they are equal or LY is greater.
+           2. Keep in mind that the window should normally treat WCX = 7 as its "0" point.
+
+           3. Next check the WCX register.
+              - If WCX > 166, then ignore the window tilemap.
+              - If WCX == 166, then draw it as if it was located at 0.
+              - If WCX == 0, then the first tile of the window tilemap will need to be ignored. And apply the formula (WCX - 7) % 8 if WCX: 1 - 6 to see how many pixels will need to be popped off of the fifo before drawing to the screen.
+              - When WCX >= 7: Apply the formula (WCX - 7) so that the position of the window algins with the number of pixels that will be transfered in the PixelTransfer state of the PPU.
+                - Then during the GetTileId state use the following formula to calculate the offset from the start of the scanline to the tile that has a collision:
+                  * tile_offset = ((WCX - 7) / 8) & 0x1f) <- this result is position of the tile collision in terms of the viewport
+                  * bg_collision_offset = ((WCX - 7) % 8) <- this result is the number of pixels from the FIFO that will need to be popped off from the BG tile before discarding the rest. After this tiles will be grabbed from the window tilemap until the end of the scanline.
+                    + These values will need to be passed into the PixelTransfer state of the PPU somehow as the FIFO will need to pop the tiles off.
+                    + Need to create PPU flags that can be set depending on if the fetcher is switching from BG to the window.
+                    + Keep in mind that right after the fetcher is clocked, the fifo will pop pixels onto the screen.
+                    + Also, the FIFO gets completely emptied, then a new batch of tiles is grabbed
+
+                    * *Maybe ^^^^ needs to be determined at the beginning of each scanline??*
+                    * Right before we enter the PixelTransfer state of the PPU, we could call a function to generate the tilemap offsets, and to determine if the current scanline will have a BG/Win collision. Then from here we can use the pixel_count member of the PPU class instead of calculating it??
+
+
+
+
+4. Now we can calculate the window tile map offset and the bg tile map offset.
+   1. First calculate both offsets in during the clock count check in the OAMSearch mode of the PPU.
+   2. Create members in the Fetcher struct for these offsets: bg_tilemap_address, win_tilemap_address.
+   3. Update the start function to have parameters for both tilemaps.
+
+   *In the fetcher clock function:*
+   1. During the GetTileId state, we need to determine if we need to access the tilemap for the bg or the window.
+      - This is where we can use the SCX/SCY and WX/WY registers to determine which tile id we need to get.
+        SCX formula: ((SCX / 8) + fetcher's X pos) & 0x1f <- from PanDocs
+        SCY formula: (Current Scanline + SCY) & 0xff
+        * For WX and WY we should be able to plug them in the formula in place of SCX/SCY.
+        + The problem is know when to choose each tilemap. The window sits ontop of the bg, and the display registers (SCX/SCY & WX/WY) provide the position of the top left pixel of th
+****** Problem: If the viewport is not aligned to the tile grid (8x8), how will the PPU deal with getting the correct pixels?
++ If say SCX = 3, then 3 pixels from FIFO will be discarded, then the remaing pixels will be pushed to the screen. But, what happens at the end of the scanline? Normally, during a scanline the PPU will grab tile data information from 20 tile map poisitons. But in this case it will need to pull from an additional tile for the first 3 pixels, to fill the gap left by popping off the first 3 of the first tile.
+  * Maybe this takes care of itself?? There is no documentation on this
+
+***** Branch 2: Window is disabled
+
+
+
+
+
+**** Re-write # 2, PPU state machine and fetcher WITH window added to the BG FIFO:
+    *Assume that the window is enabled*
+    1. Right before the PPU enters the PixelTransfer state, some prep work will need to be done.
+       - Each time the state changes to PixelTransfer marks the start of a new scanline.
+       - pixel_count will need to be reset to 0.
+       - We will need to determine if the window will need to be drawn on the current scanline.
+       - We will need to calculate the tilemap offset (the starting point relative to where the viewport exists on the tilemap).
+       - Also will need to check if there will be a collision between the BG and window.
+         + To check if there will be a collision:
+           - Check if the WCY < LY: in this case ignore window and assume BG
+           - Then check WCX:
+             + If WCX == 0; ignore the first tile in the window map
+             + If WCX == 166; draw the window like it is at WCX = 0
+             + If WCX > 166; ignore the window
+             + If WCX == 1-6; Use formula WCX % 8: This will give us the number of pixels to pop off the FIFO before pushing to the screen
+             + If WCX == 7 - 165; Use formula: (WCX / 8) to get the offset from the beginning of the scanline (in terms of tiles). This number represents the tile that will have the collision in it. Then use the formula: (WCX % 8) to get the number of pixels into the tile with collision that are BG not window.
+               + The offset will be used in the fetcher not in the PPU state machine directly. This is so the fetcher will know when to change the tilemap_address it's using to the window.
+             + Using the pixel_count member of the PPU class, we can use the following formula to get the first pixel that the window will be drawn at: (WCX -7); then when the pixel_count is equal to that number, use the following formula to calculate the number of pixels that need to be popped off the FIFO: 8 - (WCX % 8). The fetcher should at this point know to change the tilemap_address it's using and when the FIFO has pixels in it again, it will pull from the window tilemap.
