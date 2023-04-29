@@ -181,16 +181,20 @@ void DMG_PPU::clock() {
     switch (state) {
         case OAMSearch:
             // OAM search always takes 40 clocks to complete
-            stat.mode_flag = 0;
+            stat.mode_flag = 2;
             // Need to get the data for upto 10 sprites on this scanline
+
+            // Init pixel transfer
             if (clock_count == 40) {
-                 // Init pixel transfer
-                 // Reset values for a new scanline
+                // Reset values for a new scanline
                 pixel_count = 0;
                 signed_mode = false;
                 win_collision = false;
-                win_collision_offset = 0;
+                win_collision_tile_offset = 0;
+                win_collision_pos = 0xff;
                 window_draw = false;
+                swap_to_win = false;
+                pop_request = false;
 
                 // Set the tile data address - Window and BG share a tile data area
                 switch (lcdc.bg_win_tile_data_area) {
@@ -205,102 +209,156 @@ void DMG_PPU::clock() {
                         break;
                 }
 
-                // Get the line of pixels to be rendered
+                // The checks below are used to determine if the window needs to be rendered, and how
+                // it needs to be rendered.
+
                 // Check if the window can be ignored
                 if(lcdc.win_enable == 1 && wx <= 166 && wy < 144 && (wy <= ly)) {
                     window_draw = true;
+                    // Set the tilemap address
+                    switch (lcdc.win_tile_map_area) {
+                        case 0:
+                            // If lcdc.6 not set, set the tilemap to 0x1800
+                            tilemap_row_addr = 0x1800;
+                            break;
+                        case 1:
+                            // If lcdc.6 is set, set the tilemap to 0x1c00
+                            // + 1 to ignore the first tile
+                            tilemap_row_addr = 0x1c00;
+                            break;
+                    }
+                    // Draw the window ignoring the first tile in the tile map
                     if (wx == 0 || wx == 166) {
-                        // Draw the window ignoring the first tile in the tile map
+                    // Technically, wx = 0 and wx = 166 do not share the same behaviour, but
+                    // for now they will. Recreating the bug will be tedious.
 
                         // Select the correct tilemap for the window
                         // In this case, we can completely ignore the bg for this scanline,
-                        // and all future scanlines
+                        // and all future scan lines
 
                         // Set the tilemap address
-                        switch (lcdc.win_tile_map_area) {
-                            case 0:
-                                // If lcdc.6 not set, set the tilemap to 0x1800
-                                // + 1 to ignore the first tile
-                                tilemap_row_addr = 0x1800 + 1;
-                                break;
-                            case 1:
-                                // If lcdc.6 is set, set the tilemap to 0x1c00
-                                // + 1 to ignore the first tile
-                                tilemap_row_addr = 0x1c00 + 1;
-                                break;
-                        }
-                        // Now we need to add the offset for y axis
+                        tilemap_row_addr++;
+                        // Now we need to add the offset for y-axis
                         tilemap_row_addr += (win_ly / 8 * 32);
                         // Determine the tile_line using only ly
-                        tile_line = ly % 8;
+                        tile_line = win_ly % 8;
                         // Set pixel_x
-                        pixel_x = wx / 8;
+                        pixel_x = 0;
                     }
+                    // This section determines if we need to draw the first window tile at an offset
                     else if (wx > 0 && wx < 7) {
-                        // Draw the first tile of the window at an offset
-                        // At this stage, we just need to set some offsets for later
-                    }
-                    else if (wx >=7 && wx <= 165) {
-                        // Pre-staging for a normal window position
+                        // Grab the correct tilemap row, tile line, and set the pixel_x offset
+                        tilemap_row_addr += (win_ly / 8 * 32);
+                        tile_line = win_ly % 8;
+                        pixel_x = 0;
 
-                        // First check for a collision, then save the pixel it will occur at
+                        // Tell the ppu to pop off 7-wx pixels before drawing to the screen.
+                        // This will offset the first tile accordingly
+                        pop_request = true;
+                        pop_win = 7 - wx;
+                    }
+                    // Pre-staging for a normal window position. This is where most windows will be positioned.
+                    else if (wx >= 7 && wx <= 165) {
                         // No collision if the window is at WCX = 7
                         if (wx == 7) {
-                            // Set the tilemap address
-                            switch (lcdc.win_tile_map_area) {
-                                case 0:
-                                    // If lcdc.6 not set, set the tilemap to 0x1800
-                                    tilemap_row_addr = 0x1800;
-                                    break;
-                                case 1:
-                                    // If lcdc.6 is set, set the tilemap to 0x1c00
-                                    // + 1 to ignore the first tile
-                                    tilemap_row_addr = 0x1c00;
-                                    break;
-                            }
-                            // Now we need to add the offset for y axis
+                            // Now we need to add the offset for y-axis
                             tilemap_row_addr += (win_ly / 8 * 32);
                             // Determine the tile_line using only ly
                             tile_line = win_ly % 8;
                             // Set pixel_x
                             pixel_x = 0;
                         }
-                        // All window tiles are aligned to the tilemap grid
-                        else if ((wx - 7) % 8 == 0) {
-
-                        }
-                        // If we get here, then there will be a mid-tile collision
+                        // Window tiles are being swapped to during the screen draw from BG tiles
+                        // This means:
+                        // - The tilemap swapped
+                        // - Tile data area will be the same
                         else {
+                            // Set the collision flag
+                            win_collision = true;
+                            // Calculate the pixel where the collision will occur
+                            // This will be used to swap the tilemap over in the fetcher.
+                            win_collision_pos = (wx - 7);
+                            // Calculate how many pixels need to be popped off of the fifo (if any)
+                            // when the collision occurs only if there is a mid-tile collision
+                            if ((wx - 7) % 8 != 0)
+                                win_collision_tile_offset = 8 - ((wx - 7) % 8);
+                            else
+                                // If the collision does not happen mid-tile, then the FIFO will not need to pop
+                                // off any excess pixels
+                                win_collision_tile_offset = 0;
+                            // We grab where the tilemap row should be for this scanline, and save it into a
+                            // member separate from tilemap_row_addr, so it can be passed over to the fetcher
+                            // when it needs to swap tilemaps.
+                            win_tilemap_addr = tilemap_row_addr + (win_ly / 8 * 32);
 
+                            // Setup for BG drawing first, PPU will determine when to swap over to the window
+                            // Check for BG tilemap
+                            switch (lcdc.bg_tile_map_area) {
+                                case 0:
+                                    tilemap_row_addr = 0x1800;
+                                    break;
+                                case 1:
+                                    tilemap_row_addr = 0x1c00;
+                                    break;
+                            }
+                            // Setup offsets for BG
+                            pixel_x = scx / 8;
+                            pixel_y = scy + ly;
+                            tile_line = pixel_y % 8;
                         }
-
                     }
                 }
                 else {
                     // Ignore the window
-
                     pixel_x = scx / 8;
                     pixel_y = scy + ly;
-                    tile_line = pixel_y % 8;
                     // Find the address to the current tile row in the tilemap
+                    tile_line = pixel_y % 8;
 
-                    // Need to determine if the current scanline should render window, or bg
-
-                    // For now assume 0x9800 is the tilemap
-                    // Need to mask the address:
-                    //  - Tile map is 0x7ff in size, and it starts 0x1800 from starting point of VRAM 0x8000
-                    tilemap_row_addr = (0x1800) + (pixel_y / 8 * 32); // <- ly / 8 * 32 gives us the Y position
+                    // Check for BG tilemap
+                    switch (lcdc.bg_tile_map_area) {
+                        case 0:
+                            tilemap_row_addr = 0x1800;
+                            break;
+                        case 1:
+                            tilemap_row_addr = 0x1c00;
+                            break;
+                    }
+                    tilemap_row_addr += (pixel_y / 8 * 32);
                 }
-
-                fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_collision);
-
+                // Initialize the fetcher for this scanline
+                fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_tilemap_addr);
                 state = PixelTransfer;
             }
             break;
         case PixelTransfer:
+            stat.mode_flag = 3;
             // Clock the fetcher: Only clocks every 2 PPU clocks
-            fetch.clock(this);
+            fetch.clock(this, swap_to_win, tile_line, pixel_x);
 
+            // Check if we need to pop off pixels from the window (if wx < 7)
+            if (!fetch.fifo.empty() && pop_request) {
+                for (uint8_t pixel = pop_win; pixel > 0; pixel--) {
+                    fetch.fifo.pop();
+                    pop_win--;
+                }
+            }
+            // Need to check if there was a collision between the BG and the window.
+            // This will be true when there is a collision, and when the current pixel is the same as the starting
+            // pixel of the window with it's +7 offset removed.
+            if (!fetch.fifo.empty() && win_collision && pixel_count == win_collision_pos && win_collision_tile_offset > 0) {
+                for (uint8_t pixel = win_collision_tile_offset; pixel > 0; pixel--) {
+                    // Pop off residual BG tiles
+                    fetch.fifo.pop();
+                    win_collision_tile_offset--;
+                }
+                // Set the window swap flag
+                swap_to_win = true;
+                // Determine the tile_line for the window
+                tile_line = win_ly % 8;
+                // Set pixel_x offset
+                pixel_x = 0;
+            }
             // Need to call bus pixel push function if there are any in the fifo
             if(!fetch.fifo.empty()) {
                 // Check if screen is enabled
@@ -311,8 +369,7 @@ void DMG_PPU::clock() {
                     // Pop off of the FIFO
                     fetch.fifo.pop();
                 }
-
-                // Increment the position of the pixel output
+                // Increment the position of the pixel output only if the fifo is not empty
                 pixel_count++;
             }
             if (pixel_count == 160){
@@ -320,6 +377,7 @@ void DMG_PPU::clock() {
             }
             break;
         case HBlank:
+            stat.mode_flag = 0;
             // Check to see if the entire scanline has been completed by looking at the number of clocks
             // 456 is the number of clocks required for the ppu to output a complete scanline of pixels
             // CPU is also able to access VRAM and OAM now
@@ -344,6 +402,7 @@ void DMG_PPU::clock() {
             }
             break;
         case VBlank:
+            stat.mode_flag = 1;
             // Pause and allow for CPU to access VRAM and OAM
             cpu_access = true;
             // Check to see if the scanline is complete

@@ -1,13 +1,15 @@
 #include "Fetcher.h"
 #include "DMG_PPU.h"
 
-void Fetcher::init(uint16_t map_addr, uint16_t data_addr, uint8_t line, uint8_t offset, bool signed_mode, bool win_collision) {
+void
+BG_Fetcher::init(uint16_t map_addr, uint16_t data_addr, uint8_t line, uint8_t offset, bool signed_mode,
+                 uint16_t win_tilemap_addr) {
     tilemap_address = map_addr;
     tiledata_base_address = data_addr;
     tile_line = line;
     tile_index = offset;
     signed_addressing = signed_mode;
-    window_collision = win_collision;
+    window_tilemap_address = win_tilemap_addr;
 
     state = GetTileId;
 
@@ -15,9 +17,7 @@ void Fetcher::init(uint16_t map_addr, uint16_t data_addr, uint8_t line, uint8_t 
     clear_fifo();
 }
 
-// May want to move some of the values into the Fetcher struct
-void Fetcher::clock(DMG_PPU *ppu) {
-
+void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, uint8_t win_pixel_x) {
     // Fetcher runs at half the speed of the ppu
     // Only clock the fetcher every 2 clocks of the ppu
     clocks++;
@@ -26,9 +26,18 @@ void Fetcher::clock(DMG_PPU *ppu) {
     }
     // Reset clock count
     clocks = 0;
+
     // Check the state of the fetcher
     switch (state) {
         case GetTileId:
+
+            // Check if we need to swap over to window tilemap
+            if (swap_to_win) {
+                tilemap_address = window_tilemap_address;
+                tile_line = win_tile_line;
+                tile_index = win_pixel_x;
+                swap_to_win = false;
+            }
             // Need to grab the tile id to be rendered from the corresponding tile map
             // For now we are only looking in the tile map
 
@@ -47,6 +56,15 @@ void Fetcher::clock(DMG_PPU *ppu) {
             break;
 
         case GetTileLow:
+            // Check if we need to swap over to window tilemap
+            if (swap_to_win) {
+                tilemap_address = window_tilemap_address;
+                tile_line = win_tile_line;
+                tile_index = win_pixel_x;
+                swap_to_win = false;
+                state = GetTileId;
+                break;
+            }
             // Find the tile data address
             // The tile data starting address will need to be masked to 0x0000 and the offset added for 0x8800 method
             // Tile id needs to be multiplied by 0x10 or 16 to get the correct 16 byte line in tile data.
@@ -68,6 +86,15 @@ void Fetcher::clock(DMG_PPU *ppu) {
             break;
 
         case GetTileHigh:
+            // Check if we need to swap over to window tilemap
+            if (swap_to_win) {
+                tilemap_address = window_tilemap_address;
+                tile_line = win_tile_line;
+                tile_index = win_pixel_x;
+                swap_to_win = false;
+                state = GetTileId;
+                break;
+            }
             // Read in the high byte
             tiledata_address = tiledata_base_address + (tile_id * 0x10);
 
@@ -87,10 +114,28 @@ void Fetcher::clock(DMG_PPU *ppu) {
             break;
 
         case Sleep:
+            // Check if we need to swap over to window tilemap
+            if (swap_to_win) {
+                tilemap_address = window_tilemap_address;
+                tile_line = win_tile_line;
+                tile_index = win_pixel_x;
+                swap_to_win = false;
+                state = GetTileId;
+                break;
+            }
             state = Push;
             break;
 
         case Push:
+            // Check if we need to swap over to window tilemap
+            if (swap_to_win) {
+                tilemap_address = window_tilemap_address;
+                tile_line = win_tile_line;
+                tile_index = win_pixel_x;
+                swap_to_win = false;
+                state = GetTileId;
+                break;
+            }
             // Need to push pixels from the buffer to the FIFO
             // Need to push to the fifo in reverse order since we pulled pixel data in from least significant to most
             if (fifo.size() <= 8) {
@@ -101,21 +146,13 @@ void Fetcher::clock(DMG_PPU *ppu) {
             }
             // Advance to the next tile in the tile map
             tile_index++;
-            // Clear the pixel buffer
-            //clear_buffer();
             state = GetTileId;
             break;
     }
 }
 
-void Fetcher::clear_fifo() {
+void BG_Fetcher::clear_fifo() {
     // Make an empty queue and swap the memory with the FIFO
     std::queue<Pixel> empty;
     std::swap(fifo, empty);
-}
-
-void Fetcher::clear_buffer() {
-    // Make an empty array and swap the memory with the buffer
-    std::array<Pixel, 8> empty;
-    std::swap(pixel_buffer, empty);
 }

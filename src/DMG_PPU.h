@@ -11,7 +11,7 @@
 class Bus;
 
 class DMG_PPU {
-friend struct Fetcher;
+friend struct BG_Fetcher;
 public:
     DMG_PPU();
     ~DMG_PPU() = default;
@@ -62,19 +62,38 @@ public:
     uint8_t lyc = 0;
 
 private:
-    // This will act as the pixel FIFO fetcher
-    Fetcher fetch;
+    // This will act as the pixel FIFO fetcher for the background and window
+    BG_Fetcher fetch;
     // Used in the pixel transfer state
-    uint8_t tile_line = 0;
+
+    // The address to the row of the tilemap we need to grab the tile id from for the current scan line
     uint16_t tilemap_row_addr = 0x0000;
+    // Where the tile data is located for the current scan line
     uint16_t tiledata_addr = 0x0000;
+    // Flag is set when the tilemap selected uses signed access
     bool signed_mode = false;
+    // The offset from the tilemap_row_addr to get the correct bytes for the line of pixels to fetch
+    uint8_t tile_line = 0;
     // For when the window is on
+    // Current window scan line
     uint8_t win_ly = 0;
+    // Flag is set when the window is drawing
     bool window_draw = false;
     // For when the window is on, and there is a collision between the BG and window during a scanline
+    // Flag is set when there is a collision between the BG and window on the current scan line
     bool win_collision = false;
-    uint8_t win_collision_offset = 0;
+    // Flag is set when the fetcher needs to change from the BG tilemap to the Win tilemap
+    bool swap_to_win = false;
+    // The X coordinate of the window with its +7 offset removed
+    uint8_t win_collision_pos = 0xff;
+    // The number of pixels that will be popped off of the FIFO when there is a mid-tile collision
+    uint8_t win_collision_tile_offset = 0;
+    // Window tilemap address for when the fetcher changes tilemaps
+    uint16_t win_tilemap_addr = 0x0000;
+    // Flag is set for when the first tile of the window needs to be drawn at an offset
+    bool pop_request = false;
+    // Number of pixels to pop off of the FIFO for the according offset of the window
+    uint8_t pop_win = 0;
 
     // Bus pointer
     Bus *bus = nullptr;
@@ -123,7 +142,6 @@ private:
     // Window registers
     uint8_t wx = 0;
     uint8_t wy = 0;
-
 };
 
 
