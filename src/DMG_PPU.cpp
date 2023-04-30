@@ -182,10 +182,25 @@ void DMG_PPU::clock() {
         case OAMSearch:
             // OAM search always takes 40 clocks to complete
             stat.mode_flag = 2;
-            // Need to get the data for upto 10 sprites on this scanline
 
-            // Init pixel transfer
             if (clock_count == 40) {
+                // Need to get the data for upto 10 sprites on this scanline
+                // Compare the Y pos of each sprite to the current scan line
+                // Clear the sprite list from the fetcher
+                fg_fetch.sprite_ids.clear();
+                for (uint8_t i = 0; i < 160; i+=4) {
+                    // Check to see if the Y value of the sprite is < 16
+                    if (oam[i] >= 16) {
+                        uint8_t sprite_y = oam[i] - 16;
+                        if (sprite_y == ly) {
+                            if(fg_fetch.sprite_ids.size() < 10) {
+                                fg_fetch.sprite_ids.push_back(i);
+                            }
+                        }
+                    }
+                }
+
+                // Init pixel transfer
                 // Reset values for a new scanline
                 pixel_count = 0;
                 signed_mode = false;
@@ -326,30 +341,32 @@ void DMG_PPU::clock() {
                     }
                     tilemap_row_addr += (pixel_y / 8 * 32);
                 }
-                // Initialize the fetcher for this scanline
-                fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_tilemap_addr);
+                // Initialize the fetchers for this scanline
+                bg_fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_tilemap_addr);
+                fg_fetch.init(ly % 8);
                 state = PixelTransfer;
             }
             break;
         case PixelTransfer:
             stat.mode_flag = 3;
-            // Clock the fetcher: Only clocks every 2 PPU clocks
-            fetch.clock(this, swap_to_win, tile_line, pixel_x);
+            // Clock the fetchers: Only clocks every 2 PPU clocks
+            bg_fetch.clock(this, swap_to_win, tile_line, pixel_x);
+            fg_fetch.clock(this);
 
             // Check if we need to pop off pixels from the window (if wx < 7)
-            if (!fetch.fifo.empty() && pop_request) {
+            if (!bg_fetch.fifo.empty() && pop_request) {
                 for (uint8_t pixel = pop_win; pixel > 0; pixel--) {
-                    fetch.fifo.pop();
+                    bg_fetch.fifo.pop();
                     pop_win--;
                 }
             }
             // Need to check if there was a collision between the BG and the window.
             // This will be true when there is a collision, and when the current pixel is the same as the starting
             // pixel of the window with it's +7 offset removed.
-            if (!fetch.fifo.empty() && win_collision && pixel_count == win_collision_pos && win_collision_tile_offset > 0) {
+            if (!bg_fetch.fifo.empty() && win_collision && pixel_count == win_collision_pos && win_collision_tile_offset > 0) {
                 for (uint8_t pixel = win_collision_tile_offset; pixel > 0; pixel--) {
                     // Pop off residual BG tiles
-                    fetch.fifo.pop();
+                    bg_fetch.fifo.pop();
                     win_collision_tile_offset--;
                 }
                 // Set the window swap flag
@@ -359,16 +376,21 @@ void DMG_PPU::clock() {
                 // Set pixel_x offset
                 pixel_x = 0;
             }
+            // BG/Win FIFO done
+
             // Need to call bus pixel push function if there are any in the fifo
-            if(!fetch.fifo.empty()) {
+            if(!bg_fetch.fifo.empty()) {
                 // Check if screen is enabled
                 if (lcdc.lcd_ppu_enable != 0) {
                     // For now just push the color
                     // Need to map the color to a real color using the palette
-                    bus->push_pixel(map_color(fetch.fifo.front().color, fetch.fifo.front().palette), pixel_count + (ly * 160));
+                    bus->push_pixel(map_color(bg_fetch.fifo.front().color, bg_fetch.fifo.front().palette), pixel_count + (ly * 160));
                     // Pop off of the FIFO
-                    fetch.fifo.pop();
+                    //screen_buffer.pop();
+                    bg_fetch.fifo.pop();
                 }
+                //else
+                    //clear_buffer();
                 // Increment the position of the pixel output only if the fifo is not empty
                 pixel_count++;
             }
@@ -444,4 +466,9 @@ uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {
     // from the palette, and sets it as the bit 0 & 1.
     // We then & the result with 3, keeping the 2 lowest bits and discarding the rest.
     return (palette >> (color << 1)) & 0b11;
+}
+
+void DMG_PPU::clear_buffer() {
+    std::queue<uint8_t> empty;
+    std::swap(screen_buffer, empty);
 }

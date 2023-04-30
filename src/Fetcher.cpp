@@ -80,7 +80,7 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
             for (uint8_t i = 0; i < 8; i++) {
                 uint8_t low_color = tile_low >> i & 1;
                 // We set the bg priority to 0xff to indicate this does not use that bit
-                pixel_buffer[i] = {low_color, ppu->bgp, 0xff};
+                pixel_buffer[i] = {low_color, ppu->bgp};
             }
             state = GetTileHigh;
             break;
@@ -102,7 +102,7 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
             // Keep in mind each line is 2 bytes
             tiledata_address = tiledata_address + tile_line * 2;
             // Grab the byte from VRAM adding 1 for the high byte
-            tile_high= ppu->vram[tiledata_address + 1];
+            tile_high = ppu->vram[tiledata_address + 1];
             // Now push the high bits to the pixel buffer
             for (uint8_t i = 0; i < 8; i++) {
                 // Shift the high bit one left of the low bit
@@ -153,6 +153,147 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
 
 void BG_Fetcher::clear_fifo() {
     // Make an empty queue and swap the memory with the FIFO
-    std::queue<Pixel> empty;
+    std::queue<Pixel_BG> empty;
+    std::swap(fifo, empty);
+}
+
+// FG_Fetcher
+
+void FG_Fetcher::clock(DMG_PPU *ppu) {
+    // Advance the fetcher every 2 clocks
+    clocks++;
+    if (clocks < 2)
+        return;
+    clocks = 0;
+    // If sprite_ids is empty, or if we have pushed all sprites, abort
+    if (sprite_ids.empty() || sprite_index > sprite_ids.size() - 1)
+        return;
+
+    switch (state) {
+        case GetTileId:
+            // Find the tile ID: Located in byte 2 of the sprite's OAM
+            tile_id = ppu->oam[sprite_ids[sprite_index] + 2];
+            // Set the tiledata address
+            // Sprites always use 0x8000 for tiledata
+            tiledata_address = tiledata_base_address;
+            state = GetTileLow;
+            break;
+        case GetTileLow:
+            // Pixels need to be pushed to the FIFO differently depending on some attributes in byte 3 of the
+            // sprites OAM
+            // Byte 3:
+            // - Bit 5: X flip (0 = Normal, 1 = Horizontally mirrored)
+            // - Bit 6: Y flip (0 = Normal, 1 = Vertically mirrored)
+
+            // Determine if the sprite is vertically flipped
+            // Grab bit 6 of byte 3 of the current sprite
+            vertical_flip = (ppu->oam[sprite_ids[sprite_index] + 3]) & (1 << 6);
+            if (vertical_flip == (1 << 6))
+                tile_line = (tile_line + 8) % 8;
+
+            // Grab the low byte of the tile from VRAM
+            tiledata_address += tile_id * 0x10;
+            tiledata_address += tile_line * 2;
+            tile_low = ppu->vram[tiledata_address];
+
+            // Push the low bits to the pixel buffer
+            for (uint8_t i = 0; i < 8; i++) {
+                uint8_t low_color = tile_low >> i & 1;
+                // Select the correct palette byte 3 bit 4
+                palette = (ppu->oam[sprite_ids[sprite_index] + 3]) & (1 << 4);
+                if (palette == (1 << 4))
+                    palette = ppu->obp1;
+                else
+                    palette = ppu->obp0;
+                // Pull the BG priority byte 3 bit 7
+                bg_priority = (ppu->oam[sprite_ids[sprite_index] + 3]) & (1 << 7);
+                if (bg_priority == (1 << 7))
+                    // With this set, BG and Window colors 1-3 draw over the sprite
+                    bg_priority = 1;
+                else
+                    bg_priority = 0;
+                // Save the lower pixels to the buffer
+                pixel_buffer[i] = {low_color, palette, bg_priority, ppu->oam[sprite_ids[sprite_index] + 1]};
+            }
+
+            state = GetTileHigh;
+            break;
+        case GetTileHigh:
+            // Grab the high byte from VRAM
+            tile_high = ppu->vram[tiledata_address + 1];
+
+            // Push the low bits to the pixel buffer
+            for (uint8_t i = 0; i < 8; i++) {
+                // Shift the high bit one left of the low bit
+                uint8_t high_color = (tile_high >> i & 1) << 1;
+                // Or the high bit with the low bit
+                pixel_buffer[i].color = pixel_buffer[i].color | high_color;
+            }
+
+            // Pixels need to be pushed to the FIFO differently depending on some attributes in byte 3 of the
+            // sprites OAM
+            // Byte 3:
+            // - Bit 5: X flip (0 = Normal, 1 = Horizontally mirrored)
+            // - Bit 6: Y flip (0 = Normal, 1 = Vertically mirrored)
+            // In this state, we only need to worry about horizontally mirroring the pixels.
+            // The GetTileLow/High states take care of the vertical mirroring
+            horizontal_flip = (ppu->oam[sprite_ids[sprite_index + 3]] & (1 << 5));
+
+
+            state = Sleep;
+            break;
+        case Sleep:
+            state = Push;
+            break;
+        case Push:
+
+            if (horizontal_flip == (1 << 5)) {
+                // Since the sprite is flipped, we can push from the front of the buffer
+                if (fifo.size() <= 8) {
+                    for (uint8_t i = 0; i < 8; i++)
+                        fifo.push(pixel_buffer[i]);
+                }
+                pushed = true;
+            }
+            else {
+                // Need to push pixels from the buffer to the FIFO
+                // Need to push to the fifo in reverse order since we pulled pixel data in from least significant to most
+                if (fifo.size() <= 8) {
+                    // Need to use a signed int for this
+                    for (int8_t i = 7; i >= 0; i--) {
+                        fifo.push(pixel_buffer[i]);
+                    }
+                    pushed = true;
+                }
+            }
+            // The index should only change when there is a need to draw the next sprite
+            if (pushed) {
+                sprite_index++;
+                state = GetTileId;
+                pushed = false;
+            }
+
+    }
+}
+
+void FG_Fetcher::init(uint8_t line) {
+    sprite_index = 0;
+    tiledata_base_address = 0x0000;
+    tiledata_address = 0x0000;
+    tile_id = 0;
+    tile_line = line;
+    tile_low = 0;
+    tile_high = 0;
+    palette = 0;
+    bg_priority = 0;
+    horizontal_flip = 0;
+    vertical_flip = 0;
+    pushed = false;
+
+    clear_fifo();
+}
+
+void FG_Fetcher::clear_fifo() {
+    std::queue<Pixel_FG> empty;
     std::swap(fifo, empty);
 }

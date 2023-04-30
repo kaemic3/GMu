@@ -6,6 +6,7 @@
 #include "Pixel.h"
 
 class DMG_PPU;
+// Background and window fetcher
 struct BG_Fetcher {
     BG_Fetcher() = default;
     ~BG_Fetcher() = default;
@@ -47,12 +48,12 @@ struct BG_Fetcher {
     void clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, uint8_t win_pixel_x);
 
     // Out pixel FIFO
-    std::queue<Pixel> fifo;
+    std::queue<Pixel_BG> fifo;
     // Clear the FIFO
     void clear_fifo();
 
     // Array to hold pixels before they go to the FIFO
-    std::array<Pixel, 8> pixel_buffer = {};
+    std::array<Pixel_BG, 8> pixel_buffer = {};
 
     // Enum to represent the different states the fetcher can be in
     enum FetcherState {
@@ -64,5 +65,48 @@ struct BG_Fetcher {
     } state = GetTileId;
 };
 
+// Sprite fetcher
+struct FG_Fetcher {
+    FG_Fetcher() = default;
+    ~FG_Fetcher() = default;
+
+    // Enum to represent the different states the fetcher can be in
+    enum FetcherState {
+        GetTileId,
+        GetTileLow,
+        GetTileHigh,
+        Sleep,
+        Push
+    } state = GetTileId;
+
+    // Store the sprite IDs for the sprites on the current scanline
+    std::vector<uint8_t> sprite_ids;
+    uint8_t sprite_index = 0;
+    uint16_t tiledata_base_address = 0x0000;
+    uint16_t tiledata_address = 0x0000;
+    uint8_t tile_id = 0;
+    uint8_t tile_line = 0;
+    uint8_t tile_low = 0;
+    uint8_t tile_high = 0;
+    uint8_t palette = 0;
+    uint8_t bg_priority = 0;
+
+    uint8_t horizontal_flip = 0;
+    uint8_t vertical_flip = 0;
+
+    bool pushed = false;
+
+    void init(uint8_t line);
+    // Pixel buffer
+    std::array<Pixel_FG, 8> pixel_buffer = {};
+
+    // FG FIFO
+    std::queue<Pixel_FG> fifo;
+    // Clear the FIFO
+    void clear_fifo();
+    // Clock function for the FG_Fetcher
+    void clock(DMG_PPU *ppu);
+    uint8_t clocks = 0;
+};
 
 #endif //GMU_FETCHER_H

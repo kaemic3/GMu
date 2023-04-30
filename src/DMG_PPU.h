@@ -12,6 +12,7 @@ class Bus;
 
 class DMG_PPU {
 friend struct BG_Fetcher;
+friend struct FG_Fetcher;
 public:
     DMG_PPU();
     ~DMG_PPU() = default;
@@ -63,7 +64,7 @@ public:
 
 private:
     // This will act as the pixel FIFO fetcher for the background and window
-    BG_Fetcher fetch;
+    BG_Fetcher bg_fetch;
     // Used in the pixel transfer state
 
     // The address to the row of the tilemap we need to grab the tile id from for the current scan line
@@ -95,6 +96,12 @@ private:
     // Number of pixels to pop off of the FIFO for the according offset of the window
     uint8_t pop_win = 0;
 
+    // Sprite fetcher
+    FG_Fetcher fg_fetch;
+
+    // Buffer for pixels to go before they are put onto screen
+    std::queue<uint8_t> screen_buffer;
+    void clear_buffer();
     // Bus pointer
     Bus *bus = nullptr;
     // Initialize 8 KiB VRAM
