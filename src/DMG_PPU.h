@@ -98,10 +98,9 @@ private:
 
     // Sprite fetcher
     FG_Fetcher fg_fetch;
-
-    // Buffer for pixels to go before they are put onto screen
-    std::queue<uint8_t> screen_buffer;
-    void clear_buffer();
+    // Sprite pixel count
+    uint8_t sprite_pixel_count = 0;
+    bool sprite_pushed = false;
     // Bus pointer
     Bus *bus = nullptr;
     // Initialize 8 KiB VRAM

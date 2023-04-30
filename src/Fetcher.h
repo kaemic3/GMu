@@ -79,8 +79,31 @@ struct FG_Fetcher {
         Push
     } state = GetTileId;
 
+    struct Sprite {
+        Sprite(uint8_t y, uint8_t x, uint8_t index, uint8_t line, uint8_t attr) {
+            y_pos = y; x_pos = x; tile_index = index; tile_line = line;
+            attrs.data = attr;
+        }
+        ~Sprite() = default;
+        uint8_t y_pos;
+        uint8_t x_pos;
+        uint8_t tile_index;
+        uint8_t tile_line;
+        union attributes{
+            struct {
+                uint8_t unused          : 4;
+                uint8_t palette_number  : 1;
+                uint8_t x_flip          : 1;
+                uint8_t y_flip          : 1;
+                uint8_t bg_win_over_obj : 1;
+            };
+            uint8_t data;
+        } attrs{};
+    };
+
     // Store the sprite IDs for the sprites on the current scanline
     std::vector<uint8_t> sprite_ids;
+    std::vector<Sprite> sprites;
     uint8_t sprite_index = 0;
     uint16_t tiledata_base_address = 0x0000;
     uint16_t tiledata_address = 0x0000;
@@ -96,7 +119,7 @@ struct FG_Fetcher {
 
     bool pushed = false;
 
-    void init(uint8_t line);
+    void init();
     // Pixel buffer
     std::array<Pixel_FG, 8> pixel_buffer = {};
 
