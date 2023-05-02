@@ -187,6 +187,12 @@ void DMG_PPU::clock() {
                 // Need to get the data for upto 10 sprites on this scanline
                 // Compare the Y pos of each sprite to the current scan line
                 // Clear the sprite list from the fetcher
+
+                // Need to make sure that the sprites are organized based on the draw order
+                // Drawing priority for sprites is determined by their X coordinate first, and if 2 sprites
+                // share the same X coordinate, then the sprite that is stored earlier in OAM will have priority
+                // So, sprites should be stored in order of draw priority.
+
                 fg_fetch.sprites.clear();
                 for (uint8_t i = 0; i < 160; i+=4) {
                     // Check to see if the Y value of the sprite is < 16
@@ -194,12 +200,13 @@ void DMG_PPU::clock() {
                         uint8_t sprite_y = oam[i] - 16;
                         if (sprite_y <= ly && ly < (sprite_y + 8)) {
                             if(fg_fetch.sprites.size() < 10) {
-                                fg_fetch.sprites.emplace_back(oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
+                                fg_fetch.sprites.emplace_back(i/4, oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
                             }
                         }
                     }
                 }
-
+                // Sort the sprite list
+                std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
                 // Init pixel transfer
                 // Reset values for a new scanline
                 pixel_count = 0;
@@ -392,19 +399,28 @@ void DMG_PPU::clock() {
                         current_sprite_x -= 8;
                         // Need to check if the current sprite needs to be drawn with the BG priority not set
                         // and the color not 0
-                        if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 0) {
+
+                        // Push a sprite pixel to the screen if it has priority over the BG and the pixel matches the
+                        // X pos. Check for if the pixel color is transparent.
+                        if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 0
+                            || (sprite_pixel_count > 0 && current_sprite_color != 0 && current_sprite_priority == 0 && !sprite_pushed)) {
+                            if (sprite_pixel_count == 0) {
+                                sprite_pushed = true;
+                                sprite_pixel_count = 7;
+                            }
+                            else {
+                                sprite_pushed = true;
+                                sprite_pixel_count--;
+                            }
+
                             bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
                             fg_fetch.fifo.pop();
                             bg_fetch.fifo.pop();
-                            sprite_pushed = true;
-                            sprite_pixel_count = 7;
                         }
-                        else if (sprite_pixel_count > 0 && current_sprite_color != 0 && current_sprite_priority == 0 && !sprite_pushed) {
-                            sprite_pixel_count--;
-                            bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
+                        // If the current pixel is transparent then pop it off of the fifo but don't push it to the
+                        // screen
+                        else if (sprite_pixel_count == pixel_count && current_sprite_color == 0) {
                             fg_fetch.fifo.pop();
-                            bg_fetch.fifo.pop();
-                            sprite_pushed = true;
                         }
                     }
                     else {
