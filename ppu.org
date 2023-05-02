@@ -13,5 +13,4 @@
 
 ** Merging FG and BG fifos
  * Need:
-   + Detect sprite collisions
-   + Fix sprites not drawing correctly when they exist outside the tilemap's desired 8x8 grid
+   + Detect horizontal sprite collisions
