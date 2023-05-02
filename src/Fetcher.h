@@ -80,9 +80,9 @@ struct FG_Fetcher {
     } state = GetTileId;
 
     struct Sprite {
-        Sprite(uint8_t y, uint8_t x, uint8_t index, uint8_t line, uint8_t attr) {
+        Sprite(uint8_t id, uint8_t y, uint8_t x, uint8_t index, uint8_t line, uint8_t attr) {
             y_pos = y; x_pos = x; tile_index = index; tile_line = line;
-            attrs.data = attr;
+            attrs.data = attr; sprite_id = id;
         }
         ~Sprite() = default;
         uint8_t y_pos;
@@ -98,11 +98,26 @@ struct FG_Fetcher {
                 uint8_t bg_win_over_obj : 1;
             };
             uint8_t data;
-        } attrs{};
+        } attrs;
+        uint8_t sprite_id = 0;
+        // Overload < operator for sorting the list
+        bool operator < (const Sprite &s) const {
+            // The sprite with the lower X pos will go first
+            if (x_pos < s.x_pos) {
+                return true;
+            }
+            // If the X pos is the same, store the sprite with the lower sprite id first
+            if (x_pos == s.x_pos) {
+                if (sprite_id < s.sprite_id)
+                    return true;
+                else
+                    return false;
+            }
+            return false;
+        }
     };
 
     // Store the sprite IDs for the sprites on the current scanline
-    std::vector<uint8_t> sprite_ids;
     std::vector<Sprite> sprites;
     uint8_t sprite_index = 0;
     uint16_t tiledata_base_address = 0x0000;
@@ -113,9 +128,6 @@ struct FG_Fetcher {
     uint8_t tile_high = 0;
     uint8_t palette = 0;
     uint8_t bg_priority = 0;
-
-    uint8_t horizontal_flip = 0;
-    uint8_t vertical_flip = 0;
 
     bool pushed = false;
 
