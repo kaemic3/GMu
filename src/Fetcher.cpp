@@ -281,8 +281,6 @@ void FG_Fetcher::init() {
     tile_high = 0;
     palette = 0;
     bg_priority = 0;
-    horizontal_flip = 0;
-    vertical_flip = 0;
     pushed = false;
 
     clear_fifo();
