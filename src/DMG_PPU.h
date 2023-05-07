@@ -29,6 +29,8 @@ public:
 
     // Clock function
     void clock();
+    // Reset function
+    void reset();
 
     // An enum that contains the different states of the PPU
     enum PPUState {

@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     GMu::gb.cpu.sp = 0xfffe;
     // While app is running
     while(!quit) {
-       // do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+       //do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
             if (e.type == SDL_QUIT)
@@ -39,21 +39,9 @@ int main(int argc, char *argv[]) {
                     case SDLK_1:
                         GMu::window_list[0]->Focus();
                         break;
-                    case SDLK_a:
-                        GMu::gb.cpu.a_reg++;
-                        break;
-                    case SDLK_f:
-                        GMu::gb.cpu.f_reg++;
-                        break;
                     case SDLK_SPACE:
                         // Run until one complete instruction has run
                         do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
-                        break;
-                    case SDLK_s:
-                        GMu::gb.cpu.sp++;
-                        break;
-                    case SDLK_p:
-                        GMu::gb.cpu.pc = 0x0100;
                         break;
                     case SDLK_UP:
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateUp);
@@ -61,11 +49,8 @@ int main(int argc, char *argv[]) {
                     case SDLK_DOWN:
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateDown);
                         break;
-                    case SDLK_m:
-                        GMu::gb.cpu_write(0xdfff, (GMu::gb.cpu_read(0xdfff) + 1));
-                        break;
-                    case SDLK_n:
-                        GMu::gb.cpu_write(0xe000, (GMu::gb.cpu_read(0xc000) + 1));
+                    case SDLK_r:
+                        GMu::gb.reset();
                         break;
                     case SDLK_RETURN:
                         // Run until a complete frame

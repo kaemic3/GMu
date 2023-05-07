@@ -105,9 +105,10 @@ void Bus::clock() {
 }
 
 void Bus::reset() {
-    // CPU reset not yet implemented
     cpu.reset();
-    // Need to implement a PPU reset
+    ppu.reset();
+    clear_screen();
+
     system_clock_counter = 0;
 }
 void Bus::push_pixel(uint8_t pixel, uint32_t index) {

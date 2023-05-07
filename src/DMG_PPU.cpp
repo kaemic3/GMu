@@ -593,6 +593,16 @@ void DMG_PPU::clock() {
         cpu_access = true;
 }
 
+void DMG_PPU::reset() {
+    // TODO reset all members of the PPU class
+    // Clear VRAM
+    for (uint8_t i : vram) i = 0x00;
+    // Clear OAM
+    for (uint8_t i : oam) i = 0x00;
+    lcdc.data = 0;
+    stat.data = 0;
+}
+
 uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {
     // The GB has 4 colors, 0-3
     // Palette is contains 4 2-bit values

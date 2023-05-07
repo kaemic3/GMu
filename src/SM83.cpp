@@ -79,7 +79,18 @@ bool SM83::complete() {
 }
 void SM83::reset() {
     // Reset all registers to initial values
+    a_reg = 0; f_reg = 0; b_reg = 0; c_reg = 0; d_reg = 0; e_reg = 0; h_reg = 0; l_reg = 0;
+    sp = 0xfffe; pc = 0x0100;
+    cycles = 0x00;
+    fetched = 0x00;
+    addr_abs = 0x0000;
+    opcode = 0x00;
+
 }
+bool SM83::interrupt() {
+    return false;
+}
+
 // Returns 1 if the flag bit is set and 0 if reset
 uint8_t SM83::getFlag(SM83_FLAGS f) {
     // If the specified bit is set return 1 else return 0

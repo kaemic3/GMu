@@ -64,14 +64,18 @@ public:
     // Reset function
     void reset();
     // Interrupt function
-    void interrupt();
+    bool interrupt();
+    // CPU states
+    enum CPUState {
+        Execute,
+        Interrupt
+    } state;
 
     // Fetching
     uint8_t fetch();        // Will read from the address in addr_abs
     uint8_t fetched = 0x00;
     // Address storage
     uint16_t addr_abs = 0x0000;
-    uint16_t addr_rel = 0x0000;
     // Instructions
     uint8_t opcode = 0x00;
     uint8_t cycles = 0x00;
