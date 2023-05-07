@@ -13,4 +13,9 @@
 
 ** Merging FG and BG fifos
  * Need:
-   + Detect horizontal sprite collisions
+   - Vertical scrolling works, but horizontal scrolling is not working. Need to fix this!!!!
+
+   - UPDATE COMMENTS!!!!!
+   - Need to add support for sprites being > 0 but < 8
+   - Add support for 8x16 sprites
+   - Looks like the fetcher needs to fetch more often since some of the transparent pixels are staying transparent, likely due to the fg fifo not having the next sprites pixel data.
