@@ -3026,17 +3026,17 @@ uint8_t SM83::dec_sp() {
     return 0;
 }
 
-// TODO: Need to implement it after finished with interrupts
 // Disable interrupts
 uint8_t SM83::di() {
-
+    // Set the Interrupt master enable flag to 0
+    bus->di();
     return 0;
 }
 
-// TODO: Need to implement it after finished with interrupts
 // Enable interrupts
 uint8_t SM83::ei() {
-
+    // Set the Interrupt master enable flag to 1
+    bus->ei();
     return 0;
 }
 
@@ -4575,7 +4575,7 @@ uint8_t SM83::ret_z() {
     return 12;
 }
 
-// TODO: Enable interrupts after return. Still need to implement interrupts
+// Enable interrupts after return.
 uint8_t SM83::reti() {
     // Load the address that the SP points to into addr_abs
     addr_abs = sp;
@@ -4589,7 +4589,7 @@ uint8_t SM83::reti() {
     sp++;
 
     // Need to enable interrupts after return
-
+    ei();
     return 0;
 }
 
