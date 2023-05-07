@@ -11,8 +11,8 @@
 class Bus;
 
 class DMG_PPU {
-friend struct BG_Fetcher;
-friend struct FG_Fetcher;
+friend class BG_Fetcher;
+friend class FG_Fetcher;
 public:
     DMG_PPU();
     ~DMG_PPU() = default;

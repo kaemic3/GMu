@@ -563,6 +563,7 @@ void DMG_PPU::clock() {
             }
             break;
         case VBlank:
+            // Set the stat flag
             stat.mode_flag = 1;
             // Pause and allow for CPU to access VRAM and OAM
             cpu_access = true;

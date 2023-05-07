@@ -7,7 +7,8 @@
 
 class DMG_PPU;
 // Background and window fetcher
-struct BG_Fetcher {
+class BG_Fetcher {
+public:
     BG_Fetcher() = default;
     ~BG_Fetcher() = default;
 
@@ -66,7 +67,8 @@ struct BG_Fetcher {
 };
 
 // Sprite fetcher
-struct FG_Fetcher {
+class FG_Fetcher {
+public:
     FG_Fetcher() = default;
     ~FG_Fetcher() = default;
 
