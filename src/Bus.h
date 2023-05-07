@@ -31,12 +31,38 @@ public:
     // Helper functions for reading and writing RAM
     void cpu_write(uint16_t addr, uint8_t data);
     uint8_t cpu_read(uint16_t addr, bool read_only = false);
+    // Helper functions to enable and disable interrupts
+    void ei();
+    void di();
 
     // Interrupts?? Should they go here??
     // https://gbdev.io/pandocs/Interrupts.html
-    uint8_t ime = 0x00;     // Interrupt master enable flag - 0 =  Disable all interrupts, 1 = Enable all interrupts in IE reg
-    uint8_t ie_reg = 0x00;  // Interrupt enable register @ 0xFFFF
-    uint8_t if_reg = 0x00;
+    uint8_t ime = 0x00;         // Interrupt master enable flag - 0 =  Disable all interrupts, 1 = Enable all interrupts in IE reg
+    union Interrupt_Enable {    // Interrupt enable register @ 0xFFFF
+        struct {
+            uint8_t vblank     : 1;
+            uint8_t lcd_stat    : 1;
+            uint8_t timer       : 1;
+            uint8_t serial      : 1;
+            uint8_t joypad      : 1;
+            uint8_t unused      : 3;
+
+        };
+        uint8_t data;
+    } ie_reg;
+    // Interrupt flag register
+    union Interrupt_Flag {
+        struct {
+            uint8_t vblank     : 1;
+            uint8_t lcd_stat    : 1;
+            uint8_t timer       : 1;
+            uint8_t serial      : 1;
+            uint8_t joypad      : 1;
+            uint8_t unused      : 3;
+       };
+        uint8_t data;
+   } if_reg;
+
     // Misc IO registers
     uint8_t joypad_input = 0x00;
     // Total clock count

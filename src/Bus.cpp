@@ -5,6 +5,10 @@ Bus::Bus() {
     for(uint8_t i : wram) i = 0x00;
     for(uint8_t i : hram) i = 0x00;
 
+    // Initialize the interrupt registers
+    ie_reg.data = 0;
+    if_reg.data = 0;
+
     // connect cpu and ppu to bus
     cpu.connect_bus(this);
     ppu.connect_bus(this);
@@ -31,9 +35,17 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
         // Apply the mask to the address
        hram[addr - 0xff80] = data;
     }
-    // Check if write is for IO registers
+    // Check if write is to the IO registers
     else if (addr == 0xff00) {
         joypad_input = data;
+    }
+    // Check if write is to the IF register
+    else if (addr == 0xff0f) {
+        if_reg.data = data;
+    }
+    // Check if write is to the IE register
+    else if (addr == 0xffff) {
+        ie_reg.data = data;
     }
     // Check if the passed address is for VRAM
     else if (ppu.cpu_write(addr, data)) {
@@ -73,6 +85,14 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
 
     // If the address in not valid, return 0x00
     return data;
+}
+
+void Bus::ei() {
+    ime = 1;
+}
+
+void Bus::di() {
+    ime = 0;
 }
 
 // The CPU and PPU run at the same clock speed
