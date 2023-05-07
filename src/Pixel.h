@@ -13,6 +13,6 @@ struct Pixel_FG {
     uint8_t color = 0;
     uint8_t palette = 0;
     uint8_t bg_priority = 0;
-    uint8_t sprite_id = 0;
+    uint8_t x_pos = 0;
 };
 #endif //GMU_PIXEL_H

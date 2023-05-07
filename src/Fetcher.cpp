@@ -46,10 +46,10 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
 
             // Make sure to check if signed addressing is needed
             if(!signed_addressing)
-                tile_id = ppu->vram[tilemap_address + tile_index];
+                tile_id = ppu->vram[tilemap_address + (tile_index & 0x1f)];
             else
                 // Cast signed int if signed addressing is used. For 0x8800 mode only
-                tile_id = ppu->vram[tilemap_address + (int8_t) tile_index];
+                tile_id = ppu->vram[tilemap_address + (int8_t) (tile_index & 0x1f)];
 
 
             state = GetTileLow;
@@ -161,13 +161,19 @@ void BG_Fetcher::clear_fifo() {
 
 void FG_Fetcher::clock(DMG_PPU *ppu) {
     // Advance the fetcher every 2 clocks
-    clocks++;
+    /*clocks++;
     if (clocks < 2)
         return;
-    clocks = 0;
+    clocks = 0;*/
     // If sprite_ids is empty, or if we have pushed all sprites, abort
-    if (sprites.empty() || sprite_index > sprites.size() - 1)
+    if (sprites.empty() || sprite_index > sprites.size() - 1 || ppu->lcdc.obj_enable == 0)
         return;
+
+    // If the x_pos of the sprite is 0, then do not push its pixels to the fifo
+    if (sprites[sprite_index].x_pos == 0) {
+        sprite_index++;
+        return;
+    }
 
     switch (state) {
         case GetTileId:
@@ -211,7 +217,9 @@ void FG_Fetcher::clock(DMG_PPU *ppu) {
                 else
                     bg_priority = 0;
                 // Save the lower pixels to the buffer
-                pixel_buffer[i] = {low_color, palette, bg_priority, sprite_index};
+                // Keep in mind we are storing the pixels in the least significant order, and they need to be pushed in most significant order.
+                // Update the x_pos member of the pixel in reverse
+                pixel_buffer[i] = {low_color, palette, bg_priority, static_cast<uint8_t>(sprites[sprite_index].x_pos + (7 - i))};
             }
 
             state = GetTileHigh;
@@ -267,7 +275,7 @@ void FG_Fetcher::clock(DMG_PPU *ppu) {
                 state = GetTileId;
                 pushed = false;
             }
-
+            break;
     }
 }
 

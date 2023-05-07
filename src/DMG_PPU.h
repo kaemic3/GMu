@@ -98,9 +98,9 @@ private:
 
     // Sprite fetcher
     FG_Fetcher fg_fetch;
-    // Sprite pixel count
-    uint8_t sprite_pixel_count = 0;
+
     bool sprite_pushed = false;
+    bool stall = false;
     // Bus pointer
     Bus *bus = nullptr;
     // Initialize 8 KiB VRAM

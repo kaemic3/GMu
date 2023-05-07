@@ -27,12 +27,12 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data) {
             return false;
         }
         // Mask the passed address so it is offset to 0x0000
-        vram[addr & 0x1fff] = data;
+        vram[addr - 0x8000] = data;
         return true;
     }
     // Check for OAM
     else if(addr >= 0xfe00 && addr <= 0xfe9f) {
-        oam[addr & 0x009f] = data;
+        oam[addr - 0xfe00] = data;
         return true;
     }
     // Check for LCDC register
@@ -102,7 +102,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
             return false;
         }
         // Mask the passed address so it is offset to 0x0000
-        data = vram[addr & 0x1fff];
+        data = vram[addr & 0x8000];
         return true;
     }
     // Check if reading OAM
@@ -112,7 +112,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
             data = 0xff;
             return false;
         }
-        data = oam[addr & 0x009f];
+        data = oam[addr - 0xfe00];
         return true;
     }
     // Check for LCDC register
@@ -193,20 +193,24 @@ void DMG_PPU::clock() {
                 // share the same X coordinate, then the sprite that is stored earlier in OAM will have priority
                 // So, sprites should be stored in order of draw priority.
 
-                fg_fetch.sprites.clear();
-                for (uint8_t i = 0; i < 160; i+=4) {
-                    // Check to see if the Y value of the sprite is < 16
-                    if (oam[i] >= 16) {
-                        uint8_t sprite_y = oam[i] - 16;
-                        if (sprite_y <= ly && ly < (sprite_y + 8)) {
-                            if(fg_fetch.sprites.size() < 10) {
-                                fg_fetch.sprites.emplace_back(i/4, oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
+                // Check if OBJ is enabled
+                if (lcdc.obj_enable == 1) {
+                    fg_fetch.sprites.clear();
+                    for (uint8_t i = 0; i < 160; i+=4) {
+                        // Check to see if the Y value of the sprite is < 16
+                        if (oam[i] >= 16) {
+                            uint8_t sprite_y = oam[i] - 16;
+                            if (sprite_y <= ly && ly < (sprite_y + 8)) {
+                                if(fg_fetch.sprites.size() < 10) {
+                                    fg_fetch.sprites.emplace_back(i/4, oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
+                                }
                             }
                         }
                     }
+                    // Sort the sprite list in draw priority order
+                    std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
                 }
-                // Sort the sprite list
-                std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
+
                 // Init pixel transfer
                 // Reset values for a new scanline
                 pixel_count = 0;
@@ -324,16 +328,17 @@ void DMG_PPU::clock() {
                                     break;
                             }
                             // Setup offsets for BG
-                            pixel_x = scx / 8;
+                            pixel_x = ((scx / 8) + pixel_count) & 0x1f;
                             pixel_y = scy + ly;
                             tile_line = pixel_y % 8;
+                            tilemap_row_addr += (pixel_y / 8 * 32);
                         }
                     }
                 }
                 else {
                     // Ignore the window
-                    pixel_x = scx / 8;
-                    pixel_y = scy + ly;
+                    pixel_x = (scx / 8) + pixel_count & 0x1f;
+                    pixel_y = (scy + ly) & 0xff;
                     // Find the address to the current tile row in the tilemap
                     tile_line = pixel_y % 8;
 
@@ -390,11 +395,18 @@ void DMG_PPU::clock() {
                 // Check if the sprite fetcher has pixels
                 if (!fg_fetch.fifo.empty()) {
                     // Grab the current sprites X pos
-                    uint8_t current_sprite_x = fg_fetch.sprites[fg_fetch.fifo.front().sprite_id].x_pos;
+                    uint8_t current_sprite_x = fg_fetch.fifo.front().x_pos;
+                    // If the current sprite pixel is less than 8, pop it off
+                    while (current_sprite_x < 8) {
+                        fg_fetch.fifo.pop();
+                        current_sprite_x = fg_fetch.fifo.front().x_pos;
+                    }
+                    // Set the current sprite x again
+                    //current_sprite_x = fg_fetch.fifo.front().x_pos;
                     uint8_t current_sprite_color = map_color(fg_fetch.fifo.front().color, fg_fetch.fifo.front().palette);
                     uint8_t current_sprite_priority = fg_fetch.fifo.front().bg_priority;
 
-                    if (current_sprite_x != 0) {
+                    if (current_sprite_x >= 8) {
                         // Remove the offset from the sprite X
                         current_sprite_x -= 8;
                         // Need to check if the current sprite needs to be drawn with the BG priority not set
@@ -402,33 +414,65 @@ void DMG_PPU::clock() {
 
                         // Push a sprite pixel to the screen if it has priority over the BG and the pixel matches the
                         // X pos. Check for if the pixel color is transparent.
-                        if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 0
-                            || (sprite_pixel_count > 0 && current_sprite_color != 0 && current_sprite_priority == 0 && !sprite_pushed)) {
-                            if (sprite_pixel_count == 0) {
-                                sprite_pushed = true;
-                                sprite_pixel_count = 7;
-                            }
-                            else {
-                                sprite_pushed = true;
-                                sprite_pixel_count--;
-                            }
-
+                        if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 0) {
                             bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
                             fg_fetch.fifo.pop();
                             bg_fetch.fifo.pop();
+                            sprite_pushed = true;
                         }
                         // If the current pixel is transparent then pop it off of the fifo but don't push it to the
                         // screen
-                        else if (sprite_pixel_count == pixel_count && current_sprite_color == 0) {
+                        else if (current_sprite_x == pixel_count && current_sprite_color == 0 && current_sprite_priority == 0) {
+                            // First pop the transparent pixel
                             fg_fetch.fifo.pop();
+                            // First check the entire fifo and push a pixel to the screen if it's x matches the
+                            // current pixel_count
+                            // Create a temporary fifo that we will store the pixels that are needed still in
+                            std::queue<Pixel_FG> temp_fg_fifo;
+                            uint8_t size = fg_fetch.fifo.size();
+                            for(uint8_t i = 0; i < size; i++) {
+                                uint8_t x_pos = fg_fetch.fifo.front().x_pos - 8;
+                                uint8_t color = fg_fetch.fifo.front().color;
+                                if (x_pos == pixel_count && color != 0) {
+                                    // If a pixel in the fifo matches the current pixel other than the transparent one,
+                                    // Push it to the screen.
+                                    bus->push_pixel(color, pixel_count + (ly * 160));
+                                    fg_fetch.fifo.pop();
+                                    bg_fetch.fifo.pop();
+                                    sprite_pushed = true;
+                                }
+                                else {
+                                    // Push to the temp fifo
+                                    temp_fg_fifo.push(fg_fetch.fifo.front());
+                                    // Pop the original fifo
+                                    fg_fetch.fifo.pop();
+                                }
+                            }
+                            // Swap the fifos
+                            std::swap(fg_fetch.fifo, temp_fg_fifo);
+                        }
+                        // Check to see if the current X is less than pixel_count
+                        else if (current_sprite_x < pixel_count) {
+                            // Flag
+                            bool less = true;
+                            // Pop the pixel off of the fifo
+                            while (less) {
+                                uint8_t current_x = fg_fetch.fifo.front().x_pos - 8;
+                                if (current_x < pixel_count  && !fg_fetch.fifo.empty()) {
+                                    fg_fetch.fifo.pop();
+                                }
+                                else
+                                    less = false;
+                            }
+                            if ((fg_fetch.fifo.front().x_pos - 8) == pixel_count) {
+                                // Push a pixel if the x_pos is equal to the pixel_count
+                                bus->push_pixel(fg_fetch.fifo.front().color, pixel_count + (ly * 160));
+                                fg_fetch.fifo.pop();
+                                bg_fetch.fifo.pop();
+                                sprite_pushed = true;
+                            }
                         }
                     }
-                    else {
-                        // If the current sprite's X is 0, remove it from the fifo
-                        for (uint8_t i = 0; i < 8; i++)
-                            fg_fetch.fifo.pop();
-                    }
-
                 }
                 // Check if screen is enabled
                 if (lcdc.lcd_ppu_enable != 0 && !sprite_pushed) {
@@ -440,9 +484,10 @@ void DMG_PPU::clock() {
                 }
                 // Increment the position of the pixel output only if the fifo is not empty
                 pixel_count++;
-                // Reset flag
-                sprite_pushed = false;
+
             }
+            // Reset flag
+            sprite_pushed = false;
             if (pixel_count == 160){
                 state = HBlank;
             }
