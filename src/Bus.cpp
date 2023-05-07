@@ -29,7 +29,7 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     // Check for writing to HRAM
     else if (addr >= 0xff80 && addr <= 0xfffe) {
         // Apply the mask to the address
-       hram[addr & 0x007f] = data;
+       hram[addr - 0xff80] = data;
     }
     // Check if write is for IO registers
     else if (addr == 0xff00) {
@@ -59,8 +59,8 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
     }
     // Check if the read is for HRAM
     else if (addr >= 0xff80 && addr <= 0xfffe) {
-        // Apply the mask to the address
-        data = hram[addr & 0x007f];
+        // Offset the address to 0x0000
+        data = hram[addr - 0xff80];
     }
     // Check if the read is for IO registers
     else if (addr == 0xff00) {
