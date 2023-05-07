@@ -13,9 +13,7 @@
 
 ** Merging FG and BG fifos
  * Need:
-   - Vertical scrolling works, but horizontal scrolling is not working. Need to fix this!!!!
-
+   - Need to make sure that sprite pixels without priority over the BG fifo are pushed accordingly.
+     * Should check:https://gbdev.io/pandocs/OAM.html, bottom of the page as it goes over how this works. Probably need to look at this closer after implementing the interrupts.
    - UPDATE COMMENTS!!!!!
-   - Need to add support for sprites being > 0 but < 8
    - Add support for 8x16 sprites
-   - Looks like the fetcher needs to fetch more often since some of the transparent pixels are staying transparent, likely due to the fg fifo not having the next sprites pixel data.

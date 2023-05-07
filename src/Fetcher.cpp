@@ -46,6 +46,7 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
 
             // Make sure to check if signed addressing is needed
             if(!signed_addressing)
+                // Make sure that the index is masked to the values 0-31
                 tile_id = ppu->vram[tilemap_address + (tile_index & 0x1f)];
             else
                 // Cast signed int if signed addressing is used. For 0x8800 mode only
@@ -217,11 +218,14 @@ void FG_Fetcher::clock(DMG_PPU *ppu) {
                 else
                     bg_priority = 0;
                 // Save the lower pixels to the buffer
+                // Check if the sprite should be flipped, if so then we need to push the X pos accordingly
+                if (sprites[sprite_index].attrs.x_flip == 1)
+                    pixel_buffer[i] = {low_color, palette, bg_priority, static_cast<uint8_t>(sprites[sprite_index].x_pos +i)};
                 // Keep in mind we are storing the pixels in the least significant order, and they need to be pushed in most significant order.
-                // Update the x_pos member of the pixel in reverse
-                pixel_buffer[i] = {low_color, palette, bg_priority, static_cast<uint8_t>(sprites[sprite_index].x_pos + (7 - i))};
+                // Update the x_pos member of the pixel in reverse since the sprite is not flipped
+                else
+                    pixel_buffer[i] = {low_color, palette, bg_priority, static_cast<uint8_t>(sprites[sprite_index].x_pos + (7 - i))};
             }
-
             state = GetTileHigh;
             break;
         case GetTileHigh:

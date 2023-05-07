@@ -431,16 +431,40 @@ void DMG_PPU::clock() {
                             std::queue<Pixel_FG> temp_fg_fifo;
                             uint8_t size = fg_fetch.fifo.size();
                             for(uint8_t i = 0; i < size; i++) {
-                                uint8_t x_pos = fg_fetch.fifo.front().x_pos - 8;
-                                uint8_t color = fg_fetch.fifo.front().color;
-                                if (x_pos == pixel_count && color != 0) {
-                                    // If a pixel in the fifo matches the current pixel other than the transparent one,
-                                    // Push it to the screen.
-                                    bus->push_pixel(color, pixel_count + (ly * 160));
-                                    fg_fetch.fifo.pop();
-                                    bg_fetch.fifo.pop();
-                                    sprite_pushed = true;
+                                current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
+                                current_sprite_color = fg_fetch.fifo.front().color;
+                                current_sprite_priority = fg_fetch.fifo.front().bg_priority;
+                                // Check the entire sprite fifo to see if any of the pixels should be drawn where the
+                                // current transparent sprite pixel is.
+                                if (current_sprite_x == pixel_count && current_sprite_color != 0) {
+                                    // If the BG has priority then we need to check if the BG should be drawn instead
+                                    if (current_sprite_priority == 1) {
+                                        uint8_t bg_color = bg_fetch.fifo.front().color;
+                                        // If the BG color is 0, then sprites will have priority
+                                        if (bg_color == 0) {
+                                            bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
+                                            fg_fetch.fifo.pop();
+                                            bg_fetch.fifo.pop();
+                                            sprite_pushed = true;
+                                        }
+                                        // Otherwise, ignore the pixel
+                                        else {
+                                            // We will still push that pixel to the temp fifo since it will need
+                                            // to be re-evaluated
+                                            temp_fg_fifo.push(fg_fetch.fifo.front());
+                                            fg_fetch.fifo.pop();
+                                        }
+                                    }
+                                    // Otherwise the sprite will have priority, so push its pixel
+                                    else {
+                                        bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
+                                        fg_fetch.fifo.pop();
+                                        bg_fetch.fifo.pop();
+                                        sprite_pushed = true;
+                                    }
                                 }
+                                // Push the sprite to the temp fifo, which will then be swapped with the real one
+                                // after each pixel has been checked
                                 else {
                                     // Push to the temp fifo
                                     temp_fg_fifo.push(fg_fetch.fifo.front());
@@ -451,22 +475,43 @@ void DMG_PPU::clock() {
                             // Swap the fifos
                             std::swap(fg_fetch.fifo, temp_fg_fifo);
                         }
+                        // Check if the current sprite pixel should be BG/Win based on the sprite attributes
+                        // Byte 3 bit 7 is set
+                        else if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 1) {
+                            // If the front of the BG fifo has a pixel of color 0, then push a sprite pixel,
+                            // otherwise, push a bg pixel
+                            uint8_t bg_color = bg_fetch.fifo.front().color;
+                            if (bg_color == 0) {
+                                bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
+                                fg_fetch.fifo.pop();
+                                bg_fetch.fifo.pop();
+                                sprite_pushed = true;
+                            }
+                            else {
+                                fg_fetch.fifo.pop();
+                            }
+                        }
                         // Check to see if the current X is less than pixel_count
                         else if (current_sprite_x < pixel_count) {
                             // Flag
                             bool less = true;
                             // Pop the pixel off of the fifo
                             while (less) {
-                                uint8_t current_x = fg_fetch.fifo.front().x_pos - 8;
-                                if (current_x < pixel_count  && !fg_fetch.fifo.empty()) {
+                                current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
+                                if (current_sprite_x < pixel_count  && !fg_fetch.fifo.empty()) {
                                     fg_fetch.fifo.pop();
                                 }
                                 else
                                     less = false;
                             }
-                            if ((fg_fetch.fifo.front().x_pos - 8) == pixel_count) {
+                            // Check to see if the new pixel (after popping off pixels that did not have draw priority)
+                            // should be drawn now
+                            current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
+                            current_sprite_color = fg_fetch.fifo.front().color;
+                            current_sprite_priority = fg_fetch.fifo.front().bg_priority;
+                            if (current_sprite_x == pixel_count && current_sprite_priority == 0) {
                                 // Push a pixel if the x_pos is equal to the pixel_count
-                                bus->push_pixel(fg_fetch.fifo.front().color, pixel_count + (ly * 160));
+                                bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
                                 fg_fetch.fifo.pop();
                                 bg_fetch.fifo.pop();
                                 sprite_pushed = true;
