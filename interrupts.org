@@ -1,0 +1,13 @@
+#+title: Interrupts
+
+* Idea:
++ Create a state machine for the CPU. Each state is either an interrupt, or normal exectution.
++ Need to implement the interrupt related functions like ei, di, halt, stop, etc.
+
+* IME:
++ Not mapped to an address.
++ Accessible thorugh the EI, DI, RETI instructions and the <ISR> event.
+  * <ISR> is the Interrupt Service Routine that is automatically exectuted by the CPU when it services and interrupt request (directly from pan docs).
+  * <ISR> Also disables interrupts before the interrupt handler is called (PC set to the address according to the interrupt).
++ CPU sets the IF register.
+  - May want to create a check in the clock function to set the various interrupt flags rather than for example, have VBlank get set by the PPU.
