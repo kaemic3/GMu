@@ -45,6 +45,8 @@ SM83::SM83() {
             {"SET 4,B", &op::set_n_r8, 4, 2, {&b_reg}, 4}, {"SET 4,C", &op::set_n_r8, 4, 2, {&c_reg}, 4}, {"SET 4,D", &op::set_n_r8, 4, 2, {&d_reg}, 4}, {"SET 4,E", &op::set_n_r8, 4, 2, {&e_reg}, 4}, {"SET 4,H", &op::set_n_r8, 4, 2, {&h_reg}, 4}, {"SET 4,L", &op::set_n_r8, 4, 2, {&l_reg}, 4}, {"SET 4,(HL)", &op::set_n_r8, 12, 2, {&l_reg, &h_reg}, 4}, {"SET 4,A", &op::set_n_r8, 4, 2, {&a_reg}, 4}, {"SET 5,B", &op::set_n_r8, 4, 2, {&b_reg}, 5}, {"SET 5,C", &op::set_n_r8, 4, 2, {&c_reg}, 5}, {"SET 5,D", &op::set_n_r8, 4, 2, {&d_reg}, 5}, {"SET 5,E", &op::set_n_r8, 4, 2, {&e_reg}, 5}, {"SET 5,H", &op::set_n_r8, 4, 2, {&h_reg}, 5}, {"SET 5,L", &op::set_n_r8, 4, 2, {&l_reg}, 5}, {"SET 5,(HL)", &op::set_n_r8, 12, 2, {&l_reg, &h_reg}, 5}, {"SET 5,A", &op::set_n_r8, 4, 2, {&a_reg}, 5},
             {"SET 6,B", &op::set_n_r8, 4, 2, {&b_reg}, 6}, {"SET 6,C", &op::set_n_r8, 4, 2, {&c_reg}, 6}, {"SET 6,D", &op::set_n_r8, 4, 2, {&d_reg}, 6}, {"SET 6,E", &op::set_n_r8, 4, 2, {&e_reg}, 6}, {"SET 6,H", &op::set_n_r8, 4, 2, {&h_reg}, 6}, {"SET 6,L", &op::set_n_r8, 4, 2, {&l_reg}, 6}, {"SET 6,(HL)", &op::set_n_r8, 12, 2, {&l_reg, &h_reg}, 6}, {"SET 6,A", &op::set_n_r8, 4, 2, {&a_reg}, 6}, {"SET 7,B", &op::set_n_r8, 4, 2, {&b_reg}, 7}, {"SET 7,C", &op::set_n_r8, 4, 2, {&c_reg}, 7}, {"SET 7,D", &op::set_n_r8, 4, 2, {&d_reg}, 7}, {"SET 7,E", &op::set_n_r8, 4, 2, {&e_reg}, 7}, {"SET 7,H", &op::set_n_r8, 4, 2, {&h_reg}, 7}, {"SET 7,L", &op::set_n_r8, 4, 2, {&l_reg}, 7}, {"SET 7,(HL)", &op::set_n_r8, 12, 2, {&l_reg, &h_reg}, 7}, {"SET 7,A", &op::set_n_r8, 4, 2, {&a_reg}, 7}
     };
+    // Default CPU state is execute
+    state = Execute;
 }
 
 SM83::~SM83() {
@@ -59,20 +61,69 @@ void SM83::cpu_write(uint16_t addr, uint8_t data) {
     bus->cpu_write(addr, data);
 }
 
-void SM83::clock() {
-    // Only execute when the internal cycles count is 0
-    if(cycles == 0) {
-        // Read opcode - PC will be pointing to it
-        opcode = cpu_read(pc);
-        // Inc the PC to point to the next byte of the instruction
-        pc++;
-        // get the number of cycles for the instruction
-        cycles = opcode_lookup[opcode].cycles;
-        // Call the function pointer of the current opcode - Function returns the number of additional cycles req
-        uint8_t additional_cycle = (this->*opcode_lookup[opcode].operate)();
-        cycles += additional_cycle;
+void SM83::interrupt_scan() {
+    // See if the VBlank flag needs to be set
+    if (bus->ppu.ly == 144) {
+        bus->if_reg.vblank = 1;
     }
-    cycles--;
+}
+
+void SM83::clock() {
+    switch (state) {
+        case Execute:
+            // Need to check for interrupts
+            // Only execute when the internal cycles count is 0
+            if(cycles == 0) {
+                // Before executing an instruction, check for interrupt
+                if (bus->ime == 1) {
+                    // Interrupt priorities
+                    // Bit 0 VBlank highest
+                    // Bit 4 Joypad loweset
+                    // VBlank
+                    if (bus->if_reg.vblank == 1) {
+                        interrupt(VBLANK_INT);
+                        break;
+                    }
+                    else if (bus->if_reg.lcd_stat == 1) {
+
+                    }
+                    else if (bus->if_reg.lcd_stat == 1) {
+
+                    }
+                    else if (bus->if_reg.serial == 1) {
+
+                    }
+                    else if (bus->if_reg.joypad == 1) {
+
+                    }
+
+                }
+                // Read opcode - PC will be pointing to it
+                opcode = cpu_read(pc);
+                // Inc the PC to point to the next byte of the instruction
+                pc++;
+                // get the number of cycles for the instruction
+                cycles = opcode_lookup[opcode].cycles;
+                // Call the function pointer of the current opcode - Function returns the number of additional cycles req
+                uint8_t additional_cycle = (this->*opcode_lookup[opcode].operate)();
+                cycles += additional_cycle;
+            }
+            cycles--;
+            break;
+        case Halt:
+            // Halt is a mode where the CPU waits for an interrupt. As more are added,
+            // checks for each will be added here.
+            if (bus->ime == 1) {
+                if (bus->if_reg.vblank == 1) {
+                    interrupt(VBLANK_INT);
+                    state = Execute;
+                    break;
+                }
+
+            }
+            break;
+    }
+
 }
 bool SM83::complete() {
     return cycles == 0;
@@ -85,10 +136,31 @@ void SM83::reset() {
     fetched = 0x00;
     addr_abs = 0x0000;
     opcode = 0x00;
+    state = Execute;
 
 }
-bool SM83::interrupt() {
-    return false;
+bool SM83::interrupt(uint8_t addr) {
+    bool flag = false;
+    switch (addr) {
+        case VBLANK_INT:
+            di();
+            // Push the current PC to the stack
+            sp--;
+            cpu_write(sp, (pc >> 8));
+            sp--;
+            cpu_write(sp, (pc & 0xff));
+            // Set the PC to the VBLANK interrupt address
+            pc = VBLANK_INT;
+            // Clear the flags
+            bus->if_reg.data = 0;
+            flag = true;
+            break;
+        case LCD_STAT_INT:
+            break;
+        default:
+            break;
+    }
+    return flag;
 }
 
 // Returns 1 if the flag bit is set and 0 if reset
@@ -3054,7 +3126,7 @@ uint8_t SM83::ei() {
 // TODO: Need to finish this after interrupts have been implemented.
 // Halt the system clock until an interrupt occurs.
 uint8_t SM83::halt() {
-
+    state = Halt;
     return 0;
 }
 
@@ -6876,8 +6948,10 @@ uint8_t SM83::srl_l() {
 }
 
 uint8_t SM83::stop_d8() {
+    // TODO: Implement this
     // Need to pause the Game Boy when this opcode is run
     // To exit stop check link: https://gbdev.io/pandocs/Reducing_Power_Consumption.html?highlight=stop#using-the-stop-instruction
+    bus->reset();
     return 0;
 }
 

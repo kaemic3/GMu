@@ -64,7 +64,7 @@ public:
    } if_reg;
 
     // Misc IO registers
-    uint8_t joypad_input = 0x00;
+    uint8_t joypad_input = 0xff;
     // Total clock count
     uint32_t system_clock_counter = 0;
     // System functions

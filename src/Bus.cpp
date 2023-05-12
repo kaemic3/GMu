@@ -37,7 +37,10 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     }
     // Check if write is to the IO registers
     else if (addr == 0xff00) {
-        joypad_input = data;
+        // Grab only bit 4 & 5
+        uint8_t masked_data = data & 0x30;
+        // Or the masked data with the current register
+        joypad_input |= masked_data;
     }
     // Check if write is to the IF register
     else if (addr == 0xff0f) {
@@ -78,6 +81,10 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
     else if (addr == 0xff00) {
         data = joypad_input;
     }
+    // Check if the read is from the DIV register
+    else if (addr == 0xff04) {
+        data = 108;
+    }
     // Check if the read is for VRAM
     // TODO: Add check so the PPU can block access to VRAM
     else if (ppu.cpu_read(addr, data)) {
@@ -98,6 +105,9 @@ void Bus::di() {
 // The CPU and PPU run at the same clock speed
 // First the cpu is clocked, then the ppu
 void Bus::clock() {
+    // This function will scan the system for interrupts
+    cpu.interrupt_scan();
+
     cpu.clock();
     ppu.clock();
 
@@ -110,6 +120,7 @@ void Bus::reset() {
     clear_screen();
 
     system_clock_counter = 0;
+    joypad_input = 0;
 }
 void Bus::push_pixel(uint8_t pixel, uint32_t index) {
     screen[index] = pixel;

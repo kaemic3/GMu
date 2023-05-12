@@ -102,7 +102,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
             return false;
         }
         // Mask the passed address so it is offset to 0x0000
-        data = vram[addr & 0x8000];
+        data = vram[addr - 0x8000];
         return true;
     }
     // Check if reading OAM

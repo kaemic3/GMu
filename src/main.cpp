@@ -24,8 +24,20 @@ int main(int argc, char *argv[]) {
     GMu::gb.cpu.pc = 0x0100;
     GMu::gb.cpu.sp = 0xfffe;
     // While app is running
+
+    bool emulation_run = false;
+    float residual_time = 0.0f;
+    std::chrono::system_clock::time_point tp_1 = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
+
     while(!quit) {
-       //do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+        // Handle timing
+        // Pulled from the pixel game engine
+        tp_2 = std::chrono::system_clock::now();
+
+        std::chrono::duration<float> elapsed_time = tp_2 - tp_1;
+        tp_1 = tp_2;
+
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
             if (e.type == SDL_QUIT)
@@ -40,8 +52,8 @@ int main(int argc, char *argv[]) {
                         GMu::window_list[0]->Focus();
                         break;
                     case SDLK_SPACE:
-                        // Run until one complete instruction has run
-                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+                        // Toggle the run state of the emulator
+                        emulation_run = !emulation_run;
                         break;
                     case SDLK_UP:
                         GMu::main_window->HandleViewportEvent(GMu::MemoryTranslateUp);
@@ -52,13 +64,75 @@ int main(int argc, char *argv[]) {
                     case SDLK_r:
                         GMu::gb.reset();
                         break;
-                    case SDLK_RETURN:
-                        // Run until a complete frame
+                    case SDLK_w:
+                        // Up
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 2 | 1 << 4);
+                        break;
+                    case SDLK_a:
+                        // Left
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 1 | 1 << 4);
+                        break;
+                    case SDLK_s:
+                        // Down
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 3 | 1 << 4);
+                        break;
+                    case SDLK_d:
+                        // Right
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 0 | 1 << 4);
+                        break;
+                    case SDLK_j:
+                        // Select
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input = ~(1 << 2 | 1 << 5);
+                        break;
+                    case SDLK_k:
+                        // Start
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 3 | 1 << 5);
+                        break;
+                    case SDLK_n:
+                        // B
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 1 | 1 << 5);
+                        break;
+                    case SDLK_m:
+                        // A
+                        GMu::gb.joypad_input = 0xff;
+                        GMu::gb.joypad_input &= ~(1 << 0 | 1 << 5);
+                        break;
+                    case SDLK_f:
+                        // Run until the entire frame has been drawn
                         do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+                        break;
+                    case SDLK_RETURN:
+                        // Run until one complete instruction has run
+                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+                        break;
+                    default:
+                        //GMu::gb.joypad_input = 0xff;
                         break;
                 }
             }
         }
+
+        //do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+        if (emulation_run) {
+            if (residual_time > 0.0f) {
+                residual_time -= elapsed_time.count();
+            }
+            else {
+                residual_time += (1.0f / 29.7f) - elapsed_time.count();
+                do {
+                    GMu::gb.clock();
+                } while (!GMu::gb.ppu.frame_complete);
+            }
+        }
+
+
         // *** Need to Update this section to have a loop that updates all windows ***
         // Run Update on viewports
         GMu::main_window->UpdateViewports();

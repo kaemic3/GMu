@@ -1,0 +1,5 @@
+#+title: Input
+
+* TODO
++ Need to remake the main function becuase input is polled on a cycle basis rather than a frame basis.
+  - The current main function only can process input on a frame basis.

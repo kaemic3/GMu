@@ -5,6 +5,12 @@
 #include <string>
 #include <vector>
 
+#define VBLANK_INT      0x40
+#define LCD_STAT_INT    0x48
+#define TIMER_INT       0x50
+#define SERIAL_INT      0x58
+#define JOYPAD_INT      0x60
+
 // Forward declare a bus class
 class Bus;
 
@@ -56,7 +62,8 @@ public:
     uint8_t xor_a(); uint8_t xor_abs_hl(); uint8_t xor_b(); uint8_t xor_c(); uint8_t xor_d(); uint8_t xor_d8(); uint8_t xor_e(); uint8_t xor_h(); uint8_t xor_l();
     // For illegal opcodes
     uint8_t xxx();
-
+    // Interrupt Scan
+    void interrupt_scan();
     // Clock function
     void clock();
     // Helper function to tell when an instruction has finished
@@ -64,11 +71,11 @@ public:
     // Reset function
     void reset();
     // Interrupt function
-    bool interrupt();
+    bool interrupt(uint8_t addr);
     // CPU states
     enum CPUState {
         Execute,
-        Interrupt
+        Halt
     } state;
 
     // Fetching

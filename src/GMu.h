@@ -11,6 +11,7 @@
 #include <bitset>
 #include <iomanip>
 #include <memory>
+#include <chrono>
 #include "SM83.h"
 #include "Bus.h"
 #include "Cartridge.h"
