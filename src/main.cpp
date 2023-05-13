@@ -1,5 +1,8 @@
 #include "GMu.h"
 
+// Time for the clock thread to sleep for 59.7 fps
+#define FRAME_TIME_MS 16.75
+
 int main(int argc, char *argv[]) {
     // Need to pre initialize smart pointers for all windows that can be created.
     GMu::main_window = new GMu::zMainWindow(&GMu::gb);
@@ -13,7 +16,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMs/gb_snek.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/gb_snek.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -24,19 +27,11 @@ int main(int argc, char *argv[]) {
     GMu::gb.cpu.pc = 0x0100;
     GMu::gb.cpu.sp = 0xfffe;
     // While app is running
-
     bool emulation_run = false;
-    float residual_time = 0.0f;
     std::chrono::system_clock::time_point tp_1 = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
 
     while(!quit) {
-        // Handle timing
-        // Pulled from the pixel game engine
-        tp_2 = std::chrono::system_clock::now();
-
-        std::chrono::duration<float> elapsed_time = tp_2 - tp_1;
-        tp_1 = tp_2;
 
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
@@ -66,43 +61,43 @@ int main(int argc, char *argv[]) {
                         break;
                     case SDLK_w:
                         // Up
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 2 | 1 << 4);
+                        GMu::gb.joypad_directional = 0x0f;
+                        GMu::gb.joypad_directional &= ~(1 << 2);
                         break;
                     case SDLK_a:
                         // Left
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 1 | 1 << 4);
+                        GMu::gb.joypad_directional = 0x0f;
+                        GMu::gb.joypad_directional &= ~(1 << 1);
                         break;
                     case SDLK_s:
                         // Down
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 3 | 1 << 4);
+                        GMu::gb.joypad_directional = 0x0f;
+                        GMu::gb.joypad_directional &= ~(1 << 3);
                         break;
                     case SDLK_d:
                         // Right
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 0 | 1 << 4);
+                        GMu::gb.joypad_directional = 0x0f;
+                        GMu::gb.joypad_directional &= ~(1 << 0);
                         break;
                     case SDLK_j:
                         // Select
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input = ~(1 << 2 | 1 << 5);
+                        GMu::gb.joypad_action = 0x0f;
+                        GMu::gb.joypad_action &= ~(1 << 2);
                         break;
                     case SDLK_k:
                         // Start
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 3 | 1 << 5);
+                        GMu::gb.joypad_action = 0x0f;
+                        GMu::gb.joypad_action &= ~(1 << 3);
                         break;
                     case SDLK_n:
                         // B
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 1 | 1 << 5);
+                        GMu::gb.joypad_action = 0x0f;
+                        GMu::gb.joypad_action &= ~(1 << 1);
                         break;
                     case SDLK_m:
                         // A
-                        GMu::gb.joypad_input = 0xff;
-                        GMu::gb.joypad_input &= ~(1 << 0 | 1 << 5);
+                        GMu::gb.joypad_action = 0x0f;
+                        GMu::gb.joypad_action &= ~(1 << 0);
                         break;
                     case SDLK_f:
                         // Run until the entire frame has been drawn
@@ -113,25 +108,27 @@ int main(int argc, char *argv[]) {
                         do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
                         break;
                     default:
-                        //GMu::gb.joypad_input = 0xff;
                         break;
                 }
             }
         }
-
-        //do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+        // Handle the timing, the system should only clock every 16.75ms (roughly, 59.7 fps).
+        tp_1 = std::chrono::system_clock::now();
+        std::chrono::duration<float, std::milli> elapsed_time = tp_1 - tp_2;
         if (emulation_run) {
-            if (residual_time > 0.0f) {
-                residual_time -= elapsed_time.count();
+            if (elapsed_time.count() < FRAME_TIME_MS) {
+                std::chrono::system_clock::now();
+                std::chrono::duration<float, std::milli> delta_ms(FRAME_TIME_MS - elapsed_time.count());
+                auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+                std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_duration));
             }
             else {
-                residual_time += (1.0f / 29.7f) - elapsed_time.count();
+                tp_2 = std::chrono::system_clock::now();
                 do {
                     GMu::gb.clock();
                 } while (!GMu::gb.ppu.frame_complete);
             }
         }
-
 
         // *** Need to Update this section to have a loop that updates all windows ***
         // Run Update on viewports
