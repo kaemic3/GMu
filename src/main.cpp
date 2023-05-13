@@ -1,7 +1,7 @@
 #include "GMu.h"
 
-// Time for the clock thread to sleep for 59.7 fps
-#define FRAME_TIME_MS 16.75
+// Time for the clock thread to sleep for 59.73 fps
+#define FRAME_TIME_MS 16.74
 
 int main(int argc, char *argv[]) {
     // Need to pre initialize smart pointers for all windows that can be created.
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        // Handle the timing, the system should only clock every 16.75ms (roughly, 59.7 fps).
+        // Handle the timing, the system should only clock every 16.74ms (roughly, 59.73 fps).
         tp_1 = std::chrono::system_clock::now();
         std::chrono::duration<float, std::milli> elapsed_time = tp_1 - tp_2;
         if (emulation_run) {
