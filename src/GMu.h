@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <memory>
 #include <chrono>
+#include <thread>
 #include "SM83.h"
 #include "Bus.h"
 #include "Cartridge.h"
