@@ -64,7 +64,22 @@ public:
    } if_reg;
 
     // Misc IO registers
-    uint8_t joypad_input = 0xff;
+    // Joypad - The joypad is split into 3 different registers. This is due to the fact that the Game boy needs
+    // to treat the directional input differently from the action buttons. Though to the programmer, this register
+    // is mapped to just 8 bits of memory, register 0xff00
+
+    // Only the first 2 bits are used. They represent bit 4 & 5 of the joypad register.
+    uint8_t joypad_input_select = 0x03;
+
+    // Both sets of buttons only use the lower 4 bits.
+    // This register is updated by the user and represents the directional inputs
+    uint8_t joypad_directional = 0x0f;
+    // This register is updated by the user and represents the action inputs
+    uint8_t joypad_action = 0x0f;
+
+    // Timer Registers
+    uint8_t div = 0x00;
+
     // Total clock count
     uint32_t system_clock_counter = 0;
     // System functions

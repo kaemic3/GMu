@@ -40,7 +40,9 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
         // Grab only bit 4 & 5
         uint8_t masked_data = data & 0x30;
         // Or the masked data with the current register
-        joypad_input |= masked_data;
+        // Shift the data right 4 bits to align the grabbed bits to bit 0 and 1
+        masked_data = masked_data >> 4;
+        joypad_input_select = masked_data;
     }
     // Check if write is to the IF register
     else if (addr == 0xff0f) {
@@ -79,11 +81,28 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
     }
     // Check if the read is for IO registers
     else if (addr == 0xff00) {
-        data = joypad_input;
+        // When reading joypad input, we need use the 3 joypad registers to return
+        // the bits the way the GB would.
+
+        // First check the select bit
+        if (joypad_input_select == 0x02) {
+            // If bit 0 is reset, then return the directional buttons
+            // Also reset bit 4
+            data = joypad_directional  &~(1 << 4);
+        }
+        else if (joypad_input_select == 0x01) {
+            // If bit 2 is reset, then return the action buttons
+            // Also reset bit 5
+            data = joypad_action &~(1 << 5);
+        }
+        else
+            // Otherwise return 0xff
+            data = 0xff;
+
     }
     // Check if the read is from the DIV register
     else if (addr == 0xff04) {
-        data = 108;
+        data = div;
     }
     // Check if the read is for VRAM
     // TODO: Add check so the PPU can block access to VRAM
@@ -111,6 +130,9 @@ void Bus::clock() {
     cpu.clock();
     ppu.clock();
 
+    if (system_clock_counter % 256 == 0) {
+        div++;
+    }
     system_clock_counter++;
 }
 
@@ -120,7 +142,10 @@ void Bus::reset() {
     clear_screen();
 
     system_clock_counter = 0;
-    joypad_input = 0;
+    joypad_input_select = 0x03;
+    joypad_action = 0x0f;
+    joypad_directional = 0x0f;
+
 }
 void Bus::push_pixel(uint8_t pixel, uint32_t index) {
     screen[index] = pixel;
