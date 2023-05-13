@@ -32,12 +32,11 @@ int main(int argc, char *argv[]) {
     std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
 
     while(!quit) {
-
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
             if (e.type == SDL_QUIT)
                 quit = true;
-            // Handle window events - i needs to be a reference
+            // Handle window events - i needs to be a pointer
             for (auto i: GMu::window_list)
                 i->HandleWindowEvent(e);
             // Pull up window
