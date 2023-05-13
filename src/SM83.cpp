@@ -6294,6 +6294,8 @@ uint8_t SM83::sla_abs_hl() {
         setFlag(C, 0);
     // Shift the register left 1
     data = data << 1;
+    // Write the data
+    cpu_write(addr_abs, data);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
