@@ -152,17 +152,11 @@ void Bus::di() {
 // The CPU and PPU run at the same clock speed
 // First the cpu is clocked, then the ppu
 void Bus::clock() {
-
     // Compare LYC to LY
     if (ppu.ly == ppu.lyc && !ppu.ly_lyc_flag) {
         ppu.stat.lyc_ly_flag = 1;
         ppu.ly_lyc_flag = true;
     }
-    else {
-        ppu.stat.lyc_ly_flag = 0;
-        ppu.ly_lyc_flag = false;
-    }
-
     // * VBlank *
 
     // See if the VBlank interrupt flag needs to be set
@@ -262,6 +256,18 @@ void Bus::clock() {
                     tima++;
                 }
             }
+        }
+    }
+
+    // * Joypad *
+    // Need to check the low nibble of the input registers go from 1 to 0
+    // Interrupt is only fired when on of the input select bits are low
+
+    // First check to see if at least one input select bits are not set
+    if (joypad_input_select < 0x03) {
+        // Now check if any of the joypad buttons have been pressed
+        if (joypad_action < 0x0f || joypad_directional < 0x0f) {
+            if_reg.joypad = 1;
         }
     }
 

@@ -559,8 +559,12 @@ void DMG_PPU::clock() {
                 // We have now reached the end of the scanline
                 clock_count = 0;
                 hblank_flag = false;
+
                 // Increment the scanline register
                 ly++;
+                // Reset the lyc ly flags
+                ly_lyc_flag = false;
+                stat.lyc_ly_flag = 0;
                 // Check if window is drawing
                 if(window_draw)
                     win_ly++;
@@ -572,7 +576,6 @@ void DMG_PPU::clock() {
                     state = OAMSearch;
                     cpu_access = false;
                 }
-
             }
             break;
         case VBlank:
@@ -589,6 +592,9 @@ void DMG_PPU::clock() {
                 clock_count = 0;
                 // Increment the scanline register
                 ly++;
+                // Reset the lyc ly flags
+                ly_lyc_flag = false;
+                stat.lyc_ly_flag = 0;
                 // If we have reached the last scanline for VBlank, return to the start of the pixel drawing process
                 if (ly == 153) {
                     ly = 0;
@@ -597,6 +603,7 @@ void DMG_PPU::clock() {
                     frame_complete = true;
                     cpu_access = false;
                     vblank_fired = false;
+                    ly_lyc_flag = false;
                 }
             }
             break;
