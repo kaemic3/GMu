@@ -61,7 +61,8 @@ public:
             uint8_t unused      : 3;
        };
         uint8_t data;
-   } if_reg;
+    } if_reg;
+
 
     // Misc IO registers
     // Joypad - The joypad is split into 3 different registers. This is due to the fact that the Game boy needs
@@ -77,8 +78,25 @@ public:
     // This register is updated by the user and represents the action inputs
     uint8_t joypad_action = 0x0f;
 
+    // TODO Finish implementing serial communication
+    // Serial data registers
+    // SB - 0xff01
+    uint8_t sb = 0x00;
+    // SC - 0xff02
+    // Bit 0 - Shift clock (0 = External, 1 = Internal)
+    // Bit 1 - Clock Speed (only used on CGB: 0 = Normal, 1 = Fast)
+    // Bit 7 - Transfer Start Flag (0 = No transfer, 1 = Transfer requested/in progress
+    uint8_t sc = 0x00;
+
     // Timer Registers
+    // 0xff04
     uint8_t div = 0x00;
+    // 0xff05
+    uint8_t tima = 0x00;
+    // 0xff06
+    uint8_t tma = 0x00;
+    // 0xff07 - Bit 0-1 Input Clock select, Bit 2 - Timer enable
+    uint8_t tac = 0x00;
 
     // Total clock count
     uint32_t system_clock_counter = 0;

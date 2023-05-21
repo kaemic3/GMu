@@ -13,6 +13,7 @@
 #include <memory>
 #include <chrono>
 #include <thread>
+#include <limits>
 #include "SM83.h"
 #include "Bus.h"
 #include "Cartridge.h"

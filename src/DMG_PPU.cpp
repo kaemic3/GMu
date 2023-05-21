@@ -180,9 +180,11 @@ void DMG_PPU::clock() {
     // Need to make sure we are updating the stat mode flag
     switch (state) {
         case OAMSearch:
-            // OAM search always takes 40 clocks to complete
+            // Set the stat flag
             stat.mode_flag = 2;
-
+            if (clock_count == 2)
+                oam_flag = true;
+            // OAM search always takes 40 clocks to complete
             if (clock_count == 40) {
                 // Need to get the data for upto 10 sprites on this scanline
                 // Compare the Y pos of each sprite to the current scan line
@@ -221,6 +223,7 @@ void DMG_PPU::clock() {
                 window_draw = false;
                 swap_to_win = false;
                 pop_request = false;
+                oam_flag = false;
 
                 // Set the tile data address - Window and BG share a tile data area
                 switch (lcdc.bg_win_tile_data_area) {
@@ -360,7 +363,11 @@ void DMG_PPU::clock() {
             }
             break;
         case PixelTransfer:
+            // Set the stat flag
             stat.mode_flag = 3;
+            // Set the pixel transfer flag after the first clock cycle of the VBlank state
+            if (clock_count == 2)
+                pixel_transfer_flag = true;
             // Clock the fetchers: Only clocks every 2 PPU clocks
             bg_fetch.clock(this, swap_to_win, tile_line, pixel_x);
             fg_fetch.clock(this);
@@ -534,11 +541,16 @@ void DMG_PPU::clock() {
             // Reset flag
             sprite_pushed = false;
             if (pixel_count == 160){
+                pixel_transfer_flag = false;
                 state = HBlank;
             }
             break;
         case HBlank:
+            // Set the stat flag
             stat.mode_flag = 0;
+            // Set the HBlank flag after the first clock cycle of the VBlank state
+            if (clock_count == 2)
+                hblank_flag = true;
             // Check to see if the entire scanline has been completed by looking at the number of clocks
             // 456 is the number of clocks required for the ppu to output a complete scanline of pixels
             // CPU is also able to access VRAM and OAM now
@@ -546,6 +558,7 @@ void DMG_PPU::clock() {
             if (clock_count == 456) {
                 // We have now reached the end of the scanline
                 clock_count = 0;
+                hblank_flag = false;
                 // Increment the scanline register
                 ly++;
                 // Check if window is drawing
@@ -567,6 +580,9 @@ void DMG_PPU::clock() {
             stat.mode_flag = 1;
             // Pause and allow for CPU to access VRAM and OAM
             cpu_access = true;
+            // Set the VBlank flag after the first clock cycle of the VBlank state
+            if (clock_count == 2)
+                vblank_fired = true;
             // Check to see if the scanline is complete
             if (clock_count == 456) {
                 // Reset clock count for new scanline
@@ -580,6 +596,7 @@ void DMG_PPU::clock() {
                     state = OAMSearch;
                     frame_complete = true;
                     cpu_access = false;
+                    vblank_fired = false;
                 }
             }
             break;
@@ -601,6 +618,7 @@ void DMG_PPU::reset() {
     for (uint8_t i : oam) i = 0x00;
     lcdc.data = 0;
     stat.data = 0;
+    vblank_fired = false;
 }
 
 uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {

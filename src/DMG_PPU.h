@@ -39,7 +39,16 @@ public:
         HBlank,
         VBlank
     } state;
-
+    // Flag that is set when the VBlank interrupt is fired at the start of VBLANK
+    bool vblank_fired = false;
+    // This flag is set when the PPU changes state to HBlank
+    bool hblank_flag = false;
+    // This flag is set when the PPU changes state to OAM search
+    bool oam_flag = false;
+    // This flag is set when the PPU changes state to PixelTransfer
+    bool pixel_transfer_flag = false;
+    // This flag is set when the LY register is equal to the LYC register
+    bool ly_lyc_flag = false;
     // Color palettes
     uint8_t bgp = 0;
     uint8_t obp0 = 0;
@@ -64,7 +73,6 @@ public:
     // LYC register
     uint8_t lyc = 0;
 
-private:
     // This will act as the pixel FIFO fetcher for the background and window
     BG_Fetcher bg_fetch;
     // Used in the pixel transfer state

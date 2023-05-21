@@ -61,13 +61,6 @@ void SM83::cpu_write(uint16_t addr, uint8_t data) {
     bus->cpu_write(addr, data);
 }
 
-void SM83::interrupt_scan() {
-    // See if the VBlank flag needs to be set
-    if (bus->ppu.ly == 144) {
-        bus->if_reg.vblank = 1;
-    }
-}
-
 void SM83::clock() {
     switch (state) {
         case Execute:
@@ -76,27 +69,31 @@ void SM83::clock() {
             if(cycles == 0) {
                 // Before executing an instruction, check for interrupt
                 if (bus->ime == 1) {
+                    // For each interrupt, see if the flag is set and if the interrupt enable flag is also set
                     // Interrupt priorities
                     // Bit 0 VBlank highest
                     // Bit 4 Joypad loweset
                     // VBlank
-                    if (bus->if_reg.vblank == 1) {
+                    if (bus->if_reg.vblank == 1 && bus->ie_reg.vblank == 1) {
                         interrupt(VBLANK_INT);
                         break;
                     }
-                    else if (bus->if_reg.lcd_stat == 1) {
-
+                    else if (bus->if_reg.lcd_stat == 1 && bus->ie_reg.lcd_stat == 1) {
+                        interrupt(LCD_STAT_INT);
+                        break;
                     }
-                    else if (bus->if_reg.lcd_stat == 1) {
-
+                    else if (bus->if_reg.timer == 1 && bus->ie_reg.timer == 1) {
+                        interrupt(TIMER_INT);
+                        break;
                     }
-                    else if (bus->if_reg.serial == 1) {
-
+                    else if (bus->if_reg.serial == 1 && bus->ie_reg.serial == 1) {
+                        interrupt(SERIAL_INT);
+                        break;
                     }
-                    else if (bus->if_reg.joypad == 1) {
-
+                    else if (bus->if_reg.joypad == 1 && bus->ie_reg.joypad == 1) {
+                        interrupt(JOYPAD_INT);
+                        break;
                     }
-
                 }
                 // Read opcode - PC will be pointing to it
                 opcode = cpu_read(pc);
@@ -114,16 +111,29 @@ void SM83::clock() {
             // Halt is a mode where the CPU waits for an interrupt. As more are added,
             // checks for each will be added here.
             if (bus->ime == 1) {
-                if (bus->if_reg.vblank == 1) {
+                if (bus->if_reg.vblank == 1 && bus->ie_reg.vblank == 1) {
                     interrupt(VBLANK_INT);
                     state = Execute;
-                    break;
                 }
-
+                else if (bus->if_reg.lcd_stat == 1 && bus->ie_reg.lcd_stat == 1) {
+                    interrupt(LCD_STAT_INT);
+                    state = Execute;
+                }
+                else if (bus->if_reg.timer == 1 && bus->ie_reg.timer == 1) {
+                    interrupt(TIMER_INT);
+                    state = Execute;
+                }
+                else if (bus->if_reg.serial == 1 && bus->ie_reg.serial == 1) {
+                    interrupt(SERIAL_INT);
+                    state = Execute;
+                }
+                else if (bus->if_reg.joypad == 1 && bus->ie_reg.joypad == 1) {
+                    interrupt(JOYPAD_INT);
+                    state = Execute;
+                }
             }
             break;
     }
-
 }
 bool SM83::complete() {
     return cycles == 0;
@@ -140,26 +150,49 @@ void SM83::reset() {
 
 }
 bool SM83::interrupt(uint8_t addr) {
+    // Flag returns true when an interrupt occurs
     bool flag = false;
+
+    // Disable interrupts
+    di();
+    // Push the current PC to the stack
+    sp--;
+    cpu_write(sp, (pc >> 8));
+    sp--;
+    cpu_write(sp, (pc & 0xff));
+
     switch (addr) {
         case VBLANK_INT:
-            di();
-            // Push the current PC to the stack
-            sp--;
-            cpu_write(sp, (pc >> 8));
-            sp--;
-            cpu_write(sp, (pc & 0xff));
             // Set the PC to the VBLANK interrupt address
             pc = VBLANK_INT;
-            // Clear the flags
-            bus->if_reg.data = 0;
             flag = true;
             break;
         case LCD_STAT_INT:
+            // Set the PC to the STAT interrupt address
+            pc = LCD_STAT_INT;
+            flag = true;
             break;
+        case TIMER_INT:
+            // Set the PC to the TIMER interrupt address
+            pc = TIMER_INT;
+            flag = true;
+            break;
+        case SERIAL_INT:
+            // Set the PC to the SERIAL interrupt address
+            pc = SERIAL_INT;
+            flag = true;
+            break;
+        case JOYPAD_INT:
+            // Set the PC to the JOYPAD interrupt address
+            pc = JOYPAD_INT;
+            flag = true;
         default:
+            // If no interrupt occurs, return and reset the PC
             break;
     }
+
+    // Clear the flags
+    bus->if_reg.data = 0;
     return flag;
 }
 
