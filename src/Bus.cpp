@@ -65,6 +65,13 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     else if (addr == 0xff0f) {
         if_reg.data = data;
     }
+    // Check for write to DMA
+    else if (addr == 0xff46) {
+        // Writes to the DMA register are divided by 0x100
+        dma = data / 0x100;
+        // Change the system state
+        run_dma();
+    }
     // Check if write is to the IE register
     else if (addr == 0xffff) {
         ie_reg.data = data;
@@ -133,6 +140,10 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
     else if (addr == 0xff07) {
         data = tac;
     }
+    // DMA register
+    else if (addr == 0xff46) {
+        data = dma;
+    }
     // Check if the read is for VRAM
     // TODO: Add check so the PPU can block access to VRAM
     else if (ppu.cpu_read(addr, data)) {
@@ -147,6 +158,11 @@ void Bus::ei() {
 
 void Bus::di() {
     ime = 0;
+}
+
+void Bus::run_dma() {
+    // Change the state of the CPU to DMA mode
+    cpu.state = SM83::DMA;
 }
 
 // The CPU and PPU run at the same clock speed

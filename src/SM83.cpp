@@ -133,6 +133,8 @@ void SM83::clock() {
                 }
             }
             break;
+        case DMA:
+            break;
     }
 }
 bool SM83::complete() {

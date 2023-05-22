@@ -101,6 +101,12 @@ public:
     // 0xff07 - Bit 0-1 Input Clock select, Bit 2 - Timer enable
     uint8_t tac = 0x00;
 
+    // DMA register
+    // 0xff46
+    uint8_t dma = 0x00;
+    // Run DMA
+    void run_dma();
+
     // Total clock count
     uint32_t system_clock_counter = 0;
     // System functions

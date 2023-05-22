@@ -70,10 +70,12 @@ public:
     void reset();
     // Interrupt function
     bool interrupt(uint8_t addr);
+
     // CPU states
     enum CPUState {
         Execute,
-        Halt
+        Halt,
+        DMA
     } state;
 
     // Fetching
