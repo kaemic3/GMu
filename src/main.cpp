@@ -30,7 +30,6 @@ int main(int argc, char *argv[]) {
     bool emulation_run = false;
     std::chrono::system_clock::time_point tp_1 = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
-
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
@@ -60,42 +59,34 @@ int main(int argc, char *argv[]) {
                         break;
                     case SDLK_w:
                         // Up
-                        GMu::gb.joypad_directional = 0x0f;
                         GMu::gb.joypad_directional &= ~(1 << 2);
                         break;
                     case SDLK_a:
                         // Left
-                        GMu::gb.joypad_directional = 0x0f;
                         GMu::gb.joypad_directional &= ~(1 << 1);
                         break;
                     case SDLK_s:
                         // Down
-                        GMu::gb.joypad_directional = 0x0f;
                         GMu::gb.joypad_directional &= ~(1 << 3);
                         break;
                     case SDLK_d:
                         // Right
-                        GMu::gb.joypad_directional = 0x0f;
                         GMu::gb.joypad_directional &= ~(1 << 0);
                         break;
                     case SDLK_j:
                         // Select
-                        GMu::gb.joypad_action = 0x0f;
                         GMu::gb.joypad_action &= ~(1 << 2);
                         break;
                     case SDLK_k:
                         // Start
-                        GMu::gb.joypad_action = 0x0f;
                         GMu::gb.joypad_action &= ~(1 << 3);
                         break;
                     case SDLK_n:
                         // B
-                        GMu::gb.joypad_action = 0x0f;
                         GMu::gb.joypad_action &= ~(1 << 1);
                         break;
                     case SDLK_m:
                         // A
-                        GMu::gb.joypad_action = 0x0f;
                         GMu::gb.joypad_action &= ~(1 << 0);
                         break;
                     case SDLK_f:
@@ -107,6 +98,35 @@ int main(int argc, char *argv[]) {
                         do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
                         break;
                     default:
+                        break;
+                }
+            }
+            // If the key is released, then reset the key_pressed flag
+            else if (e.type == SDL_KEYUP) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_w:
+                        GMu::gb.joypad_directional |= (1 << 2);
+                        break;
+                    case SDLK_a:
+                        GMu::gb.joypad_directional |= (1 << 1);
+                        break;
+                    case SDLK_s:
+                        GMu::gb.joypad_directional |= (1 << 3);
+                        break;
+                    case SDLK_d:
+                        GMu::gb.joypad_directional |= (1 << 0);
+                        break;
+                    case SDLK_j:
+                        GMu::gb.joypad_action |= (1 << 2);
+                        break;
+                    case SDLK_k:
+                        GMu::gb.joypad_action |= (1 << 3);
+                        break;
+                    case SDLK_n:
+                        GMu::gb.joypad_action |= (1 << 1);
+                        break;
+                    case SDLK_m:
+                        GMu::gb.joypad_action |= (1 << 0);
                         break;
                 }
             }
@@ -126,6 +146,7 @@ int main(int argc, char *argv[]) {
                 do {
                     GMu::gb.clock();
                 } while (!GMu::gb.ppu.frame_complete);
+                // Check to see if a key has been released
             }
         }
 

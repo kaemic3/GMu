@@ -180,7 +180,6 @@ void Bus::clock() {
         if_reg.vblank = 1;
     }
 
-    // TODO Need to change the VBLANK stat interrupt since it will trigger every scanline.
     // Need to add a check to see if the interrupt has already fired since entering VBLANK
     // * LCD STAT *
     // First check which interrupt source is set
@@ -280,11 +279,16 @@ void Bus::clock() {
     // Interrupt is only fired when on of the input select bits are low
 
     // First check to see if at least one input select bits are not set
-    if (joypad_input_select < 0x03) {
+    if (!joypad_flag) {
         // Now check if any of the joypad buttons have been pressed
         if (joypad_action < 0x0f || joypad_directional < 0x0f) {
             if_reg.joypad = 1;
+            joypad_flag = true;
         }
+    }
+    if (joypad_flag &&  joypad_action == 0x0f && joypad_directional == 0x0f) {
+        if_reg.joypad = 0;
+        joypad_flag = false;
     }
 
     // Clock the CPU and PPU
