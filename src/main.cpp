@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/gb_snek.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/joypad_test.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -38,8 +38,8 @@ int main(int argc, char *argv[]) {
             // Handle window events - i needs to be a pointer
             for (auto i: GMu::window_list)
                 i->HandleWindowEvent(e);
-            // Pull up window
-            if (e.type == SDL_KEYDOWN) {
+            // Get input
+            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
                 switch (e.key.keysym.sym) {
                     case SDLK_1:
                         GMu::window_list[0]->Focus();
@@ -60,34 +60,42 @@ int main(int argc, char *argv[]) {
                     case SDLK_w:
                         // Up
                         GMu::gb.joypad_directional &= ~(1 << 2);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_a:
                         // Left
                         GMu::gb.joypad_directional &= ~(1 << 1);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_s:
                         // Down
                         GMu::gb.joypad_directional &= ~(1 << 3);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_d:
                         // Right
                         GMu::gb.joypad_directional &= ~(1 << 0);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_j:
                         // Select
                         GMu::gb.joypad_action &= ~(1 << 2);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_k:
                         // Start
                         GMu::gb.joypad_action &= ~(1 << 3);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_n:
                         // B
                         GMu::gb.joypad_action &= ~(1 << 1);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_m:
                         // A
                         GMu::gb.joypad_action &= ~(1 << 0);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_f:
                         // Run until the entire frame has been drawn
@@ -106,27 +114,35 @@ int main(int argc, char *argv[]) {
                 switch (e.key.keysym.sym) {
                     case SDLK_w:
                         GMu::gb.joypad_directional |= (1 << 2);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_a:
                         GMu::gb.joypad_directional |= (1 << 1);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_s:
                         GMu::gb.joypad_directional |= (1 << 3);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_d:
                         GMu::gb.joypad_directional |= (1 << 0);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_j:
                         GMu::gb.joypad_action |= (1 << 2);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_k:
                         GMu::gb.joypad_action |= (1 << 3);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_n:
                         GMu::gb.joypad_action |= (1 << 1);
+                        GMu::gb.joypad_state_change = true;
                         break;
                     case SDLK_m:
                         GMu::gb.joypad_action |= (1 << 0);
+                        GMu::gb.joypad_state_change = true;
                         break;
                 }
             }
@@ -146,7 +162,8 @@ int main(int argc, char *argv[]) {
                 do {
                     GMu::gb.clock();
                 } while (!GMu::gb.ppu.frame_complete);
-                // Check to see if a key has been released
+                // Reset joypad state flag
+                GMu::gb.joypad_state_change = false;
             }
         }
 
