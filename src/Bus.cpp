@@ -275,19 +275,12 @@ void Bus::clock() {
     }
 
     // * Joypad *
-    // Need to check the low nibble of the input registers go from 1 to 0
-    // Interrupt is only fired when on of the input select bits are low
-
-    // First check to see if at least one input select bits are not set
-    if (!joypad_flag) {
-        // Now check if any of the joypad buttons have been pressed
-        if (joypad_action < 0x0f || joypad_directional < 0x0f) {
-            if_reg.joypad = 1;
-            joypad_flag = true;
-        }
+    // Based on testing, the interrupt is fired when any of the buttons change state from high to low, or low to high
+    if (joypad_state_change && !joypad_flag) {
+        joypad_flag = true;
+        if_reg.joypad = 1;
     }
-    if (joypad_flag &&  joypad_action == 0x0f && joypad_directional == 0x0f) {
-        if_reg.joypad = 0;
+    else if (!joypad_state_change) {
         joypad_flag = false;
     }
 

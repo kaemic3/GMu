@@ -78,8 +78,9 @@ public:
     // This register is updated by the user and represents the action inputs
     uint8_t joypad_action = 0x0f;
 
-    // Joypad interrupt flag
+    // Joypad interrupt flags
     bool joypad_flag = false;
+    bool joypad_state_change = false;
 
     // TODO Finish implementing serial communication
     // Serial data registers
