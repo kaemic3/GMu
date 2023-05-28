@@ -1,4 +1,5 @@
 #include "GMu.h"
+#include "Disassembler.h"
 
 // Time for the clock thread to sleep for 59.73 fps
 #define FRAME_TIME_MS 16.74
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/dma_test.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Dr. Mario.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -26,10 +27,14 @@ int main(int argc, char *argv[]) {
     // For now set pc to 0x0100 and sp to 0xfffe
     GMu::gb.cpu.pc = 0x0100;
     GMu::gb.cpu.sp = 0xfffe;
+    GMu::gb.if_reg.data = 0xe1;
     // While app is running
     bool emulation_run = false;
     std::chrono::system_clock::time_point tp_1 = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
+    // Disassmbler
+    Disassembler dis ("../debug_out.txt");
+
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
@@ -57,15 +62,22 @@ int main(int argc, char *argv[]) {
                     case SDLK_r:
                         GMu::gb.reset();
                         break;
-
                     case SDLK_f:
                         // Run until the entire frame has been drawn
-                        do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+                        do {
+                            GMu::gb.clock();
+                            if (GMu::gb.cpu.complete())
+                                dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
+                        } while (!GMu::gb.ppu.frame_complete);
                         break;
                     case SDLK_RETURN:
                         // Run until one complete instruction has run
                         do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                         break;
+                    case SDLK_v:
+                        do { GMu::gb.clock(); } while (GMu::gb.ppu.state != DMG_PPU::VBlank && GMu::gb.ie_reg.vblank != 1);
+                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                     default:
                         break;
                 }
@@ -168,6 +180,8 @@ int main(int argc, char *argv[]) {
                 tp_2 = std::chrono::system_clock::now();
                 do {
                     GMu::gb.clock();
+                    if (GMu::gb.cpu.complete())
+                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                 } while (!GMu::gb.ppu.frame_complete);
                 // Reset joypad state flag
                 GMu::gb.joypad_state_change = false;
@@ -199,6 +213,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    dis.close_file();
     GMu::Close();
     return 0;
 }

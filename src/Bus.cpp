@@ -56,6 +56,13 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
         masked_data = masked_data >> 4;
         joypad_input_select = masked_data;
     }
+    // Serial registers
+    else if (addr == 0xff01) {
+        sb = data;
+    }
+    else if (addr == 0xff02) {
+        sc = data;
+    }
     // Check timer registers
     // Div register
     else if (addr == 0xff04) {
@@ -145,7 +152,14 @@ uint8_t Bus::cpu_read(uint16_t addr, bool dma_copy) {
         }
         else
             // Otherwise return 0xff
-            data = 0xff;
+            data = 0x0f;
+    }
+    // Serial registers
+    else if (addr == 0xff01) {
+        data = sb;
+    }
+    else if (addr == 0xff02) {
+        data = sc;
     }
     // Check if the read is from the DIV register
     else if (addr == 0xff04) {
@@ -163,12 +177,17 @@ uint8_t Bus::cpu_read(uint16_t addr, bool dma_copy) {
     else if (addr == 0xff07) {
         data = tac;
     }
+    // IF register
+    else if (addr == 0xff0f) {
+        data = if_reg.data;
+    }
     // DMA register
     else if (addr == 0xff46) {
         data = dma;
     }
+    // IE register
     else if (addr == 0xffff) {
-        data = if_reg.data;
+        data = ie_reg.data;
     }
     // Check if the read is for VRAM
     // TODO: Add check so the PPU can block access to VRAM

@@ -34,6 +34,7 @@ public:
     // 16 bit registers
     uint16_t sp = 0x0000;   // SP should only work in RAM, not ROM
     uint16_t pc = 0x0000;
+    uint16_t debug_pc = 0x0000; // This PC only gets updated at the beginning of each clock of the CPU
 
 
     // Use f_reg for flags
@@ -78,8 +79,6 @@ public:
         DMA
     } state;
 
-
-
     // Fetching
     uint8_t fetch();        // Will read from the address in addr_abs
     uint8_t fetched = 0x00;
@@ -88,8 +87,10 @@ public:
     // Instructions
     uint8_t opcode = 0x00;
     uint8_t cycles = 0x00;
+    // Funciton that returns a string of vectors
+    std::vector<std::string> return_instruction();
 
-private:
+public:
     // Pointer to a bus object
     Bus *bus = nullptr;
     // Read and write functions

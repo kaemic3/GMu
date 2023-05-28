@@ -53,6 +53,25 @@ SM83::~SM83() {
 
 }
 
+std::vector<std::string> SM83::return_instruction() {
+    std::vector<std::string> current_instruction;
+    // Check if opcode is in the prefix table
+    if (opcode == 0xcb) {
+        // Get the next byte from the PC
+        uint8_t prefix_opcode = cpu_read(debug_pc + 1);
+        current_instruction.push_back(std::to_string(prefix_opcode));
+        current_instruction.push_back(prefix_lookup[prefix_opcode].mnemonic);
+        current_instruction.push_back(std::to_string(prefix_lookup[prefix_opcode].bytes));
+        current_instruction.push_back("PREFIXED");
+        return current_instruction;
+    }
+    current_instruction.push_back(std::to_string(opcode));
+    current_instruction.push_back(opcode_lookup[opcode].mnemonic);
+    current_instruction.push_back(std::to_string(opcode_lookup[opcode].bytes));
+
+    return current_instruction;
+}
+
 uint8_t SM83::cpu_read(uint16_t addr, bool dma_copy) {
     return bus->cpu_read(addr, dma_copy);
 }
@@ -72,9 +91,23 @@ void SM83::clock() {
                 if (bus->dma_flag) {
                     // if it has, initialize DMA
                     bus->run_dma();
-                    break;
                 }
-                // Before executing an instruction, check for interrupt
+
+                // Read opcode - PC will be pointing to it
+                opcode = cpu_read(pc);
+                // Update the debug_pc register
+                debug_pc = pc;
+                // Inc the PC to point to the next byte of the instruction
+                pc++;
+                // get the number of cycles for the instruction
+                cycles = opcode_lookup[opcode].cycles;
+                // Call the function pointer of the current opcode - Function returns the number of additional cycles req
+                uint8_t additional_cycle = (this->*opcode_lookup[opcode].operate)();
+                cycles += additional_cycle;
+            }
+            cycles--;
+            if (complete()) {
+                // After executing an instruction, check for interrupt
                 if (bus->ime == 1) {
                     // For each interrupt, see if the flag is set and if the interrupt enable flag is also set
                     // Interrupt priorities
@@ -102,17 +135,7 @@ void SM83::clock() {
                         break;
                     }
                 }
-                // Read opcode - PC will be pointing to it
-                opcode = cpu_read(pc);
-                // Inc the PC to point to the next byte of the instruction
-                pc++;
-                // get the number of cycles for the instruction
-                cycles = opcode_lookup[opcode].cycles;
-                // Call the function pointer of the current opcode - Function returns the number of additional cycles req
-                uint8_t additional_cycle = (this->*opcode_lookup[opcode].operate)();
-                cycles += additional_cycle;
             }
-            cycles--;
             break;
         case Halt:
             // Halt is a mode where the CPU waits for an interrupt. As more are added,
@@ -142,7 +165,6 @@ void SM83::clock() {
             break;
             // When the CPU changes to DMA state, it can only access HRAM (0xff80 - 0xfffe)
             // DMA is 160 cycles
-            // TODO Create the DMA routine
         case DMA:
             // Copy a byte from the specified address to OAM, every 4 system clocks
             if (bus->dma_cycle_count % 4 == 0) {
@@ -153,11 +175,7 @@ void SM83::clock() {
                 // Increment the DMA address
                 bus->dma_addr++;
             }
-            // If DMA is done, change CPU state to execute
-            if (bus->dma_cycle_count == 0){
-                state = Execute;
-                break;
-            }
+
             if (cycles == 0) {
                 // Read opcode - PC will be pointing to it
                 opcode = cpu_read(pc);
@@ -171,6 +189,11 @@ void SM83::clock() {
             }
             cycles--;
             bus->dma_cycle_count--;
+            // If DMA is done, change CPU state to execute
+            if (bus->dma_cycle_count == 0){
+                state = Execute;
+                break;
+            }
             break;
     }
 }
@@ -205,33 +228,35 @@ bool SM83::interrupt(uint8_t addr) {
             // Set the PC to the VBLANK interrupt address
             pc = VBLANK_INT;
             flag = true;
+            bus->if_reg.vblank = 0;
             break;
         case LCD_STAT_INT:
             // Set the PC to the STAT interrupt address
             pc = LCD_STAT_INT;
             flag = true;
+            bus->if_reg.lcd_stat = 0;
             break;
         case TIMER_INT:
             // Set the PC to the TIMER interrupt address
             pc = TIMER_INT;
             flag = true;
+            bus->if_reg.timer = 0;
             break;
         case SERIAL_INT:
             // Set the PC to the SERIAL interrupt address
             pc = SERIAL_INT;
             flag = true;
+            bus->if_reg.serial= 0;
             break;
         case JOYPAD_INT:
             // Set the PC to the JOYPAD interrupt address
             pc = JOYPAD_INT;
             flag = true;
+            bus->if_reg.joypad= 0;
         default:
             // If no interrupt occurs, return and reset the PC
             break;
     }
-
-    // Clear the flags
-    bus->if_reg.data = 0;
     return flag;
 }
 

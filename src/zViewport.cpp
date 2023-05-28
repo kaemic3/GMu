@@ -166,6 +166,8 @@ namespace GMu {
             // 8-bit hex
             else if(!t.first->t_binary && !t.first->t_u16 && !t.first->t_dec)
                 t.first->t_string = ToHexString(*(uint8_t *) t.second, false);
+            else if(t.first->t_text)
+                t.first->t_string = *(std::string *)t.second;
             // Error, should be impossible to get here
             else {
                 printf("Error:void* in mutable_text vector for zText: %s is unknown.\n",t.first->t_string.c_str());
@@ -314,6 +316,37 @@ namespace GMu {
         all_text.push_back(ly_register_value.get());
         mutable_text.emplace_back(ly_register_value.get(), &p_bus->ppu.ly);
         GenerateTextTexture(ly_register_value.get());
+
+        // IF_REG
+        if_reg_text = std::make_unique<zText>("IF:", BORDER_OFFSET + FONT_SIZE, ly_register_value->t_y + (FONT_SIZE * 2), &viewport_font_color, viewport_font);
+        all_text.push_back(if_reg_text.get());
+        GenerateTextTexture(if_reg_text.get());
+
+        if_reg_value = std::make_unique<zText>(std::to_string(GMu::gb.if_reg.data), if_reg_text->t_x + (FONT_SIZE * 3), if_reg_text->t_y, &viewport_font_color, viewport_font, false, true, false);
+        all_text.push_back(if_reg_value.get());
+        mutable_text.emplace_back(if_reg_value.get(), &p_bus->if_reg.data);
+        GenerateTextTexture(if_reg_value.get());
+
+        if_reg_hex_value = std::make_unique<zText>(ToHexString(GMu::gb.if_reg.data, false), if_reg_value->t_x + (FONT_SIZE * 10), if_reg_value->t_y, &viewport_font_color, viewport_font);
+        all_text.push_back(if_reg_hex_value.get());
+        mutable_text.emplace_back(if_reg_hex_value.get(), &p_bus->if_reg.data);
+        GenerateTextTexture(if_reg_hex_value.get());
+
+        // IE_REG
+        ie_reg_text = std::make_unique<zText>("IE:", BORDER_OFFSET + FONT_SIZE, if_reg_value->t_y + (FONT_SIZE * 2), &viewport_font_color, viewport_font);
+        all_text.push_back(ie_reg_text.get());
+        GenerateTextTexture(ie_reg_text.get());
+
+        ie_reg_value = std::make_unique<zText>(std::to_string(GMu::gb.ie_reg.data), ie_reg_text->t_x + (FONT_SIZE * 3), ie_reg_text->t_y, &viewport_font_color, viewport_font, false, true, false);
+        all_text.push_back(ie_reg_value.get());
+        mutable_text.emplace_back(ie_reg_value.get(), &p_bus->ie_reg.data);
+        GenerateTextTexture(ie_reg_value.get());
+
+        ie_reg_hex_value = std::make_unique<zText>(ToHexString(GMu::gb.ie_reg.data, false), ie_reg_value->t_x + (FONT_SIZE * 10), ie_reg_value->t_y, &viewport_font_color, viewport_font);
+        all_text.push_back(ie_reg_hex_value.get());
+        mutable_text.emplace_back(ie_reg_hex_value.get(), &p_bus->ie_reg.data);
+        GenerateTextTexture(ie_reg_hex_value.get());
+
     }
 
 

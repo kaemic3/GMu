@@ -19,7 +19,6 @@ public:
     SM83 cpu;
     DMG_PPU ppu;
     std::shared_ptr<Cartridge> cart = nullptr;
-
     // Initialize ram - Note need the {} for it to default initialize
     std::array<uint8_t, 8 * 1024> wram{};
     std::array<uint8_t, 127> hram{};
