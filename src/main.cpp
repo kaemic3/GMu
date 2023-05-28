@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Dr. Mario.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Tetris.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -66,8 +66,8 @@ int main(int argc, char *argv[]) {
                         // Run until the entire frame has been drawn
                         do {
                             GMu::gb.clock();
-                            if (GMu::gb.cpu.complete())
-                                dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
+                            //if (GMu::gb.cpu.complete())
+                                //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                         } while (!GMu::gb.ppu.frame_complete);
                         break;
                     case SDLK_RETURN:
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
                         break;
                     case SDLK_v:
                         do { GMu::gb.clock(); } while (GMu::gb.ppu.state != DMG_PPU::VBlank && GMu::gb.ie_reg.vblank != 1);
-                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
+                        //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                     default:
                         break;
                 }
@@ -180,8 +180,8 @@ int main(int argc, char *argv[]) {
                 tp_2 = std::chrono::system_clock::now();
                 do {
                     GMu::gb.clock();
-                    if (GMu::gb.cpu.complete())
-                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
+                    //if (GMu::gb.cpu.complete())
+                        //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                 } while (!GMu::gb.ppu.frame_complete);
                 // Reset joypad state flag
                 GMu::gb.joypad_state_change = false;

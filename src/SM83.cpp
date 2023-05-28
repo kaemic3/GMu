@@ -166,6 +166,11 @@ void SM83::clock() {
             // When the CPU changes to DMA state, it can only access HRAM (0xff80 - 0xfffe)
             // DMA is 160 cycles
         case DMA:
+            // If DMA is done, change CPU state to execute
+            if (bus->dma_cycle_count == 0){
+                state = Execute;
+                break;
+            }
             // Copy a byte from the specified address to OAM, every 4 system clocks
             if (bus->dma_cycle_count % 4 == 0) {
                 // the dma_copy flag is set so the cpu_read function will return the byte we actually want
@@ -189,11 +194,7 @@ void SM83::clock() {
             }
             cycles--;
             bus->dma_cycle_count--;
-            // If DMA is done, change CPU state to execute
-            if (bus->dma_cycle_count == 0){
-                state = Execute;
-                break;
-            }
+
             break;
     }
 }
