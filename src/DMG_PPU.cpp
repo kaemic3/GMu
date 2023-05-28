@@ -10,7 +10,7 @@ DMG_PPU::DMG_PPU() {
     // Default state of the PPU
     state = OAMSearch;
     // Initialize registers
-    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 0};
+    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 1};
     stat = {0, 0, 0, 0, 0, 0, 0};
 }
 
@@ -160,7 +160,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
         data = obp1;
         return true;
     }
-    // Check for WYUregister
+    // Check for WY register
     else if (addr == 0xff4a) {
         data = wy;
         return true;
@@ -177,6 +177,12 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 
 void DMG_PPU::clock() {
     frame_complete = false;
+    // If screen is off give cpu access to VRAM
+    if(lcdc.lcd_ppu_enable == 0) {
+        cpu_access = true;
+        ly = 0;
+        return;
+    }
     // Need to make sure we are updating the stat mode flag
     switch (state) {
         case OAMSearch:
@@ -612,9 +618,7 @@ void DMG_PPU::clock() {
     }
     // Increment the clock count at the end of the clock call
     clock_count++;
-    // If screen is off give cpu access to VRAM
-    if(lcdc.lcd_ppu_enable == 0)
-        cpu_access = true;
+
 }
 
 void DMG_PPU::reset() {
@@ -626,6 +630,8 @@ void DMG_PPU::reset() {
     lcdc.data = 0;
     stat.data = 0;
     vblank_fired = false;
+    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 1};
+    stat = {0, 0, 0, 0, 0, 0, 0};
 }
 
 uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {

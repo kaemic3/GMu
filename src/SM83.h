@@ -78,6 +78,8 @@ public:
         DMA
     } state;
 
+
+
     // Fetching
     uint8_t fetch();        // Will read from the address in addr_abs
     uint8_t fetched = 0x00;
@@ -92,7 +94,7 @@ private:
     Bus *bus = nullptr;
     // Read and write functions
     void cpu_write(uint16_t addr, uint8_t data);
-    uint8_t cpu_read(uint16_t addr, bool read_only = false);
+    uint8_t cpu_read(uint16_t addr, bool dma_copy = false);
 
     // Access flags
     uint8_t getFlag(SM83_FLAGS f);                  // Used to check a specific flag

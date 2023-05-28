@@ -20,6 +20,18 @@ void Bus::clear_screen() {
 }
 
 void Bus::cpu_write(uint16_t addr, uint8_t data) {
+    // Guard check to see if the CPU is in DMA mode
+    if (cpu.state == SM83::DMA) {
+        if (addr >= 0xff80 && addr <= 0xfffe) {
+            hram[addr - 0xff80] = data;
+            return;
+        }
+        else {
+            printf("CPU in DMA mode. Cannot write to address 0x%X.\n", addr);
+            return;
+        }
+    }
+
     // Check if the cartridge should handle this write call
     if (cart->cpu_write(addr, data)) {
 
@@ -68,9 +80,9 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     // Check for write to DMA
     else if (addr == 0xff46) {
         // Writes to the DMA register are divided by 0x100
-        dma = data / 0x100;
-        // Change the system state
-        run_dma();
+        dma = data;
+        // Set DMA flag
+        dma_flag = true;
     }
     // Check if write is to the IE register
     else if (addr == 0xffff) {
@@ -86,8 +98,20 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     }
 }
 
-uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
+uint8_t Bus::cpu_read(uint16_t addr, bool dma_copy) {
     uint8_t data = 0x00;
+    // Guard check to see if the CPU is in DMA mode
+    if (cpu.state == SM83::DMA && !dma_copy) {
+        if (addr >= 0xff80 && addr <= 0xfffe) {
+            data = hram[addr - 0xff80];
+            return data;
+        }
+        else {
+            printf("CPU in DMA mode. Cannot read from address 0x%X.\n", addr);
+            return 0x00;
+        }
+    }
+
     // Check if the cartridge should handle this read call
     if (cart->cpu_read(addr, data)) {
 
@@ -122,7 +146,6 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
         else
             // Otherwise return 0xff
             data = 0xff;
-
     }
     // Check if the read is from the DIV register
     else if (addr == 0xff04) {
@@ -144,9 +167,15 @@ uint8_t Bus::cpu_read(uint16_t addr, bool read_only) {
     else if (addr == 0xff46) {
         data = dma;
     }
+    else if (addr == 0xffff) {
+        data = if_reg.data;
+    }
     // Check if the read is for VRAM
     // TODO: Add check so the PPU can block access to VRAM
     else if (ppu.cpu_read(addr, data)) {
+    }
+    else {
+        printf("Cannot read from address: 0x%X is not readable.\n", addr);
     }
     // If the address in not valid, return 0x00
     return data;
@@ -161,8 +190,13 @@ void Bus::di() {
 }
 
 void Bus::run_dma() {
+    // Copy the address to load bytes from into dma_addr
+    dma_addr = dma;
+    dma_addr = (dma_addr << 8) & 0xff00;
     // Change the state of the CPU to DMA mode
+    dma_flag = false;
     cpu.state = SM83::DMA;
+    dma_cycle_count = 40 * 4 * 4;       // Wait for 40 160 machine cycles to change back to Execute state
 }
 
 // The CPU and PPU run at the same clock speed
@@ -180,9 +214,10 @@ void Bus::clock() {
         if_reg.vblank = 1;
     }
 
-    // Need to add a check to see if the interrupt has already fired since entering VBLANK
     // * LCD STAT *
     // First check which interrupt source is set
+    // then make sure the interrupt has not already fired
+
     if (ppu.stat.hblank_int_src == 1) {
         // Check if the mode flag is set to 0
         if (ppu.state == DMG_PPU::HBlank && !ppu.hblank_flag) {

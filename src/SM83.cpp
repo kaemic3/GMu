@@ -53,8 +53,8 @@ SM83::~SM83() {
 
 }
 
-uint8_t SM83::cpu_read(uint16_t addr, bool read_only) {
-    return bus->cpu_read(addr, read_only);
+uint8_t SM83::cpu_read(uint16_t addr, bool dma_copy) {
+    return bus->cpu_read(addr, dma_copy);
 }
 
 void SM83::cpu_write(uint16_t addr, uint8_t data) {
@@ -67,6 +67,13 @@ void SM83::clock() {
             // Need to check for interrupts
             // Only execute when the internal cycles count is 0
             if(cycles == 0) {
+                // Check if the DMA flag has been set
+                // We wait until the write instruction to the DMA register completes before we change state
+                if (bus->dma_flag) {
+                    // if it has, initialize DMA
+                    bus->run_dma();
+                    break;
+                }
                 // Before executing an instruction, check for interrupt
                 if (bus->ime == 1) {
                     // For each interrupt, see if the flag is set and if the interrupt enable flag is also set
@@ -133,7 +140,37 @@ void SM83::clock() {
                 }
             }
             break;
+            // When the CPU changes to DMA state, it can only access HRAM (0xff80 - 0xfffe)
+            // DMA is 160 cycles
+            // TODO Create the DMA routine
         case DMA:
+            // Copy a byte from the specified address to OAM, every 4 system clocks
+            if (bus->dma_cycle_count % 4 == 0) {
+                // the dma_copy flag is set so the cpu_read function will return the byte we actually want
+                uint8_t buffer_byte = cpu_read(bus->dma_addr, true);
+                // Technically, DMA can write to OAM without VBLANK, so write directly to the OAM
+                bus->ppu.oam[bus->dma_addr & 0x00ff] = buffer_byte;
+                // Increment the DMA address
+                bus->dma_addr++;
+            }
+            // If DMA is done, change CPU state to execute
+            if (bus->dma_cycle_count == 0){
+                state = Execute;
+                break;
+            }
+            if (cycles == 0) {
+                // Read opcode - PC will be pointing to it
+                opcode = cpu_read(pc);
+                // Inc the PC to point to the next byte of the instruction
+                pc++;
+                // get the number of cycles for the instruction
+                cycles = opcode_lookup[opcode].cycles;
+                // Call the function pointer of the current opcode - Function returns the number of additional cycles req
+                uint8_t additional_cycle = (this->*opcode_lookup[opcode].operate)();
+                cycles += additional_cycle;
+            }
+            cycles--;
+            bus->dma_cycle_count--;
             break;
     }
 }

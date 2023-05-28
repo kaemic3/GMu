@@ -30,7 +30,7 @@ public:
     void clear_screen();
     // Helper functions for reading and writing RAM
     void cpu_write(uint16_t addr, uint8_t data);
-    uint8_t cpu_read(uint16_t addr, bool read_only = false);
+    uint8_t cpu_read(uint16_t addr, bool dma_copy = false);
     // Helper functions to enable and disable interrupts
     void ei();
     void di();
@@ -105,8 +105,13 @@ public:
     // DMA register
     // 0xff46
     uint8_t dma = 0x00;
+    uint16_t dma_addr = 0x0000;
+    // DMA flag
+    bool dma_flag = false;
     // Run DMA
     void run_dma();
+    // DMA cycle count
+    uint16_t dma_cycle_count = 0;
 
     // Total clock count
     uint32_t system_clock_counter = 0;

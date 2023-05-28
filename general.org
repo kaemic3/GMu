@@ -7,3 +7,8 @@
   - CCF op: 0x3f
   - ADC ops: 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8f, 0xCE, 0x8e
   - SBC ops: 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0xDE, 0x9e
+* DMA Needs:
++ Need to load from the specified addess in the DMA registerm into OAM
+  - Can:
+    + Copy all at once
+    + Copy one byte every 4 cpu clocks -> This may be the most accurate way to do it since DMA lasts for 160 machine cycles. This is one machine cycle per byte copied from RAM to OAM
