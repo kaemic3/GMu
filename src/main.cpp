@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
             for (auto i: GMu::window_list)
                 i->HandleWindowEvent(e);
             // Get input
-            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+            if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
                     case SDLK_1:
                         GMu::window_list[0]->Focus();
@@ -57,6 +57,22 @@ int main(int argc, char *argv[]) {
                     case SDLK_r:
                         GMu::gb.reset();
                         break;
+
+                    case SDLK_f:
+                        // Run until the entire frame has been drawn
+                        do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
+                        break;
+                    case SDLK_RETURN:
+                        // Run until one complete instruction has run
+                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
+                        break;
+                    default:
+                        break;
+                }
+            }
+            // Joypad input
+            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+                switch (e.key.keysym.sym) {
                     case SDLK_w:
                         // Up
                         GMu::gb.joypad_directional &= ~(1 << 2);
@@ -97,17 +113,8 @@ int main(int argc, char *argv[]) {
                         GMu::gb.joypad_action &= ~(1 << 0);
                         GMu::gb.joypad_state_change = true;
                         break;
-                    case SDLK_f:
-                        // Run until the entire frame has been drawn
-                        do { GMu::gb.clock(); } while (!GMu::gb.ppu.frame_complete);
-                        break;
-                    case SDLK_RETURN:
-                        // Run until one complete instruction has run
-                        do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
-                        break;
-                    default:
-                        break;
                 }
+
             }
             // If the key is released, then reset the key_pressed flag
             else if (e.type == SDL_KEYUP) {
