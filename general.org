@@ -7,5 +7,7 @@
   - CCF op: 0x3f
   - ADC ops: 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8f, 0xCE, 0x8e
   - SBC ops: 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0xDE, 0x9e
-** Disassembler:
-    + Debugging is too hard now, need to make a disassembler to keep track of where I am in the code
+** Need to redo the PPU
++ There are bugs with the bg and sprites
++ Check and Dr. Mario uses bg tiles on the main menu where there are black boxes. There are also issues with the text areas not rendering properly.
+  - This is possibly due to using signed addressing mode. Maybe look into this before the re-write.

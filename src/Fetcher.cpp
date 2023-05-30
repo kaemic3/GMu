@@ -44,15 +44,7 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
             // Look in VRAM for the tile in the tile map
             // Masking should be applied in the PPU clock function
 
-            // Make sure to check if signed addressing is needed
-            if(!signed_addressing)
-                // Make sure that the index is masked to the values 0-31
-                tile_id = ppu->vram[tilemap_address + (tile_index & 0x1f)];
-            else
-                // Cast signed int if signed addressing is used. For 0x8800 mode only
-                tile_id = ppu->vram[tilemap_address + (int8_t) (tile_index & 0x1f)];
-
-
+            tile_id = ppu->vram[tilemap_address + (tile_index & 0x1f)];
             state = GetTileLow;
             break;
 
@@ -69,7 +61,14 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
             // Find the tile data address
             // The tile data starting address will need to be masked to 0x0000 and the offset added for 0x8800 method
             // Tile id needs to be multiplied by 0x10 or 16 to get the correct 16 byte line in tile data.
-            tiledata_address = tiledata_base_address + (tile_id * 0x10);
+
+            // Need to check for signed addressing tile data mode
+            if (!signed_addressing)
+                tiledata_address = tiledata_base_address + (tile_id * 0x10);
+            // Cast int to make sure the correct tile is grabbed. Keep in mind the 0x8800 method uses 0x9000
+            // as the base pointer.
+            else
+                tiledata_address = tiledata_base_address + ( (int8_t) tile_id * 0x10);
 
             // Add the offset of where the line to be fetched is
             // Keep in mind each line is 2 bytes
@@ -96,8 +95,13 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
                 state = GetTileId;
                 break;
             }
-            // Read in the high byte
-            tiledata_address = tiledata_base_address + (tile_id * 0x10);
+            // Need to check for signed addressing tile data mode
+            if (!signed_addressing)
+                tiledata_address = tiledata_base_address + (tile_id * 0x10);
+                // Cast int to make sure the correct tile is grabbed. Keep in mind the 0x8800 method uses 0x9000
+                // as the base pointer.
+            else
+                tiledata_address = tiledata_base_address + ( (int8_t) tile_id * 0x10);
 
             // Add the offset of where the line to be fetched is
             // Keep in mind each line is 2 bytes

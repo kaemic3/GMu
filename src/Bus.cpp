@@ -101,7 +101,7 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     }
     else {
         // If we get here, then the address is invalid
-        //printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
+        printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
     }
 }
 
