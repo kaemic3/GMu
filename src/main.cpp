@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
                     case SDLK_RETURN:
                         // Run until one complete instruction has run
                         do { GMu::gb.clock(); } while (!GMu::gb.cpu.complete());
-                        dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
+                        //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                         break;
                     case SDLK_v:
                         do { GMu::gb.clock(); } while (GMu::gb.ppu.state != DMG_PPU::VBlank && GMu::gb.ie_reg.vblank != 1);

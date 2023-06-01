@@ -162,6 +162,20 @@ void SM83::clock() {
                     state = Execute;
                 }
             }
+            // TODO - Add the halt bug
+            // Check if the IME is set to 0 - If we enter here, then the HALT bug needs to occur
+            else if (bus->ime == 0) {
+                if ((bus->ie_reg.data & bus->if_reg.data) != 0) {
+                    state = Execute;
+                }
+                halt_flag = true;
+            }
+            // This is entered after the first cycle of the CPU in the HALT state
+            else if (bus->ime == 0 && halt_flag) {
+                if ((bus->ie_reg.data & bus->if_reg.data) != 0) {
+                    state = Execute;
+                }
+            }
             break;
             // When the CPU changes to DMA state, it can only access HRAM (0xff80 - 0xfffe)
             // DMA is 160 cycles
@@ -3225,6 +3239,7 @@ uint8_t SM83::ei() {
 // Halt the system clock until an interrupt occurs.
 uint8_t SM83::halt() {
     state = Halt;
+    halt_flag = false;
     return 0;
 }
 

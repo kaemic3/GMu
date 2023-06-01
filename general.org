@@ -11,3 +11,5 @@
 + There are bugs with the bg and sprites
 + Check and Dr. Mario uses bg tiles on the main menu where there are black boxes. There are also issues with the text areas not rendering properly.
   - This is possibly due to using signed addressing mode. Maybe look into this before the re-write.
+** Dr. Mario is crashing on startup of the game. Need to see why. Check $260 - $267
++ After some debugging, it seems that the screen is not turning back on when it should be. That is why the emulator is hanging. Need to investigate further.

@@ -181,6 +181,7 @@ void DMG_PPU::clock() {
     if(lcdc.lcd_ppu_enable == 0) {
         cpu_access = true;
         ly = 0;
+        stat.mode_flag = 0;
         return;
     }
     // Need to make sure we are updating the stat mode flag

@@ -63,6 +63,7 @@ public:
     } if_reg;
 
 
+
     // Misc IO registers
     // Joypad - The joypad is split into 3 different registers. This is due to the fact that the Game boy needs
     // to treat the directional input differently from the action buttons. Though to the programmer, this register

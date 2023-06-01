@@ -78,6 +78,8 @@ public:
         Halt,
         DMA
     } state;
+    // HALT Flag - set when the CPU first enters HALT, after all the interrupt bits have been checked
+    bool halt_flag = false;
 
     // Fetching
     uint8_t fetch();        // Will read from the address in addr_abs
