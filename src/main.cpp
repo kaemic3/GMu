@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Dr. Mario.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Tetris.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -33,8 +33,7 @@ int main(int argc, char *argv[]) {
     std::chrono::system_clock::time_point tp_1 = std::chrono::system_clock::now();
     std::chrono::system_clock::time_point tp_2 = std::chrono::system_clock::now();
     // Disassmbler
-    Disassembler dis ("../debug_out.txt");
-
+    //Disassembler dis ("../debug_out.txt");
     while(!quit) {
         while (SDL_PollEvent(&e) != 0) {
             // User requests quit
@@ -213,7 +212,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    dis.close_file();
+    //dis.close_file();
     GMu::Close();
     return 0;
 }

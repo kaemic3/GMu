@@ -166,10 +166,10 @@ void BG_Fetcher::clear_fifo() {
 
 void FG_Fetcher::clock(DMG_PPU *ppu) {
     // Advance the fetcher every 2 clocks
-    /*clocks++;
+    clocks++;
     if (clocks < 2)
         return;
-    clocks = 0;*/
+    clocks = 0;
     // If sprite_ids is empty, or if we have pushed all sprites, abort
     if (sprites.empty() || sprite_index > sprites.size() - 1 || ppu->lcdc.obj_enable == 0)
         return;

@@ -178,6 +178,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 void DMG_PPU::clock() {
     frame_complete = false;
     // If screen is off give cpu access to VRAM
+    // TODO - Review behaviour of GB when the screen is turned off.
     if(lcdc.lcd_ppu_enable == 0) {
         cpu_access = true;
         ly = 0;
@@ -219,7 +220,6 @@ void DMG_PPU::clock() {
                     // Sort the sprite list in draw priority order
                     std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
                 }
-
                 // Init pixel transfer
                 // Reset values for a new scanline
                 pixel_count = 0;
@@ -619,7 +619,6 @@ void DMG_PPU::clock() {
     }
     // Increment the clock count at the end of the clock call
     clock_count++;
-
 }
 
 void DMG_PPU::reset() {
