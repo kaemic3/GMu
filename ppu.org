@@ -1,19 +1,93 @@
 #+title: ppu
 
-* Done:
-+ BG rendering
-+ Some vertical scrolling
-+ PPU output to the screen via SDL
-+ BG/Win fifo and output
+* Re-Write: Basics
+** PPU States:
+1. The PPU of the GB can be though of as a state machine.
+   - OAM Search/Scan
+   - PixelTransfer
+   - HBlank
+   - VBlank
+2. These modes are labeled as follows:
+   - Mode 2: OAM Scan
+   - Mode 3: Pixel Transfer
+   - Mode 0: HBlank
+   - Mode 1: VBlank
+3. The PPU cycles between modes 2, 3, and 0. The cycle starts at the beginning of a scanline with mode 2, then after mode 2 the PPU switches to mode 3, and then mode 0.
+4. At the end of a scanline, the PPU will reset to mode 2.
+5. This cycle repeats until the current scanline is 144. The ppu will then enter mode 1 or VBlank until it has completed scanline 153, then it will reset the LY register(current scanline) to 0, and the cycle will repeat.
 
-* Need to do:
-+ Sprite fifo and output
++ *Keep in mind that when the screen is off (lcdc.7 == 0) the scanline register will always read 0, the stat register bits 0-1 will read as 0, and the CPU will have full access to VRAM.*
+Beyond this point, it will be assued that LCDC.7 is on, therefore the PPU and screen will be on.
+** Fetchers:
++ The PPU has 2 different pixel fetchers. These fetchers are paired with a FIFO that will supply the pixel data to the screen. In GMu, this screen is a buffer that can be read and will store the true color pixel data.
 
-* Sprite output:
++ The GB has a 2 bit display, and the colors it can represent are as follows. Each color is given a representative number:
 
-** Merging FG and BG fifos
- * Need:
-   - Need to make sure that sprite pixels without priority over the BG fifo are pushed accordingly.
-     * Should check:https://gbdev.io/pandocs/OAM.html, bottom of the page as it goes over how this works. Probably need to look at this closer after implementing the interrupts.
-   - UPDATE COMMENTS!!!!!
-   - Add support for 8x16 sprites
+  1. White
+  2. Light Gray
+  3. Dark Gray
+  4. Black
+
++ The 2 fetchers are:
+  - The BG/Window fetcher
+  - The Sprite/FG fetcher
+
++ These fetchers are very different from one another, but one similarity is that they use a color palette to encode the pixels.
+
+*** Color Palettes:
++ There are 3 color palettes on the DMG
+  1. BGP
+  2. OBP0
+  3. OBP1
++ BGP is used by the BG and Window, while the OBP0 and OBP1 palettes are used by the GB's sprites/objects.
++ Each of these palettes can be accessed as registers.
+  1. BGP  - 0xff47
+  2. OBP0 - 0xff48
+  3. OBP1 - 0xff49
++ Each register can be broken down as follows:
+  - Bit 7-6 - Color for index 3
+  - Bit 5-4 - Color for index 2
+  - Bit 3-2 - Color for index 1
+  - Bit 1-0 - Color for index 0
++ These color palettes allow the programmer to change the color of the BG, Window, and sprites without updating the tile data directly. As the tile data refers to the corresponding color palette, the palettes can be changed, affecting all tiles that use them.
++ *An example would be assigning bit 7-6 00 and bit 1-0 11. This would effectively reverse the colors. Any tile using this palette would have color 3 appear white instead of black, and color 0 black instead of white.*
+** Mode 2: OAM Scan
++ During this mode, the PPU will scan all of OAM. In its scan, it will compare the current scanline to each objects Y pos.
+  - *Keep in mind that sprites have offsets from the viewport. In order for a sprite to be drawn it needs to have a Y pos of 16 or greater. Any sprite with a Y pos less than 16 will not be drawn, and can be ignored.*
++ The first 10 sprites that are found will be added to a list of sprites to be drawn during the pixel transfer state.
++ This state will last for 40 clock cycles, where after it will transfer to the Pixel Transfer state. Right before the transfer, a lot of prep work will need to be done on the emulator side of things.
+
+*** Mode 3 prep:
++ There are a number of different things to consider before the PPU enters mode 3.
+  1. First, we need to consider if the window is enabled. LCDC.5 determines if the window is enabled. This bit is also tied to LCDC.0.
+     - LCDC.0 == 1: BG and window are enabled.
+     - LCDC.0 == 0: BG and window are disabled, and LCDC.5 is ignored.
+     - If the window is not enabled, we can safely ignore it. Keep in mind that this will be checked every scanline.
+  2. Next, we need to check to see if the window should be rendered on the current scanline.
+     - The window has 2 position registers:
+       - WY: 0xff4a
+       - WX: 0xff4b
+     - When the Y position is > 143, it can be ignored. It can also be ignored if the X position is greater than 166
+     - Also, X positions 0 and 166 have HW bugs associated with them. So the default position of the window is assumed to be WX = 7.
+     - Using the window position registers, we can determine if the window will need to be rendered on the current scanline.
+       1. First we should establish the 2 different cases for the window being rendered on the current scanline:
+          1. The whole scanline is window pixels
+          2. A portion of the scanline is window pixels.
+          Keep in mind that the following cases only occur if the window Y is equal to the current scanline. Also keep in mind that once the Y of the window is equal, every scanline that follows will have the window on it, unless it is turned off during the drawing period.
+
+       2. Case 1: The whole scanline is window pixels
+          - We need to check if the X position of the window is <= 7. When this is the case, only window pixels will fetched. This will be the case for all scanlines that follow unless the window is turned off during the drawing period.
+            * This does not consider the bug that occurs when the window is set to 0, and the behavior of the window is not clear when the X position is 1-6, but for this emulator we will just hide the first tile if x = 0, and will pop off n pixels from the fifo when the x is 1-6, where n = 7 - wx.
+
+          - When WX = 7, then we simply render the window normally.
+            * Another thing to keep in mind is that WX and WY control the position of the window in relation to the current SCX and SCY. WX and WY move the top left pixel of the window relative to the SCX and SCY registers, so there is no way to show portions of the window outside of the normal 160 x 144 screen.
+
+       3. Case 2: A portion of the scanline is window pixels.
+          - Now we need to keep track of where the window should start to be rendered.
+
+
+  3. Then we should consider where the window/bg tile data is located.
+     - LCDC.4 controls where the PPU will look for tiledata.
+       - 0=0x8800-0x97ff: Known as the 0x8800 method. This will use 0x9000 as a base pointer, and is indexed as a signed int rather than unsigned. Often also referred to as the signed address mode.
+       - 1=0x8000-0x87ff: Known as the 0x8000 method. Uses signed addessing, and shares tiledata with sprites, as sprites can only use this address range for tiledata.
+  4. If the window is enabled, then we need to check LCDC.4 for the tile data location, and LCDC.6 for the tilemap area of the window.
