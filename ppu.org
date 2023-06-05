@@ -83,7 +83,10 @@ Beyond this point, it will be assued that LCDC.7 is on, therefore the PPU and sc
             * Another thing to keep in mind is that WX and WY control the position of the window in relation to the current SCX and SCY. WX and WY move the top left pixel of the window relative to the SCX and SCY registers, so there is no way to show portions of the window outside of the normal 160 x 144 screen.
 
        3. Case 2: A portion of the scanline is window pixels.
-          - Now we need to keep track of where the window should start to be rendered.
+          - Now we need to keep track of where the window should start to be rendered. Use a uint8_t named pixel_x that will update based on the current pixel that is being pushed to screen buffer.
+          - When WX - 7 = pixel_x, then the fetcher should swich from BG mode to window mode. We will need to load the tilemap address that is being used for the Window into the fetcher, and the X pos that the fetcher will need to switch at.
+            *
+
 
 
   3. Then we should consider where the window/bg tile data is located.

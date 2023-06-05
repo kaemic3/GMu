@@ -190,10 +190,7 @@ void DMG_PPU::clock() {
         case OAMSearch:
             // Set the stat flag
             stat.mode_flag = 2;
-            if (clock_count == 2)
-                oam_flag = true;
-            // OAM search always takes 40 clocks to complete
-            if (clock_count == 40) {
+            if (clock_count == 2) {
                 // Need to get the data for upto 10 sprites on this scanline
                 // Compare the Y pos of each sprite to the current scan line
                 // Clear the sprite list from the fetcher
@@ -202,7 +199,6 @@ void DMG_PPU::clock() {
                 // Drawing priority for sprites is determined by their X coordinate first, and if 2 sprites
                 // share the same X coordinate, then the sprite that is stored earlier in OAM will have priority
                 // So, sprites should be stored in order of draw priority.
-
                 // Check if OBJ is enabled
                 if (lcdc.obj_enable == 1) {
                     fg_fetch.sprites.clear();
@@ -220,6 +216,13 @@ void DMG_PPU::clock() {
                     // Sort the sprite list in draw priority order
                     std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
                 }
+                oam_flag = true;
+            }
+            // OAM search always takes 40 clocks to complete
+            if (clock_count == 40) {
+
+
+
                 // Init pixel transfer
                 // Reset values for a new scanline
                 pixel_count = 0;
