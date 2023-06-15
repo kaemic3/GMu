@@ -21,7 +21,7 @@ void BG_Fetcher::clock(DMG_PPU *ppu, bool &swap_to_win, uint8_t win_tile_line, u
     // Fetcher runs at half the speed of the ppu
     // Only clock the fetcher every 2 clocks of the ppu
     clocks++;
-    if (clocks < 2) {
+    if (clocks < 2 && state != Push) {
         return;
     }
     // Reset clock count
@@ -166,10 +166,11 @@ void BG_Fetcher::clear_fifo() {
 
 void FG_Fetcher::clock(DMG_PPU *ppu) {
     // Advance the fetcher every 2 clocks
-    clocks++;
-    if (clocks < 2)
+    /*clocks++;
+    if (clocks < 2 && state != Push)
         return;
     clocks = 0;
+     */
     // If sprite_ids is empty, or if we have pushed all sprites, abort
     if (sprites.empty() || sprite_index > sprites.size() - 1 || ppu->lcdc.obj_enable == 0)
         return;

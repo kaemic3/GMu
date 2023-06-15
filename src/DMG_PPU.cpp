@@ -123,6 +123,9 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
     // Check for STAT register
     else if (addr == 0xff41) {
         data = stat.data;
+        if (data == 0) {
+
+        }
         return true;
     }
     // Check for SCY register
@@ -183,6 +186,8 @@ void DMG_PPU::clock() {
         cpu_access = true;
         ly = 0;
         stat.mode_flag = 0;
+        clock_count = 0;
+        state = OAMSearch;
         return;
     }
     // Need to make sure we are updating the stat mode flag
@@ -190,7 +195,7 @@ void DMG_PPU::clock() {
         case OAMSearch:
             // Set the stat flag
             stat.mode_flag = 2;
-            if (clock_count == 2) {
+            if (clock_count == 1) {
                 // Need to get the data for upto 10 sprites on this scanline
                 // Compare the Y pos of each sprite to the current scan line
                 // Clear the sprite list from the fetcher
@@ -206,7 +211,7 @@ void DMG_PPU::clock() {
                         // Check to see if the Y value of the sprite is < 16
                         if (oam[i] >= 16) {
                             uint8_t sprite_y = oam[i] - 16;
-                            if (sprite_y <= ly && ly < (sprite_y + 8)) {
+                            if (ly >= sprite_y && ly < (sprite_y + 8)) {
                                 if(fg_fetch.sprites.size() < 10) {
                                     fg_fetch.sprites.emplace_back(i/4, oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
                                 }
@@ -219,9 +224,7 @@ void DMG_PPU::clock() {
                 oam_flag = true;
             }
             // OAM search always takes 40 clocks to complete
-            if (clock_count == 40) {
-
-
+            if (clock_count == 80) {
 
                 // Init pixel transfer
                 // Reset values for a new scanline
@@ -234,6 +237,8 @@ void DMG_PPU::clock() {
                 swap_to_win = false;
                 pop_request = false;
                 oam_flag = false;
+
+                clock_count = 0;
 
                 // Set the tile data address - Window and BG share a tile data area
                 switch (lcdc.bg_win_tile_data_area) {
@@ -341,7 +346,7 @@ void DMG_PPU::clock() {
                                     break;
                             }
                             // Setup offsets for BG
-                            pixel_x = ((scx / 8) + pixel_count) & 0x1f;
+                            pixel_x = ((scx / 8)) & 0x1f;
                             pixel_y = scy + ly;
                             tile_line = pixel_y % 8;
                             tilemap_row_addr += (pixel_y / 8 * 32);
@@ -350,7 +355,7 @@ void DMG_PPU::clock() {
                 }
                 else {
                     // Ignore the window
-                    pixel_x = (scx / 8) + pixel_count & 0x1f;
+                    pixel_x = (scx / 8)  & 0x1f;
                     pixel_y = (scy + ly) & 0xff;
                     // Find the address to the current tile row in the tilemap
                     tile_line = pixel_y % 8;
@@ -370,14 +375,23 @@ void DMG_PPU::clock() {
                 bg_fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_tilemap_addr);
                 fg_fetch.init();
                 state = PixelTransfer;
+                break;
             }
+            clock_count++;
             break;
         case PixelTransfer:
             // Set the stat flag
             stat.mode_flag = 3;
             // Set the pixel transfer flag after the first clock cycle of the VBlank state
-            if (clock_count == 2)
+            if (clock_count == 0)
                 pixel_transfer_flag = true;
+
+            if (pixel_count == 160) {
+                pixel_transfer_flag = false;
+                state = HBlank;
+                clock_count = 0;
+                break;
+            }
             // Clock the fetchers: Only clocks every 2 PPU clocks
             bg_fetch.clock(this, swap_to_win, tile_line, pixel_x);
             fg_fetch.clock(this);
@@ -550,21 +564,27 @@ void DMG_PPU::clock() {
             }
             // Reset flag
             sprite_pushed = false;
-            if (pixel_count == 160){
-                pixel_transfer_flag = false;
-                state = HBlank;
-            }
+            clock_count++;
             break;
         case HBlank:
-            // Set the stat flag
-            stat.mode_flag = 0;
-            // Set the HBlank flag after the first clock cycle of the VBlank state
-            if (clock_count == 2)
+            cpu_access = true;
+            // Set the mode to 0 only on the first clock of HBlank
+            // This fixes the sync issues. Any routine that is trying to use HBlank will
+            // get the max time. This is needed as the PPU clock is not entirely accurate in this version.
+            if (clock_count == 0) {
+                // Set the stat flag
+                stat.mode_flag = 0;
                 hblank_flag = true;
-            // Check to see if the entire scanline has been completed by looking at the number of clocks
+            }
+            else if (clock_count == 2 && ly + 1 == 144){
+                stat.mode_flag = 0;
+            }
+            else
+                stat.mode_flag = 2;
+
+            //Check to see if the entire scanline has been completed by looking at the number of clocks
             // 456 is the number of clocks required for the ppu to output a complete scanline of pixels
             // CPU is also able to access VRAM and OAM now
-            cpu_access = true;
             if (clock_count == 456) {
                 // We have now reached the end of the scanline
                 clock_count = 0;
@@ -579,14 +599,18 @@ void DMG_PPU::clock() {
                 if(window_draw)
                     win_ly++;
                 // If the new scanline is 144, then switch to VBlank
-                if (ly == 144)
+                if (ly == 144) {
                     state = VBlank;
+                    break;
+                }
                 else {
                     // Restart the pixel drawing process
                     state = OAMSearch;
                     cpu_access = false;
+                    break;
                 }
             }
+            clock_count++;
             break;
         case VBlank:
             // Set the stat flag
@@ -594,19 +618,24 @@ void DMG_PPU::clock() {
             // Pause and allow for CPU to access VRAM and OAM
             cpu_access = true;
             // Set the VBlank flag after the first clock cycle of the VBlank state
-            if (clock_count == 2)
+            if (clock_count == 0) {
                 vblank_fired = true;
-            // Check to see if the scanline is complete
-            if (clock_count == 456) {
+                clock_count++;
+                break;
+            }
+            // Check if VBlank is done
+            if (clock_count % 456 == 0) {
                 // Reset clock count for new scanline
-                clock_count = 0;
+                //clock_count = 0;
                 // Increment the scanline register
                 ly++;
                 // Reset the lyc ly flags
                 ly_lyc_flag = false;
                 stat.lyc_ly_flag = 0;
                 // If we have reached the last scanline for VBlank, return to the start of the pixel drawing process
-                if (ly == 153) {
+                if (ly == 154) {
+                    assert(clock_count == 4560);
+                    clock_count = 0;
                     ly = 0;
                     win_ly = 0;
                     state = OAMSearch;
@@ -614,14 +643,16 @@ void DMG_PPU::clock() {
                     cpu_access = false;
                     vblank_fired = false;
                     ly_lyc_flag = false;
+                    break;
                 }
             }
+            clock_count++;
             break;
         default:
             break;
     }
     // Increment the clock count at the end of the clock call
-    clock_count++;
+    //clock_count++;
 }
 
 void DMG_PPU::reset() {

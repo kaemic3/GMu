@@ -8,8 +8,6 @@
 #include "DMG_PPU.h"
 #include "Cartridge.h"
 
-
-
 class Bus {
 public:
     Bus();

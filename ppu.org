@@ -1,5 +1,18 @@
 #+title: ppu
 
+* VBlank timing issue
+- For some reason the PPU is leaving VBlank early
+- When increasing vblank to 10x time, tetris play completely fine.
+- Randomly the clock_count member gets incremented to an insanely high number after completing vblank, when it should be 4650
+
+- Idea: Try to see what happens to the lcdc and stat registers when clock_count exceeds 4560 in the VBLANK state of the PPU.
+  + This has been fixed, but the issue still reimains...
+- At 0x25bd, Tetris will laod the contents of the LCDC register into A, then right after it ANDS A with 3. Then at 0x25c1, the game does a jr nz,25BD command. This means that in order for the GB to progress, it needs to be in HBlank mode.
+- At 0x2bd in GMu, the clock count of the PPU is 433, when it should be 290ish
+- The reason the VRAM write is failing is due to the read from the stat register sometimes happening at the beginning of HBLANK, and sometimes from the end of HBLANK. Need to find out why there is a discrepancy.
+** After some investigation, the issue seems to be with the timing of the PPU and the CPU clock
+- The bug is fixed when increasing the HBLANK and VBLANK time to 4560 clocks ish
+- Idea: Change the way the clock_count is incremented. Put it in the switch rather than at the bottom of the clock function
 * Re-Write: Basics
 ** PPU States:
 1. The PPU of the GB can be though of as a state machine.
