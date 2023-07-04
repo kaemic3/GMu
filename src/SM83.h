@@ -89,14 +89,14 @@ public:
     // Instructions
     uint8_t opcode = 0x00;
     uint8_t cycles = 0x00;
-    // Funciton that returns a string of vectors
+    // Function that returns a string of vectors
     std::vector<std::string> return_instruction();
 
 public:
     // Pointer to a bus object
     Bus *bus = nullptr;
     // Read and write functions
-    void cpu_write(uint16_t addr, uint8_t data);
+    void cpu_write(uint16_t addr, uint8_t data, bool is_dma = false);
     uint8_t cpu_read(uint16_t addr, bool dma_copy = false);
 
     // Access flags

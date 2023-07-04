@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Tetris.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Dr. Mario.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
                             GMu::gb.clock();
                             //if (GMu::gb.cpu.complete())
                                 //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
-                        } while (!GMu::gb.ppu.frame_complete);
+                        } while (!GMu::gb.ppu.get_frame_state());
                         break;
                     case SDLK_RETURN:
                         // Run until one complete instruction has run
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
                         //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                         break;
                     case SDLK_v:
-                        do { GMu::gb.clock(); } while (GMu::gb.ppu.state != DMG_PPU::VBlank && GMu::gb.ie_reg.vblank != 1);
+                        do { GMu::gb.clock(); } while (!GMu::gb.ppu.get_vblank_flag() && GMu::gb.ie_reg.vblank != 1);
                         //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
                     default:
                         break;
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
                     GMu::gb.clock();
                     //if (GMu::gb.cpu.complete())
                         //dis.output_instruction(GMu::gb.cpu.return_instruction(), GMu::gb.cpu.debug_pc);
-                } while (!GMu::gb.ppu.frame_complete);
+                } while (!GMu::gb.ppu.get_frame_state());
                 // Reset joypad state flag
                 GMu::gb.joypad_state_change = false;
             }

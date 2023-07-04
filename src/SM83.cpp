@@ -76,8 +76,8 @@ uint8_t SM83::cpu_read(uint16_t addr, bool dma_copy) {
     return bus->cpu_read(addr, dma_copy);
 }
 
-void SM83::cpu_write(uint16_t addr, uint8_t data) {
-    bus->cpu_write(addr, data);
+void SM83::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
+    bus->cpu_write(addr, data, is_dma);
 }
 
 void SM83::clock() {
@@ -190,7 +190,7 @@ void SM83::clock() {
                 // the dma_copy flag is set so the cpu_read function will return the byte we actually want
                 uint8_t buffer_byte = cpu_read(bus->dma_addr, true);
                 // Technically, DMA can write to OAM without VBLANK, so write directly to the OAM
-                bus->ppu.oam[bus->dma_addr & 0x00ff] = buffer_byte;
+                cpu_write(bus->dma_addr | 0xfe00, buffer_byte, true);
                 // Increment the DMA address
                 bus->dma_addr++;
             }
@@ -234,9 +234,9 @@ bool SM83::interrupt(uint8_t addr) {
     di();
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
 
     switch (addr) {
         case VBLANK_INT:
@@ -2585,9 +2585,9 @@ uint8_t SM83::call_a16() {
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Update the PC
     pc = addr_abs;
     return 0;
@@ -2605,9 +2605,9 @@ uint8_t SM83::call_c_a16() {
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2625,9 +2625,9 @@ uint8_t SM83::call_nc_a16() {
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2645,9 +2645,9 @@ uint8_t SM83::call_nz_a16() {
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -2665,9 +2665,9 @@ uint8_t SM83::call_z_16() {
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Update the PC
     pc = addr_abs;
     return 12;
@@ -3042,7 +3042,7 @@ uint8_t SM83::dec_abs_hl() {
         setFlag(H, 0);
     // Set sign flag
     setFlag(N, 1);
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     return 0;
 }
 
@@ -3298,7 +3298,7 @@ uint8_t SM83::inc_abs_hl() {
         setFlag(H, 0);
     // Reset sign flag
     setFlag(N, 0);
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     return 0;
 }
 
@@ -3735,7 +3735,7 @@ uint8_t SM83::ld_abs_a16_a() {
     uint16_t highByte = cpu_read(pc++);
     addr_abs = (highByte << 8) | lowByte;
     // Write the data
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -3747,8 +3747,8 @@ uint8_t SM83::ld_abs_a16_sp() {
     addr_abs = (highByte << 8) | lowByte;
 
     // Write the SP to the absolute address in little-endian
-    cpu_write(addr_abs++, sp);
-    cpu_write(addr_abs, (sp >> 8));
+    cpu_write(addr_abs++, sp, false);
+    cpu_write(addr_abs, (sp >> 8), false);
     return 0;
 }
 
@@ -3757,7 +3757,7 @@ uint8_t SM83::ld_abs_bc_a() {
     uint16_t lowByte = c_reg;
     uint16_t highByte = b_reg;
     addr_abs = (highByte << 8) | lowByte;
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -3766,7 +3766,7 @@ uint8_t SM83::ld_abs_de_a() {
     uint16_t lowByte = e_reg;
     uint16_t  highByte = d_reg;
     addr_abs = (highByte << 8) | lowByte;
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -3777,7 +3777,7 @@ uint8_t SM83::ld_abs_hl_a() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in A into the address stored in HL
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -3788,7 +3788,7 @@ uint8_t SM83::ld_abs_hl_b() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in B into the address stored in HL
-    cpu_write(addr_abs, b_reg);
+    cpu_write(addr_abs, b_reg, false);
     return 0;
 }
 
@@ -3799,7 +3799,7 @@ uint8_t SM83::ld_abs_hl_c() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    cpu_write(addr_abs, c_reg);
+    cpu_write(addr_abs, c_reg, false);
 
     return 0;
 }
@@ -3812,7 +3812,7 @@ uint8_t SM83::ld_abs_hl_d() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    cpu_write(addr_abs, d_reg);
+    cpu_write(addr_abs, d_reg, false);
 
     return 0;
 }
@@ -3824,7 +3824,7 @@ uint8_t SM83::ld_abs_hl_d8() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     uint8_t data = cpu_read(pc++);
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     return 0;
 }
 
@@ -3835,7 +3835,7 @@ uint8_t SM83::ld_abs_hl_e() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    cpu_write(addr_abs, e_reg);
+    cpu_write(addr_abs, e_reg, false);
 
     return 0;
 }
@@ -3847,7 +3847,7 @@ uint8_t SM83::ld_abs_hl_h() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    cpu_write(addr_abs, h_reg);
+    cpu_write(addr_abs, h_reg, false);
 
     return 0;
 }
@@ -3859,7 +3859,7 @@ uint8_t SM83::ld_abs_hl_l() {
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
     // Write the data in C into the address stored in HL
-    cpu_write(addr_abs, l_reg);
+    cpu_write(addr_abs, l_reg, false);
 
     return 0;
 }
@@ -3869,7 +3869,7 @@ uint8_t SM83::ld_abs_hli_a() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     inc_hl();
     return 0;
 }
@@ -3879,7 +3879,7 @@ uint8_t SM83::ld_abs_hld_a() {
     uint16_t lowByte = l_reg;
     uint16_t highByte = h_reg;
     addr_abs = (highByte << 8) | lowByte;
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     dec_hl();
     return 0;
 }
@@ -4346,7 +4346,7 @@ uint8_t SM83::ldh_abs_a8_a() {
     uint16_t lowByte = cpu_read(pc++);
     addr_abs = (0xff00 | lowByte);
     // Write the data to the address
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -4355,7 +4355,7 @@ uint8_t SM83::ldh_abs_c_a() {
     // Load the address
     addr_abs = (0xff00 | c_reg);
     // Write the data to the address
-    cpu_write(addr_abs, a_reg);
+    cpu_write(addr_abs, a_reg, false);
     return 0;
 }
 
@@ -4623,36 +4623,36 @@ uint8_t SM83::prefix() {
 // Push the AF register pair onto the stack.
 uint8_t SM83::push_af() {
     sp--;
-    cpu_write(sp, a_reg);
+    cpu_write(sp, a_reg, false);
     sp--;
-    cpu_write(sp, f_reg);
+    cpu_write(sp, f_reg, false);
     return 0;
 }
 
 // Push the BC register pair onto the stack.
 uint8_t SM83::push_bc() {
     sp--;
-    cpu_write(sp, b_reg);
+    cpu_write(sp, b_reg, false);
     sp--;
-    cpu_write(sp, c_reg);
+    cpu_write(sp, c_reg, false);
     return 0;
 }
 
 // Push the DE register pair onto the stack.
 uint8_t SM83::push_de() {
     sp--;
-    cpu_write(sp, d_reg);
+    cpu_write(sp, d_reg, false);
     sp--;
-    cpu_write(sp, e_reg);
+    cpu_write(sp, e_reg, false);
     return 0;
 }
 
 // Push the HL register pair onto the stack.
 uint8_t SM83::push_hl() {
     sp--;
-    cpu_write(sp, h_reg);
+    cpu_write(sp, h_reg, false);
     sp--;
-    cpu_write(sp, l_reg);
+    cpu_write(sp, l_reg, false);
     return 0;
 }
 
@@ -4674,7 +4674,7 @@ uint8_t SM83::res_n_r8() {
         uint8_t data = fetch();
         data &= ~(1 << n);
         // Write the data
-        cpu_write(addr_abs, data);
+        cpu_write(addr_abs, data, false);
         return 0;
     }
     // If we are here, that means only 1 operand
@@ -4877,7 +4877,7 @@ uint8_t SM83::rl_abs_hl() {
     else
         data = (data << 1);
     // Write the data back into the address
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
@@ -5169,7 +5169,7 @@ uint8_t SM83::rlc_abs_hl() {
     // First shift all bits left one, then or with all bits shifted right 7.
     data = (data << 1) | (data >> 7);
     // Write the data to the address
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -5421,7 +5421,7 @@ uint8_t SM83::rr_abs_hl() {
     else
         data = (data >> 1);
     // Write the data at the address
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check if the carry flag needs to be set
     if(c_check)
         setFlag(C, 1);
@@ -5640,9 +5640,9 @@ uint8_t SM83::rr_l() {
 uint8_t SM83::rst_00h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0000
     pc = 0x0000;
     return 0;
@@ -5652,9 +5652,9 @@ uint8_t SM83::rst_00h() {
 uint8_t SM83::rst_08h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0008
     pc = 0x0008;
     return 0;
@@ -5664,9 +5664,9 @@ uint8_t SM83::rst_08h() {
 uint8_t SM83::rst_10h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0010
     pc = 0x0010;
     return 0;
@@ -5676,9 +5676,9 @@ uint8_t SM83::rst_10h() {
 uint8_t SM83::rst_18h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0018
     pc = 0x0018;
     return 0;
@@ -5688,9 +5688,9 @@ uint8_t SM83::rst_18h() {
 uint8_t SM83::rst_20h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0020
     pc = 0x0020;
     return 0;
@@ -5700,9 +5700,9 @@ uint8_t SM83::rst_20h() {
 uint8_t SM83::rst_28h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0028
     pc = 0x0028;
     return 0;
@@ -5712,9 +5712,9 @@ uint8_t SM83::rst_28h() {
 uint8_t SM83::rst_30h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0030
     pc = 0x0030;
     return 0;
@@ -5724,9 +5724,9 @@ uint8_t SM83::rst_30h() {
 uint8_t SM83::rst_38h() {
     // Push the current address to the stack
     sp--;
-    cpu_write(sp, (pc >> 8));
+    cpu_write(sp, (pc >> 8), false);
     sp--;
-    cpu_write(sp, (pc & 0xff));
+    cpu_write(sp, (pc & 0xff), false);
     // Jump to address 0x0038
     pc = 0x0038;
     return 0;
@@ -5802,7 +5802,7 @@ uint8_t SM83::rrc_abs_hl() {
     // First shift all bits right one, then or with all bits shifted right 7.
     data = (data >> 1) | (data << 7);
     // Write the data back to the address
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -6351,7 +6351,7 @@ uint8_t SM83::set_n_r8() {
         uint8_t data = fetch();
         data |= (1 << n);
         // Write the data
-        cpu_write(addr_abs, data);
+        cpu_write(addr_abs, data, false);
         return 0;
     }
     // If we are here, that means only 1 operand
@@ -6408,7 +6408,7 @@ uint8_t SM83::sla_abs_hl() {
     // Shift the register left 1
     data = data << 1;
     // Write the data
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -6637,7 +6637,7 @@ uint8_t SM83::sra_abs_hl() {
     else
         data = data>> 1;
     // Write the data
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -6894,7 +6894,7 @@ uint8_t SM83::srl_abs_hl() {
     // Shift right one bit
     data = data >> 1;
     // Write the data
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);
@@ -7376,7 +7376,7 @@ uint8_t SM83::swap_abs_hl() {
     uint8_t data = fetch();
     data = ((data & 0x0f) << 4 | (data & 0xf0) >> 4);
     // Write the data
-    cpu_write(addr_abs, data);
+    cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
         setFlag(Z, 1);

@@ -8,11 +8,13 @@
 - Idea: Try to see what happens to the lcdc and stat registers when clock_count exceeds 4560 in the VBLANK state of the PPU.
   + This has been fixed, but the issue still reimains...
 - At 0x25bd, Tetris will laod the contents of the LCDC register into A, then right after it ANDS A with 3. Then at 0x25c1, the game does a jr nz,25BD command. This means that in order for the GB to progress, it needs to be in HBlank mode.
-- At 0x2bd in GMu, the clock count of the PPU is 433, when it should be 290ish
+- At 0x25bd in GMu, the clock count of the PPU is 433, when it should be 290ish
 - The reason the VRAM write is failing is due to the read from the stat register sometimes happening at the beginning of HBLANK, and sometimes from the end of HBLANK. Need to find out why there is a discrepancy.
 ** After some investigation, the issue seems to be with the timing of the PPU and the CPU clock
 - The bug is fixed when increasing the HBLANK and VBLANK time to 4560 clocks ish
 - Idea: Change the way the clock_count is incremented. Put it in the switch rather than at the bottom of the clock function
+** FIXED HBLANK ISSUE: with a hack to be fair
+- Still need to fix the clock issues in the PPU rewrite with the PixelTransfer state. Need to make sure that the min mode 3 time is adhered to.
 * Re-Write: Basics
 ** PPU States:
 1. The PPU of the GB can be though of as a state machine.
@@ -107,3 +109,12 @@ Beyond this point, it will be assued that LCDC.7 is on, therefore the PPU and sc
        - 0=0x8800-0x97ff: Known as the 0x8800 method. This will use 0x9000 as a base pointer, and is indexed as a signed int rather than unsigned. Often also referred to as the signed address mode.
        - 1=0x8000-0x87ff: Known as the 0x8000 method. Uses signed addessing, and shares tiledata with sprites, as sprites can only use this address range for tiledata.
   4. If the window is enabled, then we need to check LCDC.4 for the tile data location, and LCDC.6 for the tilemap area of the window.
+* DONE Need to see why the fifo is outputting white pixels
+- To start, the BackgroundAndWindow mode is never entered in the BG_Fetcher class.
+- Issue likely has something to do with the fact that the pixel_buffer array is not getting emptied?? ( need to check when .empty() returns true for std::array)
+* DONE Need to properly adjust for window bg collision
+- Need to remove pixel from the fifo instead of the pixel buffer in the fetcher.
+  + This is becuase the fetcher does not do this on the GB. It simply gets pixel data from VRAM and turns it into pixel data that can be pushed to the screen via the fifo.
+* TODO Create the FG_Fetcher and FG_Fifo properly
++ Since the FG_Fetcher needs to wait for the BG_Fifo to have pixels, a pixel will be pushed to the screen before we can check to see if a sprite may be on that scanline_x position.
+  - Need to move the bg_fetcher clock call and the loop where the bg_fifo is populated with pixels to before the check on the FG_Fetcher. This would separate when pixels are fetched and pushed to the bg_fifo, and when they are pushed to the screen buffer.

@@ -8,6 +8,8 @@
 #include "DMG_PPU.h"
 #include "Cartridge.h"
 
+
+
 class Bus {
 public:
     Bus();
@@ -26,7 +28,7 @@ public:
     // Clear the screen
     void clear_screen();
     // Helper functions for reading and writing RAM
-    void cpu_write(uint16_t addr, uint8_t data);
+    void cpu_write(uint16_t addr, uint8_t data, bool is_dma = false);
     uint8_t cpu_read(uint16_t addr, bool dma_copy = false);
     // Helper functions to enable and disable interrupts
     void ei();

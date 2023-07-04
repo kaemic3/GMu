@@ -19,12 +19,16 @@ void Bus::clear_screen() {
     std::swap(screen, empty);
 }
 
-void Bus::cpu_write(uint16_t addr, uint8_t data) {
+void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     // Guard check to see if the CPU is in DMA mode
     if (cpu.state == SM83::DMA) {
         if (addr >= 0xff80 && addr <= 0xfffe) {
             hram[addr - 0xff80] = data;
             return;
+        }
+        else if (ppu.cpu_write(addr, data, is_dma))
+        {
+
         }
         else {
             printf("CPU in DMA mode. Cannot write to address 0x%X.\n", addr);
@@ -101,7 +105,7 @@ void Bus::cpu_write(uint16_t addr, uint8_t data) {
     }
     else {
         // If we get here, then the address is invalid
-        //printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
+        printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
     }
 }
 
@@ -221,15 +225,16 @@ void Bus::run_dma() {
 // The CPU and PPU run at the same clock speed
 // First the cpu is clocked, then the ppu
 void Bus::clock() {
+
     // Compare LYC to LY
-    if (ppu.ly == ppu.lyc && !ppu.ly_lyc_flag) {
+    if (ppu.ly == ppu.lyc && !ppu.stat_ly_lyc_flag) {
         ppu.stat.lyc_ly_flag = 1;
-        ppu.ly_lyc_flag = true;
+        ppu.stat_ly_lyc_flag = true;
     }
     // * VBlank *
 
     // See if the VBlank interrupt flag needs to be set
-    if (ppu.state == DMG_PPU::VBlank && !ppu.vblank_fired) {
+    if (ppu.get_vblank_flag()) {
         if_reg.vblank = 1;
     }
 
@@ -239,17 +244,17 @@ void Bus::clock() {
 
     if (ppu.stat.hblank_int_src == 1) {
         // Check if the mode flag is set to 0
-        if (ppu.state == DMG_PPU::HBlank && !ppu.hblank_flag) {
+        if (ppu.get_stat_hblank_flag()) {
             if_reg.lcd_stat = 1;
         }
     }
     else if (ppu.stat.vblank_int_src == 1) {
-        if (ppu.state == DMG_PPU::VBlank && !ppu.vblank_fired) {
+        if (ppu.get_vblank_flag()) {
             if_reg.lcd_stat = 1;
         }
     }
     else if (ppu.stat.oam_int_src == 1) {
-        if (ppu.state == DMG_PPU::OAMSearch && !ppu.oam_flag) {
+        if (ppu.get_stat_oam_flag()) {
             if_reg.lcd_stat = 1;
         }
     }

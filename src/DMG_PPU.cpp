@@ -6,7 +6,10 @@ DMG_PPU::DMG_PPU() {
     for (uint8_t i : vram) i = 0x00;
     // Clear OAM
     for (uint8_t i : oam) i = 0x00;
+    // Override default constructor - maybe the fetchers should be pointers?
 
+    bg_fetcher = BG_Fetcher(this);
+    fg_fetcher = FG_Fetcher(this);
     // Default state of the PPU
     state = OAMSearch;
     // Initialize registers
@@ -16,13 +19,13 @@ DMG_PPU::DMG_PPU() {
 
 // Need to add checks for when the PPU is accessing RAM directly since the
 // function will need to not write anything at all
-bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data) {
+bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     // Check for VRAM
     // Will need to have 2 different cpu access conditions since during OAM search VRAM is accessible,
     // but OAM is not
     if(addr >= 0x8000 && addr <= 0x9fff) {
         // Check if ppu is using VRAM
-        if (!cpu_access) {
+        if (!cpu_access && !is_dma) {
             printf("Cannot write \"0x%x\" to 0x%x. VRAM is being used by PPU.\n",data, addr);
             return false;
         }
@@ -92,12 +95,17 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data) {
 // function will need to return 0xff
 // Will need to have 2 different cpu access conditions since during OAM search VRAM is accessible,
 // but OAM is not
-bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
+bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data, bool is_fetcher) {
 
     // Check if reading VRAM
     if(addr >= 0x8000 && addr <= 0x9fff) {
-        // Check if PPU is using VRAM
-        if (!cpu_access) {
+        /*
+         * If the PPU is using VRAM, then the CPU will not have access. However, if a pixel fetcher
+         * is trying to read VRAM, it should have access. is_fetcher is default set to false, and the
+         * CPU will not use that parameter. Therefore, only the fetchers can bypass read lock out,
+         * as they call the function with is_fetcher set to true.
+         */
+        if (!cpu_access && !is_fetcher) {
             data = 0xff;
             return false;
         }
@@ -123,9 +131,6 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
     // Check for STAT register
     else if (addr == 0xff41) {
         data = stat.data;
-        if (data == 0) {
-
-        }
         return true;
     }
     // Check for SCY register
@@ -178,11 +183,12 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data) {
 // https://blog.tigris.fr/2019/09/15/writing-an-emulator-the-first-pixel/
 // This website was instrumental to the creation of this clock function
 
+// RE-WRITE
 void DMG_PPU::clock() {
     frame_complete = false;
     // If screen is off give cpu access to VRAM
     // TODO - Review behaviour of GB when the screen is turned off.
-    if(lcdc.lcd_ppu_enable == 0) {
+    if (lcdc.lcd_ppu_enable == 0) {
         cpu_access = true;
         ly = 0;
         stat.mode_flag = 0;
@@ -190,421 +196,361 @@ void DMG_PPU::clock() {
         state = OAMSearch;
         return;
     }
-    // Need to make sure we are updating the stat mode flag
+    // PPU modes
     switch (state) {
         case OAMSearch:
-            // Set the stat flag
+            // Set the stat mode flag to 2
             stat.mode_flag = 2;
-            if (clock_count == 1) {
-                // Need to get the data for upto 10 sprites on this scanline
-                // Compare the Y pos of each sprite to the current scan line
-                // Clear the sprite list from the fetcher
-
-                // Need to make sure that the sprites are organized based on the draw order
-                // Drawing priority for sprites is determined by their X coordinate first, and if 2 sprites
-                // share the same X coordinate, then the sprite that is stored earlier in OAM will have priority
-                // So, sprites should be stored in order of draw priority.
-                // Check if OBJ is enabled
+            if (clock_count == 0)
+                // Set the OAM mode flag, this is used to detect if the IF bit
+                // needs to be set in the bus clock function.
+                stat_oam_flag = true;
+            if (clock_count == 2)
+                stat_oam_flag = false;
+            // Wait until the end of OAM search to grab the sprites from OAM
+            if (clock_count == 80) {
+                // Scan OAM for sprites that have the same Y position as LY.
+                // First check if sprites are enabled
                 if (lcdc.obj_enable == 1) {
-                    fg_fetch.sprites.clear();
-                    for (uint8_t i = 0; i < 160; i+=4) {
-                        // Check to see if the Y value of the sprite is < 16
+                    // Clear the current list of scanned sprites
+                    fg_fetcher.clear_sprites();
+                    /*
+                     * Each object in OAM is 4 bytes, with the first byte
+                     * being the Y position. Sprites need to have a Y >= 16 in order
+                     * to be considered, as anything lower cannot be seen on the screen.
+                     */
+                    for (auto i = 0; i < oam.size(); i+=4) {
                         if (oam[i] >= 16) {
-                            uint8_t sprite_y = oam[i] - 16;
-                            if (ly >= sprite_y && ly < (sprite_y + 8)) {
-                                if(fg_fetch.sprites.size() < 10) {
-                                    fg_fetch.sprites.emplace_back(i/4, oam[i], oam[i + 1], oam[i + 2], (ly - sprite_y) % 8 ,oam[i + 3]);
+                            // Remove the 16 offset from the sprite so that is in line with LY
+                            uint8_t current_sprite_y = oam[i] - 16;
+                            /* This checks to see if the current sprite has a Y position that is equal to LY,
+                             * or within +8 of its top left pixel. This is because OAM contains the Y of the top left
+                             * pixel.
+                             *
+                             * The PPU cycles through OAMSearch, PixelTransfer, and HBlank every scanline, so this is
+                             * checked every scanline. The current_sprite_y + 8 assures that the pixel data is pulled
+                             * for all 8 lines of the tile.
+                             */
+                            if (ly >= current_sprite_y && ly < (current_sprite_y + 8)) {
+                                /*
+                                 * This line adds sprites to the scanned_sprites vector. This vector contains 10 sprites
+                                 * which is all sprites that are on the current scanline. This will be used by the
+                                 * sprite fetcher to grab the relevant pixel data as it fetches sprite pixels.
+                                 */
+                                if (fg_fetcher.get_sprite_count() < 10) {
+                                    fg_fetcher.emplace_sprite(
+                                            Sprite(i / 4, oam[i], oam[i + 1], oam[i + 2],
+                                                    (ly - current_sprite_y) % 8,oam[i + 3]));
                                 }
                             }
                         }
                     }
-                    // Sort the sprite list in draw priority order
-                    std::sort(fg_fetch.sprites.begin(), fg_fetch.sprites.end());
+                    // Sort the scanned sprites in draw priority order
+                    fg_fetcher.sort_sprites();
                 }
-                oam_flag = true;
+
             }
-            // OAM search always takes 40 clocks to complete
+            // OAM search takes 80 clock cycles to complete
             if (clock_count == 80) {
-
-                // Init pixel transfer
-                // Reset values for a new scanline
-                pixel_count = 0;
-                signed_mode = false;
-                win_collision = false;
-                win_collision_tile_offset = 0;
-                win_collision_pos = 0xff;
-                window_draw = false;
-                swap_to_win = false;
-                pop_request = false;
-                oam_flag = false;
-
+                // Prep for PixelTransfer state
+                bg_fetcher.init();
+                // Grab the swap position
+                bg_win_swap_pos = bg_fetcher.get_swap_pos();
+                // Grab the pixel offset
+                win_pixel_offset = bg_fetcher.get_pixel_offset();
+                // Clear the FIFOs
+                clear_fifos();
+                // Reset all
+                scanline_x = 0;
                 clock_count = 0;
-
-                // Set the tile data address - Window and BG share a tile data area
-                switch (lcdc.bg_win_tile_data_area) {
-                    // If lcdc.4 is not set, load 0x1000 into tiledata_addr and used signed addressing
-                    case 0:
-                        tiledata_addr = 0x1000;
-                        signed_mode = true;
-                        break;
-                        // If lcdc.4 is set, load 0x0000 into tiledata_addr
-                    case 1:
-                        tiledata_addr = 0x0000;
-                        break;
-                }
-
-                // The checks below are used to determine if the window needs to be rendered, and how
-                // it needs to be rendered.
-
-                // Check if the window can be ignored
-                if(lcdc.win_enable == 1 && wx <= 166 && wy < 144 && (wy <= ly)) {
-                    window_draw = true;
-                    // Set the tilemap address
-                    switch (lcdc.win_tile_map_area) {
-                        case 0:
-                            // If lcdc.6 not set, set the tilemap to 0x1800
-                            tilemap_row_addr = 0x1800;
-                            break;
-                        case 1:
-                            // If lcdc.6 is set, set the tilemap to 0x1c00
-                            // + 1 to ignore the first tile
-                            tilemap_row_addr = 0x1c00;
-                            break;
-                    }
-                    // Draw the window ignoring the first tile in the tile map
-                    if (wx == 0 || wx == 166) {
-                    // Technically, wx = 0 and wx = 166 do not share the same behaviour, but
-                    // for now they will. Recreating the bug will be tedious.
-
-                        // Select the correct tilemap for the window
-                        // In this case, we can completely ignore the bg for this scanline,
-                        // and all future scan lines
-
-                        // Set the tilemap address
-                        tilemap_row_addr++;
-                        // Now we need to add the offset for y-axis
-                        tilemap_row_addr += (win_ly / 8 * 32);
-                        // Determine the tile_line using only ly
-                        tile_line = win_ly % 8;
-                        // Set pixel_x
-                        pixel_x = 0;
-                    }
-                    // This section determines if we need to draw the first window tile at an offset
-                    else if (wx > 0 && wx < 7) {
-                        // Grab the correct tilemap row, tile line, and set the pixel_x offset
-                        tilemap_row_addr += (win_ly / 8 * 32);
-                        tile_line = win_ly % 8;
-                        pixel_x = 0;
-
-                        // Tell the ppu to pop off 7-wx pixels before drawing to the screen.
-                        // This will offset the first tile accordingly
-                        pop_request = true;
-                        pop_win = 7 - wx;
-                    }
-                    // Pre-staging for a normal window position. This is where most windows will be positioned.
-                    else if (wx >= 7 && wx <= 165) {
-                        // No collision if the window is at WCX = 7
-                        if (wx == 7) {
-                            // Now we need to add the offset for y-axis
-                            tilemap_row_addr += (win_ly / 8 * 32);
-                            // Determine the tile_line using only ly
-                            tile_line = win_ly % 8;
-                            // Set pixel_x
-                            pixel_x = 0;
-                        }
-                        // Window tiles are being swapped to during the screen draw from BG tiles
-                        // This means:
-                        // - The tilemap swapped
-                        // - Tile data area will be the same
-                        else {
-                            // Set the collision flag
-                            win_collision = true;
-                            // Calculate the pixel where the collision will occur
-                            // This will be used to swap the tilemap over in the fetcher.
-                            win_collision_pos = (wx - 7);
-                            // Calculate how many pixels need to be popped off of the fifo (if any)
-                            // when the collision occurs only if there is a mid-tile collision
-                            if ((wx - 7) % 8 != 0)
-                                win_collision_tile_offset = 8 - ((wx - 7) % 8);
-                            else
-                                // If the collision does not happen mid-tile, then the FIFO will not need to pop
-                                // off any excess pixels
-                                win_collision_tile_offset = 0;
-                            // We grab where the tilemap row should be for this scanline, and save it into a
-                            // member separate from tilemap_row_addr, so it can be passed over to the fetcher
-                            // when it needs to swap tilemaps.
-                            win_tilemap_addr = tilemap_row_addr + (win_ly / 8 * 32);
-
-                            // Setup for BG drawing first, PPU will determine when to swap over to the window
-                            // Check for BG tilemap
-                            switch (lcdc.bg_tile_map_area) {
-                                case 0:
-                                    tilemap_row_addr = 0x1800;
-                                    break;
-                                case 1:
-                                    tilemap_row_addr = 0x1c00;
-                                    break;
-                            }
-                            // Setup offsets for BG
-                            pixel_x = ((scx / 8)) & 0x1f;
-                            pixel_y = scy + ly;
-                            tile_line = pixel_y % 8;
-                            tilemap_row_addr += (pixel_y / 8 * 32);
-                        }
-                    }
-                }
-                else {
-                    // Ignore the window
-                    pixel_x = (scx / 8)  & 0x1f;
-                    pixel_y = (scy + ly) & 0xff;
-                    // Find the address to the current tile row in the tilemap
-                    tile_line = pixel_y % 8;
-
-                    // Check for BG tilemap
-                    switch (lcdc.bg_tile_map_area) {
-                        case 0:
-                            tilemap_row_addr = 0x1800;
-                            break;
-                        case 1:
-                            tilemap_row_addr = 0x1c00;
-                            break;
-                    }
-                    tilemap_row_addr += (pixel_y / 8 * 32);
-                }
-                // Initialize the fetchers for this scanline
-                bg_fetch.init(tilemap_row_addr, tiledata_addr, tile_line, pixel_x, signed_mode, win_tilemap_addr);
-                fg_fetch.init();
+                sprite_offscreen_offset = 0;
+                // Assume normal pt mode
+                pt_mode = Normal;
                 state = PixelTransfer;
                 break;
             }
             clock_count++;
             break;
+
         case PixelTransfer:
             // Set the stat flag
             stat.mode_flag = 3;
-            // Set the pixel transfer flag after the first clock cycle of the VBlank state
             if (clock_count == 0)
-                pixel_transfer_flag = true;
-
-            if (pixel_count == 160) {
-                pixel_transfer_flag = false;
+                stat_pixel_transfer_flag = true;
+            // Check to see if the all pixels have been pushed to the screen
+            if (scanline_x == 160) {
+                // Change the state of the PPU to HBlank
+                stat_pixel_transfer_flag = false;
                 state = HBlank;
                 clock_count = 0;
                 break;
             }
-            // Clock the fetchers: Only clocks every 2 PPU clocks
-            bg_fetch.clock(this, swap_to_win, tile_line, pixel_x);
-            fg_fetch.clock(this);
+            // Execute a bg_fetcher clock
+            bg_fetcher.clock();
 
-            // Check if we need to pop off pixels from the window (if wx < 7)
-            if (!bg_fetch.fifo.empty() && pop_request) {
-                for (uint8_t pixel = pop_win; pixel > 0; pixel--) {
-                    bg_fetch.fifo.pop();
-                    pop_win--;
+            // Check to see if the bg_fetcher has 8 pixels, if so, grab them and start pushing to the screen buffer
+            if (bg_fetcher.pixels_ready() && bg_fifo.empty()) {
+                // Reset the sprite offscreen offset
+                sprite_offscreen_offset = 0;
+                // If the fetcher has pixels, then push them into the fifo
+                // Grab the pixels from the fetcher
+                std::vector<Pixel_BG> pixels = bg_fetcher.get_pixels();
+                // Push the pixels to the FIFO in reverse order as they are stored in reverse
+                for (int8_t i = 7; i >= 0; i--) {
+                    bg_fifo.push(pixels[i]);
                 }
             }
-            // Need to check if there was a collision between the BG and the window.
-            // This will be true when there is a collision, and when the current pixel is the same as the starting
-            // pixel of the window with it's +7 offset removed.
-            if (!bg_fetch.fifo.empty() && win_collision && pixel_count == win_collision_pos && win_collision_tile_offset > 0) {
-                for (uint8_t pixel = win_collision_tile_offset; pixel > 0; pixel--) {
-                    // Pop off residual BG tiles
-                    bg_fetch.fifo.pop();
-                    win_collision_tile_offset--;
-                }
-                // Set the window swap flag
-                swap_to_win = true;
-                // Determine the tile_line for the window
-                tile_line = win_ly % 8;
-                // Set pixel_x offset
-                pixel_x = 0;
-            }
-            // BG/Win FIFO done
-
-            // Need to call bus pixel push function if there are any in the fifo
-            if(!bg_fetch.fifo.empty()) {
-                // Check if the sprite fetcher has pixels
-                if (!fg_fetch.fifo.empty()) {
-                    // Grab the current sprites X pos
-                    uint8_t current_sprite_x = fg_fetch.fifo.front().x_pos;
-                    // If the current sprite pixel is less than 8, pop it off
-                    while (current_sprite_x < 8) {
-                        fg_fetch.fifo.pop();
-                        current_sprite_x = fg_fetch.fifo.front().x_pos;
-                    }
-                    // Set the current sprite x again
-                    //current_sprite_x = fg_fetch.fifo.front().x_pos;
-                    uint8_t current_sprite_color = map_color(fg_fetch.fifo.front().color, fg_fetch.fifo.front().palette);
-                    uint8_t current_sprite_priority = fg_fetch.fifo.front().bg_priority;
-
-                    if (current_sprite_x >= 8) {
-                        // Remove the offset from the sprite X
-                        current_sprite_x -= 8;
-                        // Need to check if the current sprite needs to be drawn with the BG priority not set
-                        // and the color not 0
-
-                        // Push a sprite pixel to the screen if it has priority over the BG and the pixel matches the
-                        // X pos. Check for if the pixel color is transparent.
-                        if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 0) {
-                            bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
-                            fg_fetch.fifo.pop();
-                            bg_fetch.fifo.pop();
-                            sprite_pushed = true;
-                        }
-                        // If the current pixel is transparent then pop it off of the fifo but don't push it to the
-                        // screen
-                        else if (current_sprite_x == pixel_count && current_sprite_color == 0 && current_sprite_priority == 0) {
-                            // First pop the transparent pixel
-                            fg_fetch.fifo.pop();
-                            // First check the entire fifo and push a pixel to the screen if it's x matches the
-                            // current pixel_count
-                            // Create a temporary fifo that we will store the pixels that are needed still in
-                            std::queue<Pixel_FG> temp_fg_fifo;
-                            uint8_t size = fg_fetch.fifo.size();
-                            for(uint8_t i = 0; i < size; i++) {
-                                current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
-                                current_sprite_color = fg_fetch.fifo.front().color;
-                                current_sprite_priority = fg_fetch.fifo.front().bg_priority;
-                                // Check the entire sprite fifo to see if any of the pixels should be drawn where the
-                                // current transparent sprite pixel is.
-                                if (current_sprite_x == pixel_count && current_sprite_color != 0) {
-                                    // If the BG has priority then we need to check if the BG should be drawn instead
-                                    if (current_sprite_priority == 1) {
-                                        uint8_t bg_color = bg_fetch.fifo.front().color;
-                                        // If the BG color is 0, then sprites will have priority
-                                        if (bg_color == 0) {
-                                            bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
-                                            fg_fetch.fifo.pop();
-                                            bg_fetch.fifo.pop();
-                                            sprite_pushed = true;
-                                        }
-                                        // Otherwise, ignore the pixel
-                                        else {
-                                            // We will still push that pixel to the temp fifo since it will need
-                                            // to be re-evaluated
-                                            temp_fg_fifo.push(fg_fetch.fifo.front());
-                                            fg_fetch.fifo.pop();
-                                        }
-                                    }
-                                    // Otherwise the sprite will have priority, so push its pixel
-                                    else {
-                                        bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
-                                        fg_fetch.fifo.pop();
-                                        bg_fetch.fifo.pop();
-                                        sprite_pushed = true;
-                                    }
-                                }
-                                // Push the sprite to the temp fifo, which will then be swapped with the real one
-                                // after each pixel has been checked
-                                else {
-                                    // Push to the temp fifo
-                                    temp_fg_fifo.push(fg_fetch.fifo.front());
-                                    // Pop the original fifo
-                                    fg_fetch.fifo.pop();
-                                }
-                            }
-                            // Swap the fifos
-                            std::swap(fg_fetch.fifo, temp_fg_fifo);
-                        }
-                        // Check if the current sprite pixel should be BG/Win based on the sprite attributes
-                        // Byte 3 bit 7 is set
-                        else if (current_sprite_x == pixel_count && current_sprite_color != 0 && current_sprite_priority == 1) {
-                            // If the front of the BG fifo has a pixel of color 0, then push a sprite pixel,
-                            // otherwise, push a bg pixel
-                            uint8_t bg_color = bg_fetch.fifo.front().color;
-                            if (bg_color == 0) {
-                                bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
-                                fg_fetch.fifo.pop();
-                                bg_fetch.fifo.pop();
-                                sprite_pushed = true;
+            // Determine the PixelTransfer mode
+            // Check to see if there are any objects on the current scanline, and set the PT_mode
+            if (fg_fetcher.get_sprite_count() > 0 && !bg_fifo.empty()) {
+                // Flag is set when get_sprite_count returns 0
+                bool sprite_list_empty = false;
+                // First check to see if there are any sprites on the current scanline
+                if (fg_fetcher.get_sprite_count() > 0) {
+                    Sprite current_sprite = fg_fetcher.get_front_sprite();
+                    // Now check to see if the sprite's X-position is 0
+                    if (current_sprite.x_pos == 0) {
+                        // Sprites with an X pos of zero can be popped off and ignored
+                        // Need to loop until the front sprite.x_pos != 0
+                        bool end_loop = false;
+                        do {
+                            fg_fetcher.pop_sprite();
+                            if (fg_fetcher.get_sprite_count() == 0) {
+                                sprite_list_empty = true;
+                                end_loop = true;
                             }
                             else {
-                                fg_fetch.fifo.pop();
+                                current_sprite = fg_fetcher.get_front_sprite();
+                                if (current_sprite.x_pos > 0) {
+                                    end_loop = true;
+                                }
+                            }
+                        } while(end_loop);
+                    }
+                    // Check to see if the sprite will have an offscreen offset at the beginning of the scanline
+                    if (current_sprite.x_pos > 0 && current_sprite.x_pos < 8 && scanline_x == 0 && !sprite_list_empty) {
+                        sprite_offscreen_offset = 8 - current_sprite.x_pos;
+                        pt_mode = ObjFetch;
+                    }
+                    // Check to see if a sprite should be fetched: sprite x has an offset of 8 pixels
+                    else if (current_sprite.x_pos - 8 == scanline_x && !sprite_list_empty) {
+                        pt_mode = ObjFetch;
+                    }
+                }
+            }
+
+            switch (pt_mode) {
+                case Normal:
+
+                    /* Before trying to push pixels from the FIFO to the screen, check to see if the FIFO is empty.
+                     * If it's not, then we can try to push pixels to the screen.
+                     */
+                    // Make sure there are pixels in the fifo
+                    if (!bg_fifo.empty()) {
+                        // First pop off any pixels needed if the window is at an offset
+                        for (uint8_t i = 0; i < win_pixel_offset; i++)
+                            bg_fifo.pop();
+                        // Check to see if we need to change from BG to Window based on the swap pos
+                        if (scanline_x == bg_win_swap_pos && bg_fifo.size() != 8) {
+                            // This temporary variable contains the pixel offset the window will have
+                            // relative to the 8x8 grid of tiles
+                            uint8_t collision_offset = 8 - (scanline_x % 8);
+                            // Need to pop off any excess BG pixels
+                            for (uint8_t i = collision_offset; i > 0; i--) {
+                                bg_fifo.pop();
                             }
                         }
-                        // Check to see if the current X is less than pixel_count
-                        else if (current_sprite_x < pixel_count) {
-                            // Flag
-                            bool less = true;
-                            // Pop the pixel off of the fifo
-                            while (less) {
-                                current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
-                                if (current_sprite_x < pixel_count  && !fg_fetch.fifo.empty()) {
-                                    fg_fetch.fifo.pop();
+                        // Make sure the bg_fifo is not empty before trying to push a pixel to the screen
+                        if (!bg_fifo.empty()) {
+                            // Now see if there are pixels in the fg_fifo
+                            if (!fg_fifo.empty()) {
+                                // Now we need to select the pixel that will be drawn to the screen
+                                // fg pixel is not transparent and has priority over bg/win
+                                if (fg_fifo.front().color != 0 && fg_fifo.front().bg_priority != 1 && fg_fifo.front().x_pos - 8 == scanline_x) {
+                                    push_mode = Object;
+                                }
+                                // fg pixel is not transparent and does not have priority over bg/win
+                                else if (fg_fifo.front().color != 0 && fg_fifo.front().bg_priority == 1 && fg_fifo.front().x_pos - 8 == scanline_x) {
+                                    // Only push the fg pixel when the bg fetcher color is 0
+                                    if (map_color(bg_fifo.front().color, bgp) == 0){
+                                        push_mode = Object;
+                                    }
+                                    else
+                                        push_mode = BGWin;
                                 }
                                 else
-                                    less = false;
+                                    push_mode = BGWin;
                             }
-                            // Check to see if the new pixel (after popping off pixels that did not have draw priority)
-                            // should be drawn now
-                            current_sprite_x = fg_fetch.fifo.front().x_pos - 8;
-                            current_sprite_color = fg_fetch.fifo.front().color;
-                            current_sprite_priority = fg_fetch.fifo.front().bg_priority;
-                            if (current_sprite_x == pixel_count && current_sprite_priority == 0) {
-                                // Push a pixel if the x_pos is equal to the pixel_count
-                                bus->push_pixel(current_sprite_color, pixel_count + (ly * 160));
-                                fg_fetch.fifo.pop();
-                                bg_fetch.fifo.pop();
-                                sprite_pushed = true;
+                            else
+                                push_mode = BGWin;
+                            switch (push_mode) {
+                                case BGWin:
+                                    push_pixel(map_color(bg_fifo.front().color, bg_fifo.front().palette), scanline_x + (ly * 160));
+                                    bg_fifo.pop();
+                                    if (!fg_fifo.empty())
+                                        fg_fifo.pop();
+                                    scanline_x++;
+                                    break;
+                                case Object:
+                                    push_pixel(map_color(fg_fifo.front().color, fg_fifo.front().palette), scanline_x + (ly * 160));
+                                    bg_fifo.pop();
+                                    fg_fifo.pop();
+                                    scanline_x++;
+                                    break;
+                            }
+
+                        }
+                        // Change the offset to 0 now that we have pushed the pixels to the screen
+                        win_pixel_offset = 0;
+                    }
+                    break;
+
+                    // Need to implement the FG_Fifo and fetcher
+
+                    /*
+                     * The FG_Fifo operates very differently to the BG_Fifo due to the way it requests pixels from
+                     * its fetcher. The FG_Fetcher will begin fetching pixels only when a sprite should be drawn to the
+                     * screen. This means that pixels are fetched when scanline_x is equal to a sprite's x-pos on the
+                     * current scanline.
+                     *
+                     * When the FG_Fetcher begins fetching a slice of pixels for a sprite, it will stall the BG and FG
+                     * fifos. Once pixels have been fetched, they are merged with the pixels currently in the fifo, unless
+                     * it's empty. In this case they are directly pushed into the FG fifo.
+                     *
+                     * Once the pixels have been merged into the FG fifo, another check will need to occur.
+                     *
+                     * To begin a fetch, here in the PPU clock function we need to check the front of the scanned_sprite
+                     * vector, which is a member of the FG_Fetcher class. We then check the X pos of the front sprite to see
+                     * if it is equal to scanline_x.
+                     *
+                     * Note: the X-pos has an offset of +8 i.e. for the sprite to be visible, it's X must be 8 <= X <= 160.
+                     * Keep in mind that the X position could be 1, and though most of the sprite will not be visible,
+                     * one pixel theoretically could be, so we need to account for that possibility.
+                     *
+                     * Even when we fetch a pixel slice, we still need to check the sprite list to see if the next
+                     * sprite has it's X pos as the same as the current scanline. This is because there could be overlapping
+                     * sprites, and any transparent pixel that was initially fetched could be overwritten by a sprite that
+                     * is overlapping.
+                     *
+                     * scanned_sprites is sorted by object priority. The sprite at the front has the highest object
+                     * priority, so in the case of two sprites overlapping, the first one that was fetched will retain all
+                     * non-transparent pixels.
+                     *
+                     */
+                case ObjFetch:
+                    //printf("pt_mode is ObjFetch.\n");
+                    // Clock the fg_fetcher
+                    fg_fetcher.clock();
+                    // Check to see if the fetcher has object pixels ready
+                    /* *Note: Pixels can be pushed to the fg_fifo even if it is full, however not all pixels
+                     * that are fetched will be pushed to the fifo if it already has pixel data. Pixels are fetched
+                     * based on object priority, so pixels that have already been fetched and pushed to the fifo will
+                     * have priority over pixels that have just been fetched. This is where we will need to merge the
+                     * existing pixels with the fetched ones. We will also need to see if the pt_mode needs to change
+                     * from ObjFetch to Normal.
+                     *
+                     * Before changing back to Normal, we need to check the front of the scanned sprite list again.
+                     * When using the fg_fetcher.get_pixels() function, we pop off the front sprite from the
+                     * scanned_sprites deque. We can now check the front of scanned_sprites to see if the following
+                     * sprite shares the same X-pos. If it does, then we need to fetch that sprite and merge the pixels
+                     * accordingly. This will assure that we do not miss any sprite pixels that should be rendered over
+                     * the existing sprites transparent pixels.
+                     */
+
+                    // First sprite fetched, fifo is empty
+                    if (fg_fetcher.pixels_ready() && fg_fifo.empty()) {
+                        // Grab pixels from the pixel buffer
+                        std::vector<Pixel_FG> pixels = fg_fetcher.get_pixels();
+                        // Push the pixels to the fg_fifo
+                        for (int8_t i = 7; i >= 0; i--) {
+                            fg_fifo.push(pixels[i]);
+                        }
+                        // Now check to see if there is an offscreen offset, and adjust the pixel fifo
+                        if (sprite_offscreen_offset > 0) {
+                            for (uint8_t i = 0; i < sprite_offscreen_offset; i++) {
+                                // Pop unneeded pixels from the fg_fifo
+                                fg_fifo.pop();
                             }
                         }
                     }
-                }
-                // Check if screen is enabled
-                if (lcdc.lcd_ppu_enable != 0 && !sprite_pushed) {
-                    // For now just push the color
-                    // Need to map the color to a real color using the palette
-                    bus->push_pixel(map_color(bg_fetch.fifo.front().color, bg_fetch.fifo.front().palette), pixel_count + (ly * 160));
-                    // Pop off of the FIFO
-                    bg_fetch.fifo.pop();
-                }
-                // Increment the position of the pixel output only if the fifo is not empty
-                pixel_count++;
-
+                    // fifo is not empty, pixels need to be merged
+                    else if (fg_fetcher.pixels_ready() && !fg_fifo.empty()) {
+                        // Grab pixels from the pixel buffer
+                        std::vector<Pixel_FG> pixels = fg_fetcher.get_pixels();
+                        // Create a copy of the fifo in vector form so the fetched pixels can be merged
+                        std::vector<Pixel_FG> fifo_vector_copy = {};
+                        uint8_t fg_fifo_size = fg_fifo.size();
+                        for (auto i = 0; i < fg_fifo_size; i++) {
+                            fifo_vector_copy.push_back(fg_fifo.front());
+                            fg_fifo.pop();
+                        }
+                        // Now merge the fetched pixels with the fifo vector
+                        for (uint8_t i = 0; i < fg_fifo_size; i++) {
+                            // Compare the fetched pixels with the existing fifo pixels
+                            if (fifo_vector_copy[i].color == 0 && pixels[7 - i].color != 0) {
+                                // Over-write the exiting pixel when it is transparent and the new one is not
+                                fifo_vector_copy[i] = pixels[7 - i];
+                            }
+                        }
+                        // Push remaining pixels to the fifo copy
+                        for (auto i = 7 - static_cast<int8_t>(fg_fifo_size); i >= 0 ; i--) {
+                            fifo_vector_copy.push_back(pixels[i]);
+                        }
+                        // Over-write the fg_fifo with the new one that has been merged with new pixels
+                        for (const auto &v : fifo_vector_copy)
+                            fg_fifo.push(v);
+                    }
+                    // Check the front sprite to see if it has the same x-pos
+                    if (fg_fetcher.get_sprite_count() == 0)
+                        pt_mode = Normal;
+                    else if (fg_fetcher.get_sprite_count() > 0) {
+                        uint8_t new_sprite_x = fg_fetcher.get_front_sprite().x_pos - 8;
+                        if (new_sprite_x != scanline_x)
+                            pt_mode = Normal;
+                    }
+                    break;
             }
-            // Reset flag
-            sprite_pushed = false;
+
             clock_count++;
             break;
         case HBlank:
+            // CPU has full access to VRAM
             cpu_access = true;
-            // Set the mode to 0 only on the first clock of HBlank
-            // This fixes the sync issues. Any routine that is trying to use HBlank will
-            // get the max time. This is needed as the PPU clock is not entirely accurate in this version.
+            /* Set the STAT flag for HBlank
+             * This is set only on the first clock of the HBlank state. After the first clock, we check
+             * what the next state of the PPU will be, and set the flag accordingly. This assures that
+             * any program that uses the STAT mode flag will execute the associated code at the beginning
+             * of HBlank.
+             */
             if (clock_count == 0) {
-                // Set the stat flag
                 stat.mode_flag = 0;
-                hblank_flag = true;
+                stat_hblank_flag = true;
+                clock_count++;
+                break;
             }
-            else if (clock_count == 2 && ly + 1 == 144){
+            // Check what the next PPU mode will be
+            else if (clock_count == 2 && ly + 1 == 144) {
                 stat.mode_flag = 0;
             }
+            // Set the mode flag to OAM search if the next mode will be OAMSearch
             else
                 stat.mode_flag = 2;
-
-            //Check to see if the entire scanline has been completed by looking at the number of clocks
-            // 456 is the number of clocks required for the ppu to output a complete scanline of pixels
-            // CPU is also able to access VRAM and OAM now
+            // Wait one clock cycle before resetting the HBlank flag
+            if (clock_count == 2)
+                stat_hblank_flag = false;
+            // Check if we need to advance to a new scanline
             if (clock_count == 456) {
-                // We have now reached the end of the scanline
                 clock_count = 0;
-                hblank_flag = false;
-
-                // Increment the scanline register
+                stat_hblank_flag = false;
                 ly++;
-                // Reset the lyc ly flags
-                ly_lyc_flag = false;
-                stat.lyc_ly_flag = 0;
-                // Check if window is drawing
-                if(window_draw)
-                    win_ly++;
-                // If the new scanline is 144, then switch to VBlank
+                // Reset the LY LYC flag
+                stat_ly_lyc_flag = false;
+                // If ly = 144, change mode to VBlank
                 if (ly == 144) {
                     state = VBlank;
                     break;
                 }
                 else {
-                    // Restart the pixel drawing process
                     state = OAMSearch;
                     cpu_access = false;
                     break;
@@ -613,72 +559,71 @@ void DMG_PPU::clock() {
             clock_count++;
             break;
         case VBlank:
+            cpu_access = true;
             // Set the stat flag
             stat.mode_flag = 1;
-            // Pause and allow for CPU to access VRAM and OAM
-            cpu_access = true;
-            // Set the VBlank flag after the first clock cycle of the VBlank state
+            // Set the VBlank flag, this is used to detect interrupts
             if (clock_count == 0) {
-                vblank_fired = true;
+                vblank_flag = true;
                 clock_count++;
                 break;
             }
-            // Check if VBlank is done
-            if (clock_count % 456 == 0) {
-                // Reset clock count for new scanline
-                //clock_count = 0;
-                // Increment the scanline register
+            // Wait 1 clock cycle before turning off the VBlank flag
+            if (clock_count == 2)
+                vblank_flag = false;
+            // Check if VBLANK is done - VBLANK is 10 scanlines
+            if (clock_count % 456 == 0 && clock_count != 0) {
+                // Increment the LY register
                 ly++;
-                // Reset the lyc ly flags
-                ly_lyc_flag = false;
-                stat.lyc_ly_flag = 0;
-                // If we have reached the last scanline for VBlank, return to the start of the pixel drawing process
+                // Reset the LYC LY flag
+                stat_ly_lyc_flag = false;
+                // Check to see if VBlank is done - VBlank is from ly 144 - 153
                 if (ly == 154) {
+                    // Need to fix so assert below does not crash
                     assert(clock_count == 4560);
                     clock_count = 0;
                     ly = 0;
-                    win_ly = 0;
                     state = OAMSearch;
                     frame_complete = true;
                     cpu_access = false;
-                    vblank_fired = false;
-                    ly_lyc_flag = false;
+                    vblank_flag = false;
                     break;
                 }
             }
             clock_count++;
             break;
-        default:
-            break;
     }
-    // Increment the clock count at the end of the clock call
-    //clock_count++;
 }
 
 void DMG_PPU::reset() {
-    // TODO reset all members of the PPU class
-    // Clear VRAM
-    for (uint8_t i : vram) i = 0x00;
-    // Clear OAM
-    for (uint8_t i : oam) i = 0x00;
-    lcdc.data = 0;
-    stat.data = 0;
-    vblank_fired = false;
-    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 1};
-    stat = {0, 0, 0, 0, 0, 0, 0};
+
 }
 
-uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {
-    // The GB has 4 colors, 0-3
-    // Palette is contains 4 2-bit values
+void DMG_PPU::clear_fifos() {
+    std::queue<Pixel_BG> bg_empty;
+    std::queue<Pixel_FG> fg_empty;
+    std::swap(bg_fifo, bg_empty);
+    std::swap(fg_fifo, fg_empty);
+}
 
-    // The color parameter contains the index of the pixel's
-    // color in the palette.
-    // First we multiply the color by 2, or shift it left 1 (both are the same).
-    // Next we shift the palette right n bits. N (the result of color << 1).
-    // Color will be a value of 0-3, so we need to multiply it by 2 to get the number of
-    // bits to shift right in palette. This effectively selects the colpr
-    // from the palette, and sets it as the bit 0 & 1.
-    // We then & the result with 3, keeping the 2 lowest bits and discarding the rest.
+void DMG_PPU::set_fetcher_flag(bool val) {
+    fetcher_access = val;
+}
+
+void DMG_PPU::push_pixel(uint8_t pixel, uint32_t index) {
+    bus->push_pixel(pixel, index);
+}
+
+uint8_t DMG_PPU::map_color(uint8_t color, uint8_t palette) {    // The GB has 4 colors, 0-3
+/*     Palette is contains 4 2-bit values
+
+     The color parameter contains the index of the pixel's
+     color in the palette.
+     First we multiply the color by 2, or shift it left 1 (both are the same).
+     Next we shift the palette right n bits. N (the result of color << 1).
+     Color will be a value of 0-3, so we need to multiply it by 2 to get the number of
+     bits to shift right in palette. This effectively selects the colpr
+     from the palette, and sets it as the bit 0 & 1.
+     We then & the result with 3, keeping the 2 lowest bits and discarding the rest */
     return (palette >> (color << 1)) & 0b11;
 }

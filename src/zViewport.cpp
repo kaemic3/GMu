@@ -283,9 +283,9 @@ namespace GMu {
         all_text.push_back(pc_text.get());
         GenerateTextTexture(pc_text.get());
 
-        pc_value = std::make_unique<zText>(ToHexString(p_bus->cpu.pc, true), pc_text->t_x + (FONT_SIZE * 3), pc_text->t_y, &viewport_font_color, viewport_font, true);
+        pc_value = std::make_unique<zText>(ToHexString(p_bus->cpu.debug_pc, true), pc_text->t_x + (FONT_SIZE * 3), pc_text->t_y, &viewport_font_color, viewport_font, true);
         all_text.push_back(pc_value.get());
-        mutable_text.emplace_back(pc_value.get(), &p_bus->cpu.pc);
+        mutable_text.emplace_back(pc_value.get(), &p_bus->cpu.debug_pc);
         GenerateTextTexture(pc_value.get());
 
         // SP
