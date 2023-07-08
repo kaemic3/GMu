@@ -94,6 +94,7 @@ uint8_t FG_Fetcher::get_sprite_count() {
 }
 Sprite FG_Fetcher::get_front_sprite() {
     if (scanned_sprites.empty()) {
+        printf("Out of range access of scanned_sprites\n");
         throw std::out_of_range("scanned_sprites vector is empty.\n");
     }
     return scanned_sprites.front();

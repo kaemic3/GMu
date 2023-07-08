@@ -1,5 +1,5 @@
-#ifndef PPU_OVERHAUL_FG_FETCHER_H
-#define PPU_OVERHAUL_FG_FETCHER_H
+#ifndef GMU_FG_FETCHER_H
+#define GMU_FG_FETCHER_H
 #include <cstdint>
 #include <array>
 #include <queue>
@@ -66,4 +66,4 @@ private:
 
 
 
-#endif //PPU_OVERHAUL_FG_FETCHER_H
+#endif //GMU_FG_FETCHER_H

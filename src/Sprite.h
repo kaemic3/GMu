@@ -1,5 +1,5 @@
-#ifndef PPU_OVERHAUL_SPRITE_H
-#define PPU_OVERHAUL_SPRITE_H
+#ifndef GMU_SPRITE_H
+#define GMU_SPRITE_H
 #include <cstdint>
 
 struct Sprite {
@@ -33,4 +33,4 @@ public:
 };
 
 
-#endif //PPU_OVERHAUL_SPRITE_H
+#endif //GMU_SPRITE_H

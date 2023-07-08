@@ -1,5 +1,5 @@
-#ifndef GMU_FETCHER_H
-#define GMU_FETCHER_H
+#ifndef GMU_BG_FETCHER_H
+#define GMU_BG_FETCHER_H
 #include <cstdint>
 #include <array>
 #include <queue>
@@ -82,4 +82,4 @@ private:
     // Clock count
     uint8_t clock_count = 0;
 };
-#endif //GMU_FETCHER_H
+#endif //GMU_BG_FETCHER_H

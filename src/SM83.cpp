@@ -190,7 +190,7 @@ void SM83::clock() {
                 // the dma_copy flag is set so the cpu_read function will return the byte we actually want
                 uint8_t buffer_byte = cpu_read(bus->dma_addr, true);
                 // Technically, DMA can write to OAM without VBLANK, so write directly to the OAM
-                cpu_write(bus->dma_addr | 0xfe00, buffer_byte, true);
+                cpu_write((bus->dma_addr & 0x00ff) | 0xfe00, buffer_byte, true);
                 // Increment the DMA address
                 bus->dma_addr++;
             }

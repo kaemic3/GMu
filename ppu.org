@@ -115,6 +115,10 @@ Beyond this point, it will be assued that LCDC.7 is on, therefore the PPU and sc
 * DONE Need to properly adjust for window bg collision
 - Need to remove pixel from the fifo instead of the pixel buffer in the fetcher.
   + This is becuase the fetcher does not do this on the GB. It simply gets pixel data from VRAM and turns it into pixel data that can be pushed to the screen via the fifo.
-* TODO Create the FG_Fetcher and FG_Fifo properly
+* DONE Create the FG_Fetcher and FG_Fifo properly
 + Since the FG_Fetcher needs to wait for the BG_Fifo to have pixels, a pixel will be pushed to the screen before we can check to see if a sprite may be on that scanline_x position.
   - Need to move the bg_fetcher clock call and the loop where the bg_fifo is populated with pixels to before the check on the FG_Fetcher. This would separate when pixels are fetched and pushed to the bg_fifo, and when they are pushed to the screen buffer.
+* TODO Need to add 8x16 sprite mode
++ I see possible approaches to this.
+  1. Create a sprite buffer that is merged into the scanned_sprites vector within the fg_fetcher.
+  2. During OAMSearch, check to see if LCDC.2 is set before each scan of OAM,

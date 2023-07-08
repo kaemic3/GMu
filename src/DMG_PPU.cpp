@@ -210,8 +210,9 @@ void DMG_PPU::clock() {
             // Wait until the end of OAM search to grab the sprites from OAM
             if (clock_count == 80) {
                 // Scan OAM for sprites that have the same Y position as LY.
-                // First check if sprites are enabled
-                if (lcdc.obj_enable == 1) {
+                // First check if sprites are enabled, and if 8x16 mode is enabled
+                if (lcdc.obj_enable == 1 && lcdc.obj_size != 1) {
+                    // 8x8 sprites
                     // Clear the current list of scanned sprites
                     fg_fetcher.clear_sprites();
                     /*
@@ -248,7 +249,61 @@ void DMG_PPU::clock() {
                     // Sort the scanned sprites in draw priority order
                     fg_fetcher.sort_sprites();
                 }
+                else if (lcdc.obj_enable == 1 && lcdc.obj_size == 1) {
+                    // 8x16 sprites
+                    fg_fetcher.clear_sprites();
+                    for (auto i = 0; i < oam.size(); i+=4) {
+                        if (oam[i] >= 16) {
+                            // Remove Y offset
+                            uint8_t current_sprite_y = oam[i] - 16;
+                            // Need to make sure that a 8x16 tile is acknowledged for all 16 scanlines
+                            if (ly >= current_sprite_y && ly < (current_sprite_y + 16)) {
+                                // Need to check if we are on the first or second tile
+                                uint8_t current_sprite_y_flip = oam[i + 3];
+                                if (ly < current_sprite_y + 8) {
+                                    // First tile
+                                    // Now check the Y-flip bit and select the correct tile
+                                    // Check if bit 6 is enabled in the attribute byte
+                                    if ((current_sprite_y_flip & 0x40) == 0x40) {
+                                        if (fg_fetcher.get_sprite_count() < 10) {
+                                            fg_fetcher.emplace_sprite(
+                                                    Sprite(i / 4, oam[i], oam[i + 1], oam[i + 2] + 1,
+                                                           (ly - current_sprite_y) % 8,oam[i + 3]));
+                                        }
+                                    }
+                                    else {
+                                        if (fg_fetcher.get_sprite_count() < 10) {
+                                            fg_fetcher.emplace_sprite(
+                                                    Sprite(i / 4, oam[i], oam[i + 1], oam[i + 2],
+                                                           (ly - current_sprite_y) % 8,oam[i + 3]));
+                                        }
+                                    }
+                                }
+                                else {
+                                    // Second tile
+                                    // Now check the Y-flip bit
+                                    if ((current_sprite_y_flip & 0x40) == 0x40) {
+                                        if (fg_fetcher.get_sprite_count() < 10) {
+                                            fg_fetcher.emplace_sprite(
+                                                    Sprite(i / 4, oam[i], oam[i + 1], oam[i + 2],
+                                                           (ly - current_sprite_y) % 8,oam[i + 3]));
+                                        }
+                                    }
+                                    else {
+                                        if (fg_fetcher.get_sprite_count() < 10) {
+                                            fg_fetcher.emplace_sprite(
+                                                    Sprite(i / 4, oam[i], oam[i + 1], oam[i + 2] + 1,
+                                                           (ly - current_sprite_y) % 8,oam[i + 3]));
+                                        }
 
+                                    }
+                                }
+                            }
+                        }
+                        // Sort the scanned sprites in draw priority order
+                        fg_fetcher.sort_sprites();
+                    }
+                }
             }
             // OAM search takes 80 clock cycles to complete
             if (clock_count == 80) {
@@ -325,7 +380,7 @@ void DMG_PPU::clock() {
                                     end_loop = true;
                                 }
                             }
-                        } while(end_loop);
+                        } while(!end_loop);
                     }
                     // Check to see if the sprite will have an offscreen offset at the beginning of the scanline
                     if (current_sprite.x_pos > 0 && current_sprite.x_pos < 8 && scanline_x == 0 && !sprite_list_empty) {
