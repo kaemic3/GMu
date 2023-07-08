@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include "Mapper.h"
+#include "Mapper_00.h"
 
 class Cartridge {
 public:
