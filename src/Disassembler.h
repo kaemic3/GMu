@@ -4,7 +4,7 @@
 
 class Disassembler {
 public:
-    Disassembler(const std::string &file);
+    Disassembler(const std::string &file, Bus* bus);
     ~Disassembler() = default;
 
     // Write the current instruction with the PC addr to the output file
@@ -14,6 +14,7 @@ public:
 
 private:
     std::ofstream output;
+    Bus* p_bus = nullptr;
 };
 
 

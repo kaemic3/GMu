@@ -19,7 +19,7 @@ bool Mapper_00::cpu_map_read(uint16_t addr, uint32_t &mapped_addr) {
     return false;
 }
 
-bool Mapper_00::cpu_map_write(uint16_t addr, uint32_t &mapped_addr) {
+bool Mapper_00::cpu_map_write(uint16_t addr, uint8_t data) {
     // Mapper 0 has no ROM bank switching or RAM banks, so this function will always return false
     // Check if the address is within the cartridge ROM memory range
     if (addr >= 0x0000 && addr <= 0x7fff) {

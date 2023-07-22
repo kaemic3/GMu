@@ -8,7 +8,14 @@
   - ADC ops: 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8f, 0xCE, 0x8e
   - SBC ops: 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0xDE, 0x9e
 ** TODO Implement MBC1
-** TODO Fix CPU
+- Figured out that the stat.ly_lyc_flag bit was not getting reset and was causing stat interrupt to occur constantly. Now we get stuck at pc=0x296, then crash.
+- Currently the issue seems to be with the stat interrupt source.
+- Found that the screen is turned off at $576
+- Looks like as soon as the screen is turned off, the STAT interrupt is fired.
+- No longer crashing, but still have weird issues.
+- Look at debug output to see what to do next.
+- VBlank seems to init a DMA.
+** DONE Fix CPU
 ** TODO UI Re-Work
 ** TODO Fix "state issues" with encapsulation
 - Need to do UI re-work for this to happen

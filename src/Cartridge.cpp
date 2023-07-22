@@ -71,10 +71,25 @@ Cartridge::Cartridge(const std::string &directory) {
     // Get ROM bank count
     switch (header.rom_size) {
         case 0x00:
-            rom_banks = 0x02;
+            rom_banks = 2;
             break;
         case 0x01:
-            rom_banks = 0x04;
+            rom_banks = 4;
+            break;
+        case 0x02:
+            rom_banks = 8;
+            break;
+        case 0x03:
+            rom_banks = 16;
+            break;
+        case 0x04:
+            rom_banks = 32;
+            break;
+        case 0x05:
+            rom_banks = 64;
+            break;
+        case 0x06:
+            rom_banks = 128;
             break;
         default:
             break;
@@ -89,6 +104,11 @@ Cartridge::Cartridge(const std::string &directory) {
             // Un-used code assume no banks
             ram_banks = 0x00;
             break;
+        case 0x02:
+            ram_banks = 1;
+            break;
+        case 0x03:
+            ram_banks = 4;
         default:
             break;
     }
@@ -109,7 +129,15 @@ Cartridge::Cartridge(const std::string &directory) {
             // Construct the appropriate mapper according to the mapper_id
             p_mapper = std::make_shared<Mapper_00>(rom_banks, ram_banks);
             break;
-
+        case 0x01:
+            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            break;
+        case 0x02:
+            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            break;
+        case 0x03:
+            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            break;
         default:
             break;
     }
@@ -119,10 +147,11 @@ Cartridge::Cartridge(const std::string &directory) {
 }
 
 bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
-    uint32_t mapped_addr = 0;
     // Check if the mapper needs to handle the write call
-    if(p_mapper->cpu_map_write(addr, mapped_addr)) {
-        cart_rom[mapped_addr] = data;
+    if (addr == 0x2000) {
+
+    }
+    if(p_mapper->cpu_map_write(addr, data)) {
         return true;
     }
     return false;
@@ -151,4 +180,8 @@ uint8_t Cartridge::viewport_get_data(uint16_t addr) {
     uint8_t data = 0x00;
 
     return data;
+}
+
+uint8_t Cartridge::get_rom_bank() {
+    return p_mapper->get_current_rom_bank();
 }

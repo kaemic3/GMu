@@ -105,7 +105,7 @@ void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     }
     else {
         // If we get here, then the address is invalid
-        printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
+        //printf("Attempt to write to an illegal address: 0x%X is not writeable.\n", addr);
     }
 }
 
@@ -227,7 +227,7 @@ void Bus::run_dma() {
 void Bus::clock() {
 
     // Compare LYC to LY
-    if (ppu.ly == ppu.lyc && !ppu.stat_ly_lyc_flag) {
+    if (ppu.ly == ppu.lyc && !ppu.stat_ly_lyc_flag && ppu.lcdc.lcd_ppu_enable) {
         ppu.stat.lyc_ly_flag = 1;
         ppu.stat_ly_lyc_flag = true;
     }
@@ -259,7 +259,7 @@ void Bus::clock() {
         }
     }
     else if (ppu.stat.lyc_int_src == 1) {
-        if (ppu.stat.lyc_ly_flag == 1) {
+        if (ppu.stat.lyc_ly_flag == 1 && ppu.stat_ly_lyc_flag) {
             if_reg.lcd_stat = 1;
         }
     }

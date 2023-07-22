@@ -13,8 +13,8 @@ DMG_PPU::DMG_PPU() {
     // Default state of the PPU
     state = OAMSearch;
     // Initialize registers
-    lcdc = {0, 0 ,0 ,0 ,0 ,0, 0, 1};
-    stat = {0, 0, 0, 0, 0, 0, 0};
+    lcdc.data = 0x91;
+    stat.data = 0x85;
 }
 
 // Need to add checks for when the PPU is accessing RAM directly since the
@@ -45,7 +45,8 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     }
     // Check for STAT register
     else if (addr == 0xff41) {
-        stat.data = data;
+        // Only bits 3-6 are writable, need to mask the data write to this register
+        stat.data |= data & 0b01111000;
         return true;
     }
     // Check for write to SCY register
@@ -192,8 +193,11 @@ void DMG_PPU::clock() {
         cpu_access = true;
         ly = 0;
         stat.mode_flag = 0;
+        //lcdc.obj_enable = 0;
+        //lcdc.bg_window_enable = 0;
         clock_count = 0;
         state = OAMSearch;
+
         return;
     }
     // PPU modes
@@ -205,8 +209,9 @@ void DMG_PPU::clock() {
                 // Set the OAM mode flag, this is used to detect if the IF bit
                 // needs to be set in the bus clock function.
                 stat_oam_flag = true;
-            if (clock_count == 2)
+            if (clock_count == 2) {
                 stat_oam_flag = false;
+            }
             // Wait until the end of OAM search to grab the sprites from OAM
             if (clock_count == 80) {
                 // Scan OAM for sprites that have the same Y position as LY.
@@ -600,6 +605,7 @@ void DMG_PPU::clock() {
                 ly++;
                 // Reset the LY LYC flag
                 stat_ly_lyc_flag = false;
+                stat.lyc_ly_flag = 0;
                 // If ly = 144, change mode to VBlank
                 if (ly == 144) {
                     state = VBlank;
@@ -632,6 +638,7 @@ void DMG_PPU::clock() {
                 ly++;
                 // Reset the LYC LY flag
                 stat_ly_lyc_flag = false;
+                stat.lyc_ly_flag = 0;
                 // Check to see if VBlank is done - VBlank is from ly 144 - 153
                 if (ly == 154) {
                     // Need to fix so assert below does not crash

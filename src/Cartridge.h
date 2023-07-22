@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include "Mapper_00.h"
+#include "Mapper_01.h"
 
 class Cartridge {
 public:
@@ -21,6 +22,7 @@ public:
     // Helper function for memory viewport
     // Will probably need to use the mapper to get the correct data from the rom
     uint8_t viewport_get_data(uint16_t addr);
+    uint8_t get_rom_bank();
 private:
     // Containers for the rom and ram. They are vectors since their size is unknown until the
     // cartridge header information is obtained.
