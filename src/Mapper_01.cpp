@@ -168,14 +168,14 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
         if (reg.ram_enable) {
             // Check bank mode and that there is more than 1 bank
             if (reg.bank_mode == 0x1 && ram_banks > 1) {
-                mapper_addr = addr;
+                mapper_addr = addr & 0x1fff;
                 // Shift in the 2-bit register 13 to the left
                 mapper_addr |= (reg.ram_rom_2bit << 13);
 
             }
             else {
                 // If we get here, there is no need to map the address
-                mapper_addr = addr;
+                mapper_addr = addr & 0x1fff;
             }
             return true;
         }
