@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "FG_Fetcher.h"
 #include "DMG_PPU.h"
 

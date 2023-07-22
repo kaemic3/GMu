@@ -1,3 +1,4 @@
+#include <cassert>
 #include "DMG_PPU.h"
 #include "Bus.h"
 
