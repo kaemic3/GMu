@@ -197,7 +197,6 @@ void DMG_PPU::clock() {
         //lcdc.bg_window_enable = 0;
         clock_count = 0;
         state = OAMSearch;
-
         return;
     }
     // PPU modes
@@ -322,7 +321,6 @@ void DMG_PPU::clock() {
                 clear_fifos();
                 // Reset all
                 scanline_x = 0;
-                clock_count = 0;
                 sprite_offscreen_offset = 0;
                 // Assume normal pt mode
                 pt_mode = Normal;
@@ -335,16 +333,17 @@ void DMG_PPU::clock() {
         case PixelTransfer:
             // Set the stat flag
             stat.mode_flag = 3;
-            if (clock_count == 0)
+            if (clock_count == 80)
                 stat_pixel_transfer_flag = true;
             // Check to see if the all pixels have been pushed to the screen
-            if (scanline_x == 160) {
+            if (scanline_x >= 160) {
                 // Change the state of the PPU to HBlank
                 stat_pixel_transfer_flag = false;
                 state = HBlank;
-                clock_count = 0;
+                old_clock = clock_count;
                 break;
             }
+
             // Execute a bg_fetcher clock
             bg_fetcher.clock();
 
@@ -582,21 +581,21 @@ void DMG_PPU::clock() {
              * any program that uses the STAT mode flag will execute the associated code at the beginning
              * of HBlank.
              */
-            if (clock_count == 0) {
-                stat.mode_flag = 0;
+            stat.mode_flag = 0;
+            if (clock_count == old_clock) {
                 stat_hblank_flag = true;
                 clock_count++;
                 break;
             }
             // Check what the next PPU mode will be
-            else if (clock_count == 2 && ly + 1 == 144) {
-                stat.mode_flag = 0;
-            }
+            //else if (clock_count == 2 && ly + 1 == 144) {
+                //stat.mode_flag = 0;
+            //}
             // Set the mode flag to OAM search if the next mode will be OAMSearch
-            else
-                stat.mode_flag = 2;
+            //else
+                //stat.mode_flag = 2;
             // Wait one clock cycle before resetting the HBlank flag
-            if (clock_count == 2)
+            if (clock_count == old_clock + 2)
                 stat_hblank_flag = false;
             // Check if we need to advance to a new scanline
             if (clock_count == 456) {

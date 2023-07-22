@@ -134,5 +134,8 @@ public:
     bool stat_hblank_flag = false;
     bool stat_ly_lyc_flag = false;
     bool vblank_flag = false;
+
+    // Store old clock_count: used to request interrupts
+    uint32_t old_clock = 0;
 };
 #endif //GMU_DMG_PPU_H

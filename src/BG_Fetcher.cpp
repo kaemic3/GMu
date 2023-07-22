@@ -136,6 +136,15 @@ void BG_Fetcher::init() {
                     tilemap_win = 0x9c00;
                     break;
             }
+            // Grab the BG tile map
+            switch (lcdc.bg_tile_map_area) {
+                case 0:
+                    tilemap_bg = 0x9800;
+                    break;
+                case 1:
+                    tilemap_bg = 0x9c00;
+                    break;
+            }
         }
             // If the window is not in a valid location, setup for drawing
             // from only the BG
@@ -227,7 +236,11 @@ void BG_Fetcher::clock() {
                     break;
                 case BackgroundAndWindow:
                     // Check if we need to swap over to the window tilemap
-                    if (pixel_count >= swap_position ) {
+                    if (pixel_count >= swap_position) {
+                        // Need to reset the tile_index when the map is swapped for the first time
+                        if (!tilemap_swap) {
+                            tile_index = 0;
+                        }
                         tilemap_address = tilemap_win;
                         tilemap_swap = true;
                     }
