@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Mario.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Tetris.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();

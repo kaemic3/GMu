@@ -40,6 +40,12 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     }
     // Check for LCDC register
     else if (addr == 0xff40) {
+        if ((data & 80) == 80) {
+            ppu_on_flag = true;
+        }
+        else if ((data & 80) == 0) {
+            ppu_on_flag = false;
+        }
         lcdc.data = data;
         return true;
     }
@@ -117,7 +123,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data, bool is_fetcher) {
     // Check if reading OAM
     else if(addr >= 0xfe00 && addr <= 0xfe9f) {
         // Check if PPU is using OAM
-        if (!cpu_access) {
+        if (!cpu_access || state == OAMSearch) {
             data = 0xff;
             return false;
         }
@@ -187,6 +193,17 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data, bool is_fetcher) {
 // RE-WRITE
 void DMG_PPU::clock() {
     frame_complete = false;
+    if (clock_count == 70224) {
+        frame_complete = true;
+        clock_count = 0;
+    }
+    if (ppu_on_flag) {
+        if (bus->cpu.cycles == 0) {
+            ppu_on_flag = false;
+        }
+        clock_count = 0;
+        return;
+    }
     // If screen is off give cpu access to VRAM
     // TODO - Review behaviour of GB when the screen is turned off.
     if (lcdc.lcd_ppu_enable == 0) {
@@ -195,13 +212,16 @@ void DMG_PPU::clock() {
         stat.mode_flag = 0;
         //lcdc.obj_enable = 0;
         //lcdc.bg_window_enable = 0;
-        clock_count = 0;
+        //clock_count = 0;
         state = OAMSearch;
+        clock_count++;
         return;
     }
     // PPU modes
     switch (state) {
         case OAMSearch:
+            // CPU has access to VRAM, not OAM
+            cpu_access = true;
             // Set the stat mode flag to 2
             stat.mode_flag = 2;
             if (clock_count == 0)
@@ -213,6 +233,8 @@ void DMG_PPU::clock() {
             }
             // Wait until the end of OAM search to grab the sprites from OAM
             if (clock_count == 80) {
+                // Disable CPU access
+                cpu_access = false;
                 // Scan OAM for sprites that have the same Y position as LY.
                 // First check if sprites are enabled, and if 8x16 mode is enabled
                 if (lcdc.obj_enable == 1 && lcdc.obj_size != 1) {

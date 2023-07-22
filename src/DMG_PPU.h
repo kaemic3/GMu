@@ -137,5 +137,7 @@ public:
 
     // Store old clock_count: used to request interrupts
     uint32_t old_clock = 0;
+    // PPU toggle flags
+    bool ppu_on_flag = false;
 };
 #endif //GMU_DMG_PPU_H
