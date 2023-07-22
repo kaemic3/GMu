@@ -338,7 +338,8 @@ void DMG_PPU::clock() {
                 // Grab the swap position
                 bg_win_swap_pos = bg_fetcher.get_swap_pos();
                 // Grab the pixel offset
-                win_pixel_offset = bg_fetcher.get_pixel_offset();
+                win_pixel_offset = bg_fetcher.get_win_pixel_offset();
+                bg_pixel_offset = bg_fetcher.get_bg_pixel_offset();
                 // Clear the FIFOs
                 clear_fifos();
                 // Reset all
@@ -428,18 +429,14 @@ void DMG_PPU::clock() {
                      */
                     // Make sure there are pixels in the fifo
                     if (!bg_fifo.empty()) {
-                        // First pop off any pixels needed if the window is at an offset
-                        for (uint8_t i = 0; i < win_pixel_offset; i++)
+                        // Pop off bg offset pixels
+                        for (uint8_t i = 0; i < bg_pixel_offset; i++){
                             bg_fifo.pop();
-                        // Check to see if we need to change from BG to Window based on the swap pos
-                        if (scanline_x == bg_win_swap_pos && bg_fifo.size() != 8) {
-                            // This temporary variable contains the pixel offset the window will have
-                            // relative to the 8x8 grid of tiles
-                            uint8_t collision_offset = 8 - (scanline_x % 8);
-                            // Need to pop off any excess BG pixels
-                            for (uint8_t i = collision_offset; i > 0; i--) {
+                        }
+                        // Pop off any pixels needed if the window is at an offset
+                        if (bg_fetcher.fetcher_mode_win()) {
+                            for (uint8_t i = 0; i < win_pixel_offset; i++)
                                 bg_fifo.pop();
-                            }
                         }
                         // Make sure the bg_fifo is not empty before trying to push a pixel to the screen
                         if (!bg_fifo.empty()) {
@@ -483,6 +480,7 @@ void DMG_PPU::clock() {
                         }
                         // Change the offset to 0 now that we have pushed the pixels to the screen
                         win_pixel_offset = 0;
+                        bg_pixel_offset = 0;
                     }
                     break;
 

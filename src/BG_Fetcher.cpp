@@ -15,7 +15,8 @@ void BG_Fetcher::init() {
     tile_data_low = 0x00;
     tile_data_high = 0x00;
     tile_index = 0;
-    pixel_offset = 0;
+    pixel_offset_bg = 0;
+    pixel_offset_win = 0;
     bgp = 0;
     clock_count = 0;
     pixel_buffer = {};
@@ -107,7 +108,7 @@ void BG_Fetcher::init() {
                 // If we get here, only the window will be drawn on this
                 // scanline.
                 fetch_mode = WindowOnly;
-                pixel_offset = 7 - wx;
+                pixel_offset_win = 7 - wx;
             }
             // Draw the window with an 8 pixel offset
            /*
@@ -117,7 +118,7 @@ void BG_Fetcher::init() {
             */
             else if (wx == 0 || wx == 166) {
                 fetch_mode = WindowOnly;
-                pixel_offset = 8;
+                pixel_offset_win = 8;
             }
                 // Draw the window from the beginning of the scanline
             else if (wx == 7) {
@@ -168,10 +169,11 @@ void BG_Fetcher::init() {
         case BGWinOff:
             break;
         case BackgroundOnly:
-            tile_index = (scx / 8) & 0x1f;
+            tile_index = (scx / 8);
             tilemap_offset_y = scy + ly;
             tile_line_offset = tilemap_offset_y % 8;
             tilemap_bg += tilemap_offset_y / 8 * 32;
+            pixel_offset_bg = scx % 8;
             break;
         case WindowOnly:
             tile_index = 0;
@@ -183,10 +185,11 @@ void BG_Fetcher::init() {
             // When both the BG and window are rendered, the fetcher first fetches BG pixels,
             // then swaps to the window at a certain point each scanline.
             // First, set up the BG values
-            tile_index = (scx / 8) & 0x1f;
+            tile_index = (scx / 8);
             tilemap_offset_y = scy + ly;
             tile_line_offset = tilemap_offset_y % 8;
             tilemap_bg += tilemap_offset_y / 8 * 32;
+            pixel_offset_bg = scx % 8;
             // Now the window
             tilemap_offset_y = ly - wy;
             tile_line_offset_win = tilemap_offset_y % 8;

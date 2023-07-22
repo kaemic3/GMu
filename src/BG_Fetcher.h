@@ -32,7 +32,9 @@ public:
     // Returns the BG Win. swap position
     uint8_t get_swap_pos() const { return swap_position; }
     // Returns the pixel offset when the window is not aligned to the 8x8 tile grid
-    uint8_t get_pixel_offset() const { return pixel_offset; }
+    uint8_t get_win_pixel_offset() const { return pixel_offset_win; }
+    uint8_t get_bg_pixel_offset() const { return pixel_offset_bg; }
+    bool fetcher_mode_win() const { return (fetch_mode == WindowOnly); }
     // Main clock for the BG fetcher
     void clock();
 private:
@@ -49,7 +51,8 @@ private:
     uint8_t tile_data_high = 0;
     // The offset/index to the current tile in the tilemap
     uint8_t tile_index = 0;
-    uint8_t pixel_offset = 0;
+    uint8_t pixel_offset_win = 0;
+    uint8_t pixel_offset_bg = 0;
     bool tilemap_swap = false;
     uint8_t swap_position = 0xff;
     // Number of pixels popped off the fifo for the current scanline

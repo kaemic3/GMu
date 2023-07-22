@@ -83,6 +83,7 @@ public:
     void clear_fifos();
     uint8_t bg_win_swap_pos = 0xff;
     uint8_t win_pixel_offset = 0;
+    uint8_t bg_pixel_offset = 0;
     uint8_t sprite_offscreen_offset = 0;
     // PPU registers
     // LCD control register - top to bottom bit 0 - 7
