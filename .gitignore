@@ -1,6 +1,10 @@
 # Default ignored files
 /shelf/
 /.idea/
+/GMU_VS.sln
+/GMU_VS.vcxproj
+/GMU_VS.vcxproj.filters
+/GMU_VS.vcxproj.user
 
 # Editor-based HTTP Client requests
 /httpRequests/
@@ -12,3 +16,15 @@
 /cmake-build-release/
 CMakeLists.txt
 /ROMs/dmg.bin
+/.vs/
+/Debug/
+/SDL2/
+/SDL2_ttf/
+/x64/
+/Release/
+GMu_VS.sln
+GMu_VS.vcxproj
+GMu_VS.vcxproj.filters
+GMu_VS.vcxproj.user
+
+/CppProperties.json
