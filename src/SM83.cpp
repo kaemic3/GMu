@@ -2674,11 +2674,18 @@ uint8_t SM83::call_z_16() {
 }
 
 // Complement (invert) the carry flag.
+// Flags:
+//  -N: Reset to 0
+//  -H: Reset to 0
+//  -C: Inverted
 uint8_t SM83::ccf() {
     if(getFlag(C) == 1)
         setFlag(C, 0);
     else
         setFlag(C, 1);
+    // Reset flags
+    setFlag(N, 0);
+    setFlag(H, 0);
     return 0;
 }
 
