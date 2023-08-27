@@ -100,8 +100,8 @@ public:
     uint8_t cpu_read(uint16_t addr, bool dma_copy = false);
 
     // Access flags
-    uint8_t getFlag(SM83_FLAGS f);                  // Used to check a specific flag
-    void setFlag(SM83_FLAGS f, bool v);             // Used to set a specific flag, bool v is used to determine set or reset
+    uint8_t get_flag(SM83_FLAGS f);                  // Used to check a specific flag
+    void set_flag(SM83_FLAGS f, bool v);             // Used to set a specific flag, bool v is used to determine set or reset
 
     // Instruction struct
     struct INSTRUCTION {

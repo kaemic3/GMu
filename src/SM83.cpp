@@ -276,12 +276,12 @@ bool SM83::interrupt(uint8_t addr) {
 }
 
 // Returns 1 if the flag bit is set and 0 if reset
-uint8_t SM83::getFlag(SM83_FLAGS f) {
+uint8_t SM83::get_flag(SM83_FLAGS f) {
     // If the specified bit is set return 1 else return 0
     return ((f_reg & f) > 0 ? 1 : 0);
 }
 // Sets or resets a specific flag bit in f_reg
-void SM83::setFlag(SM83_FLAGS f, bool v) {
+void SM83::set_flag(SM83_FLAGS f, bool v) {
     if(v)
         f_reg |= f;     // Set the bit
     else
@@ -311,21 +311,21 @@ uint8_t SM83::add_a_a() {
     a_reg += a_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -348,21 +348,21 @@ uint8_t SM83::add_a_abs_hl() {
     a_reg += data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -380,21 +380,21 @@ uint8_t SM83::add_a_b() {
     a_reg += b_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -412,21 +412,21 @@ uint8_t SM83::add_a_c() {
     a_reg += c_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -446,21 +446,21 @@ uint8_t SM83::add_a_d8() {
     a_reg += data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -478,21 +478,21 @@ uint8_t SM83::add_a_d() {
     a_reg += d_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -510,21 +510,21 @@ uint8_t SM83::add_a_e() {
     a_reg += e_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -542,21 +542,21 @@ uint8_t SM83::add_a_h() {
     a_reg += h_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -574,113 +574,76 @@ uint8_t SM83::add_a_l() {
     a_reg += l_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
 // Add the contents of the BC register pair into the HL register pair.
 // Flags:
 //  -N: Reset to 0
-//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -H: Set if overflow from bit 11
 //  -C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_bc() {
-    // Create a 16-bit copy of the H register
-    uint16_t h_16 = h_reg;
-    // Create copy of H before addition - Need for when H overflows from L overflow i.e H = 0xff
-    // before carry from L.
-    uint8_t h_old = h_reg;
-    // Calculate the overflow and half carry flags
-    uint16_t l_overflow = l_reg + c_reg;
-    l_reg += c_reg;
-    if(l_overflow > 0xff) {
-        // Increment both h_reg and the 16-bit version
-        h_reg++;
-        h_16++;
-    }
-    // Check for half carry flag
-    uint8_t h_check = (h_reg & 0xf) + (b_reg & 0xf);
-    uint8_t h_old_check = (h_old & 0xf) + (b_reg & 0xf);
-    // Add the two versions of H with B
-    h_16 += b_reg;
-    h_reg += b_reg;
-    // Now run the check for the half carry flag
-
-    // To break down this check:
-    // First we need to have the state of the H register before we have modified it for this
-    // function. This is due to the way uint8_t variables work. When their value goes over 0xff,
-    // they will wrap around to 0. This is a problem when checking for the half carry if the result
-    // of the addition should cause the half carry to trigger after it has wrapped around, like when adding
-    // 0xff + 0xff. We then do a check on overflow from bit 3 to 4 on the new and old h_reg (before and after overflow
-    // from L). We also check if h_reg == 0 as this covers the case where overflow from L causes h_reg == 0x10.
-    //-----------------------------------------------------------------------------------------------------------
-    // Note: h_reg != h_old ONLY when l_reg has overflow. This means h_old_check will result the same as h_check
-    // if there is no L overflow, and that means there should not be any unexpected results.
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || h_reg == 0x10)
-        setFlag(H, 1);
+    uint16_t hl = (h_reg << 8) | l_reg;
+    uint16_t bc = (b_reg << 8) | c_reg;
+    // Check for bit 11 overflow
+    if ((((hl & 0xfff) + (bc & 0xfff))  & 0x1000) == 0x1000)
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
-    // Check overflow of HL pair
-    if(h_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(H, 0);
+    // Check for bit 15 overflow
+    if ((uint32_t)(hl + bc) > 0xffff)
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset sign flag
-    setFlag(N, 0);
-    return 0;
-}
+    set_flag(N, 0);
+    // Update hl
+    hl += bc;
+    l_reg = hl & 0xff;
+    h_reg = hl >> 8;
+    return 4;
+   }
 
 // Add the contents of the DE register pair into the HL register pair.
 // Flags:
 //  -N: Reset to 0
-//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -H: Set if overflow from bit 11
 //  -C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_de() {
-    // Create a 16-bit copy of the H register
-    uint16_t h_16 = h_reg;
-    // Create copy of H before addition - Need for when H overflows from L overflow i.e H = 0xff
-    // before carry from L.
-    uint8_t h_old = h_reg;
-    // Calculate the overflow and half carry flags
-    uint16_t l_overflow = l_reg + e_reg;
-    l_reg += e_reg;
-    if(l_overflow > 0xff) {
-        // Increment both h_reg and the 16-bit version
-        h_reg++;
-        h_16++;
-    }
-    // Check for half carry flag
-    uint8_t h_check = (h_reg & 0xf) + (d_reg & 0xf);
-    uint8_t h_old_check = (h_old & 0xf) + (d_reg & 0xf);
-    // Add the two versions of H with D
-    h_16 += d_reg;
-    h_reg += d_reg;
-    // Now run the check for the half carry flag
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || h_reg == 0x10)
-        setFlag(H, 1);
+    uint16_t hl = (h_reg << 8) | l_reg;
+    uint16_t de = (d_reg << 8) | e_reg;
+    // Check for bit 11 overflow
+    if ((((hl & 0xfff) + (de & 0xfff))  & 0x1000) == 0x1000)
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
-    // Check overflow of HL pair
-    if(h_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(H, 0);
+    // Check for bit 15 overflow
+    if ((uint32_t)(hl + de) > 0xffff)
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset sign flag
-    setFlag(N, 0);
-    return 0;
+    set_flag(N, 0);
+    // Update hl
+    hl += de;
+    l_reg = hl & 0xff;
+    h_reg = hl >> 8;
+    return 4;
 }
 
 // Add the contents of the HL register pair into itself.
@@ -689,83 +652,50 @@ uint8_t SM83::add_hl_de() {
 //  - H: Set to 1 if overflow from bit 11
 //  - C: Set to 1 if overflow from bit 15
 uint8_t SM83::add_hl_hl() {
-    // Need to create copies of each of these before the increments.
-    uint8_t l_old = l_reg;
-    uint8_t h_old = h_reg;
-    // Copy of H register
-    uint16_t h_16 = h_reg;
-    // Check for L register overflow
-    uint16_t l_overflow = l_reg + l_old;
-    l_reg += l_old;
-    if(l_overflow > 0xff) {
-        h_reg++;
-        h_16++;
-    }
-
-    // Used to check for half carry
-    uint8_t h_check = ((h_reg & 0xf) + (h_old & 0xf));
-    uint8_t h_old_check = (h_old & 0xf) + (h_old & 0xf);
-    // Used to check for carry
-    h_16 += h_old;
-    h_reg += h_old;
-    // Check if half carry needs to be enabled
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || h_reg == 0x10 )
-        setFlag(H, 1);
+    uint16_t hl = (h_reg << 8) | l_reg;
+    // Check for bit 11 overflow
+    if ((((hl & 0xfff) + (hl & 0xfff))  & 0x1000) == 0x1000)
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
-    // Check if carry needs to be enabled
-    if(h_16 > 0xFF)
-        setFlag(C, 1);
+        set_flag(H, 0);
+    // Check for bit 15 overflow
+    if ((uint32_t)(hl + hl) > 0xffff)
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset sign flag
-    setFlag(N, 0);
-    return 0;
+    set_flag(N, 0);
+    // Update hl
+    hl += hl;
+    l_reg = hl & 0xff;
+    h_reg = hl >> 8;
+    return 4;
 }
 
 // Add the 16 bit SP to the 16-bit register pair HL.
-// Note: Probably need to do more testing, but I am pretty
-// sure that this is a pretty good setup.
-
 // Flags:
 //  -N: Reset to 0
-//  -H: Set if overflow from bit 11, if H overflows, or if H = 0x10 (This was pretty hard to figure out)
+//  -H: Set if overflow from bit 11
 //  -C: Set of H overflows from bit 15
 uint8_t SM83::add_hl_sp() {
-    // Create temporary variables for the H register
-    uint16_t h_16 = h_reg;
-    // Create copy of H before addition - Need for when H overflows from L overflow i.e H = 0xff
-    // before carry from L.
-    uint8_t h_old = h_reg;
-    // Read in the value from the SP
-    uint8_t lowByte = sp;
-    uint8_t highByte = (sp >> 8);
-
-    // Check for L overflow
-    uint16_t l_overflow = l_reg + lowByte;
-    l_reg += lowByte;
-    if(l_overflow > 0xff) {
-        h_16++;
-        h_reg++;
-    }
-    // Check for half carry
-    uint8_t h_check = (h_reg &0xf) + (highByte & 0xf);
-    uint8_t h_old_check = (h_old & 0xf) + (highByte & 0xf);
-    h_16 += highByte;
-    h_reg += highByte;
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || h_reg == 0x10)
-        setFlag(H, 1);
+    uint16_t hl = (h_reg << 8) | l_reg;
+    // Check for bit 11 overflow
+    if ((((hl & 0xfff) + (sp & 0xfff))  & 0x1000) == 0x1000)
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
-    // Check for overflow
-    if(h_16 > 0xff) {
-        setFlag(C, 1);
-    }
+        set_flag(H, 0);
+    // Check for bit 15 overflow
+    if ((uint32_t)(hl + sp) > 0xffff)
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset sign flag
-    setFlag(N, 0);
-    return 0;
+    set_flag(N, 0);
+    // Update hl
+    hl += sp;
+    l_reg = hl & 0xff;
+    h_reg = hl >> 8;
+    return 4;
 }
 
 // Add immediate signed 8-bit data to SP.
@@ -786,17 +716,17 @@ uint8_t SM83::add_sp_r8() {
     sp += sData;
     // Check for half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Check for carry flag
     if(overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the zero and sign flags
-    setFlag(Z, 0);
-    setFlag(N, 0);
+    set_flag(Z, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -811,7 +741,7 @@ uint8_t SM83::adc_a_a() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -824,21 +754,21 @@ uint8_t SM83::adc_a_a() {
     a_16 += a_old;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -860,7 +790,7 @@ uint8_t SM83::adc_a_abs_hl() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -873,21 +803,21 @@ uint8_t SM83::adc_a_abs_hl() {
     a_16 += data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -902,7 +832,7 @@ uint8_t SM83::adc_a_b() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -915,21 +845,21 @@ uint8_t SM83::adc_a_b() {
     a_16 += b_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -944,7 +874,7 @@ uint8_t SM83::adc_a_c() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -957,21 +887,21 @@ uint8_t SM83::adc_a_c() {
     a_16 += c_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -986,7 +916,7 @@ uint8_t SM83::adc_a_d() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -999,21 +929,21 @@ uint8_t SM83::adc_a_d() {
     a_16 += d_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1030,7 +960,7 @@ uint8_t SM83::adc_a_d8() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -1043,21 +973,21 @@ uint8_t SM83::adc_a_d8() {
     a_16 += data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1072,7 +1002,7 @@ uint8_t SM83::adc_a_e() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -1085,21 +1015,21 @@ uint8_t SM83::adc_a_e() {
     a_16 += e_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1114,7 +1044,7 @@ uint8_t SM83::adc_a_h() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -1127,21 +1057,21 @@ uint8_t SM83::adc_a_h() {
     a_16 += h_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1156,7 +1086,7 @@ uint8_t SM83::adc_a_l() {
     uint16_t a_16 = a_reg;
     uint8_t a_old = a_reg;
     // Need to see if the carry flag is enabled and inc A if so
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg++;
         a_16++;
     }
@@ -1169,21 +1099,21 @@ uint8_t SM83::adc_a_l() {
     a_16 += l_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Carry check
     if(a_16 > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1197,14 +1127,14 @@ uint8_t SM83::and_a() {
     a_reg &= a_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1224,14 +1154,14 @@ uint8_t SM83::and_abs_hl() {
     a_reg &= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1245,14 +1175,14 @@ uint8_t SM83::and_b() {
     a_reg &= b_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1266,14 +1196,14 @@ uint8_t SM83::and_c() {
     a_reg &= c_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1287,14 +1217,14 @@ uint8_t SM83::and_d() {
     a_reg &= d_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1310,14 +1240,14 @@ uint8_t SM83::and_d8() {
     a_reg &= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1331,14 +1261,14 @@ uint8_t SM83::and_e() {
     a_reg &= e_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1352,14 +1282,14 @@ uint8_t SM83::and_h() {
     a_reg &= h_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1373,14 +1303,14 @@ uint8_t SM83::and_l() {
     a_reg &= l_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set the half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset the sign and carry flag
-    setFlag(N, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -1392,13 +1322,13 @@ uint8_t SM83::and_l() {
 uint8_t SM83::bit_0_a() {
     // Check for zero flag
     if((a_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1415,13 +1345,13 @@ uint8_t SM83::bit_0_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1433,13 +1363,13 @@ uint8_t SM83::bit_0_abs_hl() {
 uint8_t SM83::bit_0_b() {
     // Check for zero flag
     if((b_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1451,13 +1381,13 @@ uint8_t SM83::bit_0_b() {
 uint8_t SM83::bit_0_c() {
     // Check for zero flag
     if((c_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1469,13 +1399,13 @@ uint8_t SM83::bit_0_c() {
 uint8_t SM83::bit_0_d() {
     // Check for zero flag
     if((d_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1487,13 +1417,13 @@ uint8_t SM83::bit_0_d() {
 uint8_t SM83::bit_0_e() {
     // Check for zero flag
     if((e_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1505,13 +1435,13 @@ uint8_t SM83::bit_0_e() {
 uint8_t SM83::bit_0_h() {
     // Check for zero flag
     if((h_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1523,13 +1453,13 @@ uint8_t SM83::bit_0_h() {
 uint8_t SM83::bit_0_l() {
     // Check for zero flag
     if((l_reg & 0x01) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1541,13 +1471,13 @@ uint8_t SM83::bit_0_l() {
 uint8_t SM83::bit_1_a() {
     // Check for zero flag
     if((a_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1564,13 +1494,13 @@ uint8_t SM83::bit_1_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1582,13 +1512,13 @@ uint8_t SM83::bit_1_abs_hl() {
 uint8_t SM83::bit_1_b() {
     // Check for zero flag
     if((b_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1600,13 +1530,13 @@ uint8_t SM83::bit_1_b() {
 uint8_t SM83::bit_1_c() {
     // Check for zero flag
     if((c_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1618,13 +1548,13 @@ uint8_t SM83::bit_1_c() {
 uint8_t SM83::bit_1_d() {
     // Check for zero flag
     if((d_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1636,13 +1566,13 @@ uint8_t SM83::bit_1_d() {
 uint8_t SM83::bit_1_e() {
     // Check for zero flag
     if((e_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1654,13 +1584,13 @@ uint8_t SM83::bit_1_e() {
 uint8_t SM83::bit_1_h() {
     // Check for zero flag
     if((h_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1672,13 +1602,13 @@ uint8_t SM83::bit_1_h() {
 uint8_t SM83::bit_1_l() {
     // Check for zero flag
     if((l_reg & (1 << 1)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1690,13 +1620,13 @@ uint8_t SM83::bit_1_l() {
 uint8_t SM83::bit_2_a() {
     // Check for zero flag
     if((a_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1713,13 +1643,13 @@ uint8_t SM83::bit_2_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1731,13 +1661,13 @@ uint8_t SM83::bit_2_abs_hl() {
 uint8_t SM83::bit_2_b() {
     // Check for zero flag
     if((b_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1749,13 +1679,13 @@ uint8_t SM83::bit_2_b() {
 uint8_t SM83::bit_2_c() {
     // Check for zero flag
     if((c_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1767,13 +1697,13 @@ uint8_t SM83::bit_2_c() {
 uint8_t SM83::bit_2_d() {
     // Check for zero flag
     if((d_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1785,13 +1715,13 @@ uint8_t SM83::bit_2_d() {
 uint8_t SM83::bit_2_e() {
     // Check for zero flag
     if((e_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1803,13 +1733,13 @@ uint8_t SM83::bit_2_e() {
 uint8_t SM83::bit_2_h() {
     // Check for zero flag
     if((h_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1821,13 +1751,13 @@ uint8_t SM83::bit_2_h() {
 uint8_t SM83::bit_2_l() {
     // Check for zero flag
     if((l_reg & (1 << 2)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1839,13 +1769,13 @@ uint8_t SM83::bit_2_l() {
 uint8_t SM83::bit_3_a() {
     // Check for zero flag
     if((a_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1862,13 +1792,13 @@ uint8_t SM83::bit_3_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1880,13 +1810,13 @@ uint8_t SM83::bit_3_abs_hl() {
 uint8_t SM83::bit_3_b() {
     // Check for zero flag
     if((b_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1898,13 +1828,13 @@ uint8_t SM83::bit_3_b() {
 uint8_t SM83::bit_3_c() {
     // Check for zero flag
     if((c_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1916,13 +1846,13 @@ uint8_t SM83::bit_3_c() {
 uint8_t SM83::bit_3_d() {
     // Check for zero flag
     if((d_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1934,13 +1864,13 @@ uint8_t SM83::bit_3_d() {
 uint8_t SM83::bit_3_e() {
     // Check for zero flag
     if((e_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1952,13 +1882,13 @@ uint8_t SM83::bit_3_e() {
 uint8_t SM83::bit_3_h() {
     // Check for zero flag
     if((h_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1970,13 +1900,13 @@ uint8_t SM83::bit_3_h() {
 uint8_t SM83::bit_3_l() {
     // Check for zero flag
     if((l_reg & (1 << 3)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -1988,13 +1918,13 @@ uint8_t SM83::bit_3_l() {
 uint8_t SM83::bit_4_a() {
     // Check for zero flag
     if((a_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2011,13 +1941,13 @@ uint8_t SM83::bit_4_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2029,13 +1959,13 @@ uint8_t SM83::bit_4_abs_hl() {
 uint8_t SM83::bit_4_b() {
     // Check for zero flag
     if((b_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2047,13 +1977,13 @@ uint8_t SM83::bit_4_b() {
 uint8_t SM83::bit_4_c() {
     // Check for zero flag
     if((c_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2065,13 +1995,13 @@ uint8_t SM83::bit_4_c() {
 uint8_t SM83::bit_4_d() {
     // Check for zero flag
     if((d_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2083,13 +2013,13 @@ uint8_t SM83::bit_4_d() {
 uint8_t SM83::bit_4_e() {
     // Check for zero flag
     if((e_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2101,13 +2031,13 @@ uint8_t SM83::bit_4_e() {
 uint8_t SM83::bit_4_h() {
     // Check for zero flag
     if((h_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2119,13 +2049,13 @@ uint8_t SM83::bit_4_h() {
 uint8_t SM83::bit_4_l() {
     // Check for zero flag
     if((l_reg & (1 << 4)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2137,13 +2067,13 @@ uint8_t SM83::bit_4_l() {
 uint8_t SM83::bit_5_a() {
     // Check for zero flag
     if((a_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2160,13 +2090,13 @@ uint8_t SM83::bit_5_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2178,13 +2108,13 @@ uint8_t SM83::bit_5_abs_hl() {
 uint8_t SM83::bit_5_b() {
     // Check for zero flag
     if((b_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2196,13 +2126,13 @@ uint8_t SM83::bit_5_b() {
 uint8_t SM83::bit_5_c() {
     // Check for zero flag
     if((c_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2214,13 +2144,13 @@ uint8_t SM83::bit_5_c() {
 uint8_t SM83::bit_5_d() {
     // Check for zero flag
     if((d_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2232,13 +2162,13 @@ uint8_t SM83::bit_5_d() {
 uint8_t SM83::bit_5_e() {
     // Check for zero flag
     if((e_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2250,13 +2180,13 @@ uint8_t SM83::bit_5_e() {
 uint8_t SM83::bit_5_h() {
     // Check for zero flag
     if((h_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2268,13 +2198,13 @@ uint8_t SM83::bit_5_h() {
 uint8_t SM83::bit_5_l() {
     // Check for zero flag
     if((l_reg & (1 << 5)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2286,13 +2216,13 @@ uint8_t SM83::bit_5_l() {
 uint8_t SM83::bit_6_a() {
     // Check for zero flag
     if((a_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2309,13 +2239,13 @@ uint8_t SM83::bit_6_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2327,13 +2257,13 @@ uint8_t SM83::bit_6_abs_hl() {
 uint8_t SM83::bit_6_b() {
     // Check for zero flag
     if((b_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2345,13 +2275,13 @@ uint8_t SM83::bit_6_b() {
 uint8_t SM83::bit_6_c() {
     // Check for zero flag
     if((c_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2363,13 +2293,13 @@ uint8_t SM83::bit_6_c() {
 uint8_t SM83::bit_6_d() {
     // Check for zero flag
     if((d_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2381,13 +2311,13 @@ uint8_t SM83::bit_6_d() {
 uint8_t SM83::bit_6_e() {
     // Check for zero flag
     if((e_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2399,13 +2329,13 @@ uint8_t SM83::bit_6_e() {
 uint8_t SM83::bit_6_h() {
     // Check for zero flag
     if((h_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2417,13 +2347,13 @@ uint8_t SM83::bit_6_h() {
 uint8_t SM83::bit_6_l() {
     // Check for zero flag
     if((l_reg & (1 << 6)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2435,13 +2365,13 @@ uint8_t SM83::bit_6_l() {
 uint8_t SM83::bit_7_a() {
     // Check for zero flag
     if((a_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2458,13 +2388,13 @@ uint8_t SM83::bit_7_abs_hl() {
     uint8_t data = fetch();
     // Check for zero flag
     if((data & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2476,13 +2406,13 @@ uint8_t SM83::bit_7_abs_hl() {
 uint8_t SM83::bit_7_b() {
     // Check for zero flag
     if((b_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2494,13 +2424,13 @@ uint8_t SM83::bit_7_b() {
 uint8_t SM83::bit_7_c() {
     // Check for zero flag
     if((c_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2512,13 +2442,13 @@ uint8_t SM83::bit_7_c() {
 uint8_t SM83::bit_7_d() {
     // Check for zero flag
     if((d_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2530,13 +2460,13 @@ uint8_t SM83::bit_7_d() {
 uint8_t SM83::bit_7_e() {
     // Check for zero flag
     if((e_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2548,13 +2478,13 @@ uint8_t SM83::bit_7_e() {
 uint8_t SM83::bit_7_h() {
     // Check for zero flag
     if((h_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2566,13 +2496,13 @@ uint8_t SM83::bit_7_h() {
 uint8_t SM83::bit_7_l() {
     // Check for zero flag
     if((l_reg & (1 << 7)) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Set half carry flag
-    setFlag(H, 1);
+    set_flag(H, 1);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -2600,7 +2530,7 @@ uint8_t SM83::call_c_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if the carry flag is not set
-    if(!getFlag(C))
+    if(!get_flag(C))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
@@ -2620,7 +2550,7 @@ uint8_t SM83::call_nc_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if the carry flag is set
-    if(getFlag(C))
+    if(get_flag(C))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
@@ -2640,7 +2570,7 @@ uint8_t SM83::call_nz_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if the zero flag is set
-    if(getFlag(Z))
+    if(get_flag(Z))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
@@ -2660,7 +2590,7 @@ uint8_t SM83::call_z_16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if the zero flag is not set
-    if(!getFlag(Z))
+    if(!get_flag(Z))
         return 0;
     addr_abs = (highByte << 8) | lowByte;
     // Push the current PC to the stack
@@ -2679,13 +2609,13 @@ uint8_t SM83::call_z_16() {
 //  -H: Reset to 0
 //  -C: Inverted
 uint8_t SM83::ccf() {
-    if(getFlag(C) == 1)
-        setFlag(C, 0);
+    if(get_flag(C) == 1)
+        set_flag(C, 0);
     else
-        setFlag(C, 1);
+        set_flag(C, 1);
     // Reset flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -2699,11 +2629,11 @@ uint8_t SM83::ccf() {
 //  -C: Reset to 0
 uint8_t SM83::cp_a() {
     // Set the zero and sign flag
-    setFlag(Z, 1);
-    setFlag(N, 1);
+    set_flag(Z, 1);
+    set_flag(N, 1);
     // Reset the half carry and carry flags
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -2724,21 +2654,21 @@ uint8_t SM83::cp_abs_hl() {
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
     if(data > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - data) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2753,21 +2683,21 @@ uint8_t SM83::cp_b() {
     uint8_t h_check = (a_reg & 0xf) - (b_reg & 0xf);
     // Check for carry flag
     if(b_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - b_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2782,21 +2712,21 @@ uint8_t SM83::cp_c() {
     uint8_t h_check = (a_reg & 0xf) - (c_reg & 0xf);
     // Check for carry flag
     if(c_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - c_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2811,21 +2741,21 @@ uint8_t SM83::cp_d() {
     uint8_t h_check = (a_reg & 0xf) - (d_reg & 0xf);
     // Check for carry flag
     if(d_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - d_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 // Subtract th immediate 8-bit data from the A register, but do not store the result.
@@ -2841,21 +2771,21 @@ uint8_t SM83::cp_d8() {
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
     if(data > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - data) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2870,21 +2800,21 @@ uint8_t SM83::cp_e() {
     uint8_t h_check = (a_reg & 0xf) - (e_reg & 0xf);
     // Check for carry flag
     if(e_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - e_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2899,21 +2829,21 @@ uint8_t SM83::cp_h() {
     uint8_t h_check = (a_reg & 0xf) - (h_reg & 0xf);
     // Check for carry flag
     if(h_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - h_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2928,21 +2858,21 @@ uint8_t SM83::cp_l() {
     uint8_t h_check = (a_reg & 0xf) - (l_reg & 0xf);
     // Check for carry flag
     if(l_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Zero flag check
     if((a_reg - l_reg) == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -2954,8 +2884,8 @@ uint8_t SM83::cp_l() {
 uint8_t SM83::cpl() {
     a_reg = ~a_reg;
     // Set sign and half carry flags
-    setFlag(N, 1);
-    setFlag(H, 1);
+    set_flag(N, 1);
+    set_flag(H, 1);
     return 0;
 }
 
@@ -2976,25 +2906,25 @@ uint8_t SM83::daa() {
     int8_t correction = 0;      // Note this is a signed int
     // Check to see if the half carry flag is enabled, or the sign flag is disabled
     // and the value of the lower nibble exceeds 0x9 in register A
-    if(getFlag(H) || (!getFlag(N) && (a_reg & 0xf) > 0x9))
+    if(get_flag(H) || (!get_flag(N) && (a_reg & 0xf) > 0x9))
         correction |= 0x6;
     // Check to see if the carry flag is enabled, or the sign flag is disabled
     // and the value of a_reg is greater than 0x99 (this means the high nibble is > 0x9
-    if(getFlag(C) || (!getFlag(N) && a_reg > 0x99)) {
+    if(get_flag(C) || (!get_flag(N) && a_reg > 0x99)) {
         correction |= 0x60;
-        setFlag(C, 1);
+        set_flag(C, 1);
     }
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Add or subtract based on sign flag
-    a_reg += getFlag(N) ? -correction : correction;
+    a_reg += get_flag(N) ? -correction : correction;
     // Check zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset half carry
-    setFlag(H, 0);
+    set_flag(H, 0);
     return 0;
 }
 // Decrement the A register. Set according flags.
@@ -3009,16 +2939,16 @@ uint8_t SM83::dec_a() {
     a_reg--;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3039,16 +2969,16 @@ uint8_t SM83::dec_abs_hl() {
     data--;
     // Check zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry flag
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     cpu_write(addr_abs, data, false);
     return 0;
 }
@@ -3063,16 +2993,16 @@ uint8_t SM83::dec_b() {
     uint8_t h_check = ((b_reg & 0xf) - (1 & 0xf));
     b_reg--;
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check to see if bit 4 was set due to our subtraction
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3087,16 +3017,16 @@ uint8_t SM83::dec_c() {
     c_reg--;
     // Check zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry flag
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3111,16 +3041,16 @@ uint8_t SM83::dec_d() {
     d_reg--;
     // Check for zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3152,16 +3082,16 @@ uint8_t SM83::dec_e() {
     e_reg--;
     // Check zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry flag
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3176,16 +3106,16 @@ uint8_t SM83::dec_h() {
     h_reg--;
     // Check zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry flag
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3208,16 +3138,16 @@ uint8_t SM83::dec_l() {
     l_reg--;
     // Check zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry flag
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -3265,16 +3195,16 @@ uint8_t SM83::inc_a() {
     a_reg++;
     // Check for zero
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3295,16 +3225,16 @@ uint8_t SM83::inc_abs_hl() {
     data++;     // Increment the data
     // Check Z flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     cpu_write(addr_abs, data, false);
     return 0;
 }
@@ -3319,16 +3249,16 @@ uint8_t SM83::inc_b() {
     uint8_t h_check= ((b_reg & 0xf) + (1 & 0xf));
     b_reg++;
     if(b_reg == 0)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check if bit 4 in b_reg is set due to our addition
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);      // If so, set the half-carry flag
+        set_flag(H, 1);      // If so, set the half-carry flag
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3352,16 +3282,16 @@ uint8_t SM83::inc_c() {
     c_reg++;
     // Check zero
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3376,16 +3306,16 @@ uint8_t SM83::inc_d() {
     d_reg++;
     // Check zero
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset the sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3410,16 +3340,16 @@ uint8_t SM83::inc_e() {
     e_reg++;
     // Check for zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check &0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3434,16 +3364,16 @@ uint8_t SM83::inc_h() {
     h_reg++;
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check &0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3467,16 +3397,16 @@ uint8_t SM83::inc_l() {
     l_reg++;
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Check for half carry
     if((h_check &0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Reset sign flag
-    setFlag(N, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -3512,7 +3442,7 @@ uint8_t SM83::jp_c_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if carry flag is not enabled
-    if(!getFlag(C))
+    if(!get_flag(C))
         return 0;
     // Update the PC to point to the new address
     pc = (highByte << 8) | lowByte;
@@ -3525,7 +3455,7 @@ uint8_t SM83::jp_nc_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if carry flag is enabled
-    if(getFlag(C))
+    if(get_flag(C))
         return 0;
     // Update the PC to point to the new address
     pc = (highByte << 8) | lowByte;
@@ -3538,7 +3468,7 @@ uint8_t SM83::jp_nz_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if zero flag is enabled
-    if(getFlag(Z))
+    if(get_flag(Z))
         return 0;
     // Update the PC to point to the new address
     pc = (highByte << 8) | lowByte;
@@ -3551,7 +3481,7 @@ uint8_t SM83::jp_z_a16() {
     uint16_t lowByte = cpu_read(pc++);
     uint16_t highByte = cpu_read(pc++);
     // Check if zero flag is not enabled
-    if(!getFlag(Z))
+    if(!get_flag(Z))
         return 0;
     // Update the PC to point to the new address
     pc = (highByte << 8) | lowByte;
@@ -3577,7 +3507,7 @@ uint8_t SM83::jr_r8() {
 uint8_t SM83::jr_c_r8() {
     // Use a signed 8-bit int
     int8_t offset = cpu_read(pc++);
-    if(!getFlag(C))
+    if(!get_flag(C))
         return 0;
     pc += offset;
     return 4;
@@ -3589,7 +3519,7 @@ uint8_t SM83::jr_c_r8() {
 uint8_t SM83::jr_nc_r8() {
     // Use a signed 8-bit int
     int8_t offset = cpu_read(pc++);
-    if(getFlag(C))
+    if(get_flag(C))
         return 0;
     pc += offset;
     return 4;
@@ -3602,7 +3532,7 @@ uint8_t SM83::jr_nz_r8() {
     // Used a signed 8-bit int
     int8_t offset = cpu_read(pc++);
     // Check if zero flag is set
-    if(getFlag(Z))
+    if(get_flag(Z))
         return 0;
     pc += offset;
     return 4;
@@ -3614,7 +3544,7 @@ uint8_t SM83::jr_nz_r8() {
 uint8_t SM83::jr_z_r8() {
     int8_t offset = cpu_read(pc++);
     // Check if the Z flag is not set
-    if(!getFlag(Z))
+    if(!get_flag(Z))
         return 0;
     pc +=offset;
     return 4;
@@ -4230,17 +4160,17 @@ uint8_t SM83::ld_hl_sp_r8() {
     sp_cp += sData;
     // Check for half carry
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Check for carry flag
     if(overflow > 0xff)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset the zero and sign flags
-    setFlag(Z, 0);
-    setFlag(N, 0);
+    set_flag(Z, 0);
+    set_flag(N, 0);
     // Load the SP into HL
     l_reg = (0x00ff & sp_cp);
     // Shift the high byte of sp_cp into the low byte
@@ -4376,13 +4306,13 @@ uint8_t SM83::or_a() {
     a_reg |= a_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4402,13 +4332,13 @@ uint8_t SM83::or_abs_hl() {
     a_reg |= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4422,13 +4352,13 @@ uint8_t SM83::or_b() {
     a_reg |= b_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4442,13 +4372,13 @@ uint8_t SM83::or_c() {
     a_reg |= c_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4462,13 +4392,13 @@ uint8_t SM83::or_d() {
     a_reg |= d_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4484,13 +4414,13 @@ uint8_t SM83::or_d8() {
     a_reg |= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4504,13 +4434,13 @@ uint8_t SM83::or_e() {
     a_reg |= e_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4524,13 +4454,13 @@ uint8_t SM83::or_h() {
     a_reg |= h_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4544,13 +4474,13 @@ uint8_t SM83::or_l() {
     a_reg |= l_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -4709,7 +4639,7 @@ uint8_t SM83::ret() {
 // Pop 2 bytes off of the stack and load them into the PC, only when the carry flag is set.
 uint8_t SM83::ret_c() {
     // Check to see if the carry flag is not set
-    if(!getFlag(C))
+    if(!get_flag(C))
         return 0;
     // Load the address that the SP points to into addr_abs
     addr_abs = sp;
@@ -4727,7 +4657,7 @@ uint8_t SM83::ret_c() {
 // Pop 2 bytes off of the stack and load them into the PC, only when the carry flag is not set.
 uint8_t SM83::ret_nc() {
     // Check to see if the carry flag is set
-    if(getFlag(C))
+    if(get_flag(C))
         return 0;
     // Load the address that the SP points to into addr_abs
     addr_abs = sp;
@@ -4745,7 +4675,7 @@ uint8_t SM83::ret_nc() {
 // Pop 2 bytes off of the stack and load them into the PC, only when the zero flag is not set.
 uint8_t SM83::ret_nz() {
     // Check to see if the zero flag is set
-    if(getFlag(Z))
+    if(get_flag(Z))
         return 0;
     // Load the address that the SP points to into addr_abs
     addr_abs = sp;
@@ -4763,7 +4693,7 @@ uint8_t SM83::ret_nz() {
 // Pop 2 bytes off of the stack and load them into the PC, only when the zero flag is set.
 uint8_t SM83::ret_z() {
     // Check to see if the zero flag is not set
-    if(!getFlag(Z))
+    if(!get_flag(Z))
         return 0;
     // Load the address that the SP points to into addr_abs
     addr_abs = sp;
@@ -4807,7 +4737,7 @@ uint8_t SM83::rla() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = a_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg = (a_reg << 1);           // Shift left 1
         a_reg |= 0x01;                  // Set bit 0
     }
@@ -4816,13 +4746,13 @@ uint8_t SM83::rla() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset rest of flags
-    setFlag(Z, 0);
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(Z, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -4837,7 +4767,7 @@ uint8_t SM83::rl_a() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = a_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg = (a_reg << 1);           // Shift left 1
         a_reg |= 0x01;                  // Set bit 0
     }
@@ -4846,17 +4776,17 @@ uint8_t SM83::rl_a() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(a_reg == 0x00)
-        setFlag(Z , 1);
+        set_flag(Z , 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -4877,7 +4807,7 @@ uint8_t SM83::rl_abs_hl() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = data & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         data = (data  << 1);           // Shift left 1
         data |= 0x01;                  // Set bit 0
     }
@@ -4888,17 +4818,17 @@ uint8_t SM83::rl_abs_hl() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -4913,7 +4843,7 @@ uint8_t SM83::rl_b() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = b_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         b_reg = (b_reg << 1);           // Shift left 1
         b_reg |= 0x01;                  // Set bit 0
     }
@@ -4922,17 +4852,17 @@ uint8_t SM83::rl_b() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -4947,7 +4877,7 @@ uint8_t SM83::rl_c() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = c_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         c_reg = (c_reg << 1);           // Shift left 1
         c_reg |= 0x01;                  // Set bit 0
     }
@@ -4956,17 +4886,17 @@ uint8_t SM83::rl_c() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -4981,7 +4911,7 @@ uint8_t SM83::rl_d() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = d_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         d_reg = (d_reg << 1);           // Shift left 1
         d_reg |= 0x01;                  // Set bit 0
     }
@@ -4990,17 +4920,17 @@ uint8_t SM83::rl_d() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5015,7 +4945,7 @@ uint8_t SM83::rl_e() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = e_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         e_reg = (e_reg << 1);           // Shift left 1
         e_reg |= 0x01;                  // Set bit 0
     }
@@ -5024,17 +4954,17 @@ uint8_t SM83::rl_e() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5049,7 +4979,7 @@ uint8_t SM83::rl_h() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = h_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         h_reg = (h_reg << 1);           // Shift left 1
         h_reg |= 0x01;                  // Set bit 0
     }
@@ -5058,17 +4988,17 @@ uint8_t SM83::rl_h() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5083,7 +5013,7 @@ uint8_t SM83::rl_l() {
     // Check if bit 7 is enabled before rotating
     uint8_t c_check = l_reg & (1 << 7);
     // Check to see if the carry bit is set
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         l_reg = (l_reg << 1);           // Shift left 1
         l_reg |= 0x01;                  // Set bit 0
     }
@@ -5092,17 +5022,17 @@ uint8_t SM83::rl_l() {
     // Need to check for carry
     // Check to see if bit 7 was enabled before rotate
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5115,17 +5045,17 @@ uint8_t SM83::rl_l() {
 uint8_t SM83::rlca() {
     // If bit 7 in B is set, set the carry bit
     if(a_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     a_reg = (a_reg << 1) | (a_reg >> 7);
 
     // Reset the rest of the flags
-    setFlag(Z, 0);
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(Z, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5138,20 +5068,20 @@ uint8_t SM83::rlca() {
 uint8_t SM83::rlc_a() {
     // If bit 7 in B is set, set the carry bit
     if(a_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     a_reg = (a_reg << 1) | (a_reg >> 7);
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5169,9 +5099,9 @@ uint8_t SM83::rlc_abs_hl() {
     uint8_t data = fetch();
     // If bit 7 is set, set the carry bit
     if(data & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     data = (data << 1) | (data >> 7);
@@ -5179,12 +5109,12 @@ uint8_t SM83::rlc_abs_hl() {
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5197,20 +5127,20 @@ uint8_t SM83::rlc_abs_hl() {
 uint8_t SM83::rlc_b() {
     // If bit 7 is set, set the carry bit
     if(b_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     b_reg = (b_reg << 1) | (b_reg >> 7);
     // Check for zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
 
     return 0;
 }
@@ -5223,20 +5153,20 @@ uint8_t SM83::rlc_b() {
 uint8_t SM83::rlc_c() {
     // If bit 7 is set, set the carry bit
     if(c_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     c_reg = (c_reg << 1) | (c_reg >> 7);
     // Check the zero flag
     if(c_reg == 0x00)
-        setFlag(Z ,1);
+        set_flag(Z ,1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 // Rotates the bits in the D register left.
@@ -5248,20 +5178,20 @@ uint8_t SM83::rlc_c() {
 uint8_t SM83::rlc_d() {
     // If bit 7 is set, set the carry bit
     if(d_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     d_reg = (d_reg << 1) | (d_reg >> 7);
     // Check the zero flag
     if(d_reg == 0x00)
-        setFlag(Z ,1);
+        set_flag(Z ,1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5274,20 +5204,20 @@ uint8_t SM83::rlc_d() {
 uint8_t SM83::rlc_e() {
     // If bit 7 is set, set the carry bit
     if(e_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     e_reg = (e_reg << 1) | (e_reg >> 7);
     // Check the zero flag
     if(e_reg == 0x00)
-        setFlag(Z ,1);
+        set_flag(Z ,1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5300,20 +5230,20 @@ uint8_t SM83::rlc_e() {
 uint8_t SM83::rlc_h() {
     // If bit 7 is set, set the carry bit
     if(h_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     h_reg = (h_reg << 1) | (h_reg >> 7);
     // Check the zero flag
     if(h_reg == 0x00)
-        setFlag(Z ,1);
+        set_flag(Z ,1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5326,20 +5256,20 @@ uint8_t SM83::rlc_h() {
 uint8_t SM83::rlc_l() {
     // If bit 7 is set, set the carry bit
     if(l_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits left 1
     // First shift all bits left one, then or with all bits shifted right 7.
     l_reg = (l_reg << 1) | (l_reg >> 7);
     // Check for the zero flag
     if(l_reg == 0x00)
-        setFlag(Z ,1);
+        set_flag(Z ,1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5354,7 +5284,7 @@ uint8_t SM83::rra() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = a_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg = (a_reg >> 1);       // Shift right one
         a_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5362,13 +5292,13 @@ uint8_t SM83::rra() {
         a_reg = (a_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Reset other flags
-    setFlag(Z, 0);
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(Z, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5383,7 +5313,7 @@ uint8_t SM83::rr_a() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = a_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         a_reg = (a_reg >> 1);       // Shift right one
         a_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5391,17 +5321,17 @@ uint8_t SM83::rr_a() {
         a_reg = (a_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5421,7 +5351,7 @@ uint8_t SM83::rr_abs_hl() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = data & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         data = (data >> 1);       // Shift right one
         data |= (1 << 7);              // Enable bit 7
     }
@@ -5431,17 +5361,17 @@ uint8_t SM83::rr_abs_hl() {
     cpu_write(addr_abs, data, false);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5456,7 +5386,7 @@ uint8_t SM83::rr_b() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = b_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         b_reg = (b_reg >> 1);       // Shift right one
         b_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5464,17 +5394,17 @@ uint8_t SM83::rr_b() {
         b_reg = (b_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5489,7 +5419,7 @@ uint8_t SM83::rr_c() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = c_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         c_reg = (c_reg >> 1);       // Shift right one
         c_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5497,17 +5427,17 @@ uint8_t SM83::rr_c() {
         c_reg = (c_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5522,7 +5452,7 @@ uint8_t SM83::rr_d() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = d_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         d_reg = (d_reg >> 1);       // Shift right one
         d_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5530,17 +5460,17 @@ uint8_t SM83::rr_d() {
         d_reg = (d_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5555,7 +5485,7 @@ uint8_t SM83::rr_e() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = e_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         e_reg = (e_reg >> 1);       // Shift right one
         e_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5563,17 +5493,17 @@ uint8_t SM83::rr_e() {
         e_reg = (e_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5588,7 +5518,7 @@ uint8_t SM83::rr_h() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = h_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         h_reg = (h_reg >> 1);       // Shift right one
         h_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5596,17 +5526,17 @@ uint8_t SM83::rr_h() {
         h_reg = (h_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5621,7 +5551,7 @@ uint8_t SM83::rr_l() {
     // Check if bit 0 is enabled before rotating
     uint8_t c_check = l_reg & 0x01;
     // Check if the carry bit is enabled
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         l_reg = (l_reg >> 1);       // Shift right one
         l_reg |= (1 << 7);              // Enable bit 7
     }
@@ -5629,17 +5559,17 @@ uint8_t SM83::rr_l() {
         l_reg = (l_reg >> 1);
     // Check if the carry flag needs to be set
     if(c_check)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check for the zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset other flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -5748,16 +5678,16 @@ uint8_t SM83::rst_38h() {
 uint8_t SM83::rrca() {
     // If bit 0 is set, set the carry bit
     if(a_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     a_reg = (a_reg >> 1) | (a_reg << 7);
     // Reset the rest of the flags
-    setFlag(Z, 0);
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(Z, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5770,20 +5700,20 @@ uint8_t SM83::rrca() {
 uint8_t SM83::rrc_a() {
     // If bit 0 is set, set the carry bit
     if(a_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     a_reg = (a_reg >> 1) | (a_reg << 7);
     // Check for zero flag
     if(a_reg == 0x000)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5802,9 +5732,9 @@ uint8_t SM83::rrc_abs_hl() {
     uint8_t data = fetch();
     // If bit 0 is set, set the carry bit
     if(data & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     data = (data >> 1) | (data << 7);
@@ -5812,12 +5742,12 @@ uint8_t SM83::rrc_abs_hl() {
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5830,20 +5760,20 @@ uint8_t SM83::rrc_abs_hl() {
 uint8_t SM83::rrc_b() {
     // If bit 0 is set, set the carry bit
     if(b_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     b_reg = (b_reg >> 1) | (b_reg << 7);
     // Check the zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5856,20 +5786,20 @@ uint8_t SM83::rrc_b() {
 uint8_t SM83::rrc_c() {
     // If bit 0 is set, set the carry bit
     if(c_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     c_reg = (c_reg >> 1) | (c_reg << 7);
     // Check for the zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5882,20 +5812,20 @@ uint8_t SM83::rrc_c() {
 uint8_t SM83::rrc_d() {
     // If bit 0 is set, set the carry bit
     if(d_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     d_reg = (d_reg >> 1) | (d_reg << 7);
     // Check the zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5908,20 +5838,20 @@ uint8_t SM83::rrc_d() {
 uint8_t SM83::rrc_e() {
     // If bit 0 is set, set the carry bit
     if(e_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     e_reg = (e_reg >> 1) | (e_reg << 7);
     // Check for the zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5934,20 +5864,20 @@ uint8_t SM83::rrc_e() {
 uint8_t SM83::rrc_h() {
     // If bit 0 is set, set the carry bit
     if(h_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     h_reg = (h_reg >> 1) | (h_reg << 7);
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5960,20 +5890,20 @@ uint8_t SM83::rrc_h() {
 uint8_t SM83::rrc_l() {
     // If bit 0 is set, set the carry bit
     if(l_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Rotate bits right 1
     // First shift all bits right one, then or with all bits shifted right 7.
     l_reg = (l_reg >> 1) | (l_reg << 7);
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(H, 0);
-    setFlag(N, 0);
+    set_flag(H, 0);
+    set_flag(N, 0);
     return 0;
 }
 
@@ -5989,7 +5919,7 @@ uint8_t SM83::sbc_a_a() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = a_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
@@ -5998,16 +5928,16 @@ uint8_t SM83::sbc_a_a() {
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6030,30 +5960,30 @@ uint8_t SM83::sbc_a_abs_hl() {
     // 16-bit copy for overflow check
     uint16_t cp_d8_16 = data;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_d8++;
         cp_d8_16++;
     }
     // Carry check
     if(cp_d8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_d8 & 0xf);
     a_reg -= cp_d8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_d8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6069,30 +5999,30 @@ uint8_t SM83::sbc_a_b() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = b_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6108,30 +6038,30 @@ uint8_t SM83::sbc_a_c() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = c_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6147,30 +6077,30 @@ uint8_t SM83::sbc_a_d() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = d_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6188,30 +6118,30 @@ uint8_t SM83::sbc_a_d8() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = data;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6227,30 +6157,30 @@ uint8_t SM83::sbc_a_e() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = e_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6266,30 +6196,30 @@ uint8_t SM83::sbc_a_h() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = h_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -6305,38 +6235,38 @@ uint8_t SM83::sbc_a_l() {
     // 16-bit copy for overflow check
     uint16_t cp_r8_16 = l_reg;
     // Need to see if the carry flag is enabled and inc r8
-    if(getFlag(C) == 1) {
+    if(get_flag(C) == 1) {
         cp_r8++;
         cp_r8_16++;
     }
     // Carry check
     if(cp_r8_16 > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Disable high nibble bits for the half carry check
     uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
     a_reg -= cp_r8;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check
     if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
 // Set the carry flag. Reset the sign and half carry flags.
 uint8_t SM83::scf() {
-    setFlag(C, 1);
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(C, 1);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6378,19 +6308,19 @@ uint8_t SM83::sla_a() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(a_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     a_reg = a_reg << 1;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6409,21 +6339,21 @@ uint8_t SM83::sla_abs_hl() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(data & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     data = data << 1;
     // Write the data
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6437,19 +6367,19 @@ uint8_t SM83::sla_b() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(b_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     b_reg = b_reg << 1;
     // Check for zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6463,19 +6393,19 @@ uint8_t SM83::sla_c() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(c_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     c_reg = c_reg << 1;
     // Check for zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6489,19 +6419,19 @@ uint8_t SM83::sla_d() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(d_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     d_reg = d_reg << 1;
     // Check for zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6515,19 +6445,19 @@ uint8_t SM83::sla_e() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(e_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     e_reg = e_reg << 1;
     // Check for zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6541,19 +6471,19 @@ uint8_t SM83::sla_h() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(h_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     h_reg = h_reg << 1;
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6567,19 +6497,19 @@ uint8_t SM83::sla_l() {
     // Check if bit 7 is set
     // If so, set carry flag
     if(l_reg & (1 << 7))
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift the register left 1
     l_reg = l_reg << 1;
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6593,9 +6523,9 @@ uint8_t SM83::sra_a() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(a_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(a_reg & (1 << 7)) {
         // Shift right 1
@@ -6607,12 +6537,12 @@ uint8_t SM83::sra_a() {
         a_reg = a_reg >> 1;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6631,9 +6561,9 @@ uint8_t SM83::sra_abs_hl() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(data & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(data & (1 << 7)) {
         // Shift right 1
@@ -6647,12 +6577,12 @@ uint8_t SM83::sra_abs_hl() {
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6666,9 +6596,9 @@ uint8_t SM83::sra_b() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(b_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(b_reg & (1 << 7)) {
         // Shift right 1
@@ -6680,12 +6610,12 @@ uint8_t SM83::sra_b() {
         b_reg = b_reg >> 1;
     // Check for zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6699,9 +6629,9 @@ uint8_t SM83::sra_c() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(c_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(c_reg & (1 << 7)) {
         // Shift right 1
@@ -6713,12 +6643,12 @@ uint8_t SM83::sra_c() {
         c_reg = c_reg >> 1;
     // Check for zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6732,9 +6662,9 @@ uint8_t SM83::sra_d() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(d_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(d_reg & (1 << 7)) {
         // Shift right 1
@@ -6746,12 +6676,12 @@ uint8_t SM83::sra_d() {
         d_reg = d_reg >> 1;
     // Check for zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6765,9 +6695,9 @@ uint8_t SM83::sra_e() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(e_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(e_reg & (1 << 7)) {
         // Shift right 1
@@ -6779,12 +6709,12 @@ uint8_t SM83::sra_e() {
         e_reg = e_reg >> 1;
     // Check for zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6798,9 +6728,9 @@ uint8_t SM83::sra_h() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(h_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(h_reg & (1 << 7)) {
         // Shift right 1
@@ -6812,12 +6742,12 @@ uint8_t SM83::sra_h() {
         h_reg = h_reg >> 1;
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6831,9 +6761,9 @@ uint8_t SM83::sra_l() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(l_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Check to see if bit 7 is set
     if(l_reg & (1 << 7)) {
         // Shift right 1
@@ -6845,12 +6775,12 @@ uint8_t SM83::sra_l() {
         l_reg = l_reg >> 1;
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6864,19 +6794,19 @@ uint8_t SM83::srl_a() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(a_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     a_reg = a_reg >> 1;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6895,21 +6825,21 @@ uint8_t SM83::srl_abs_hl() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(data & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     data = data >> 1;
     // Write the data
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6923,19 +6853,19 @@ uint8_t SM83::srl_b() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(b_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     b_reg = b_reg >> 1;
     // Check for zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6949,19 +6879,19 @@ uint8_t SM83::srl_c() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(c_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     c_reg = c_reg >> 1;
     // Check for zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -6975,19 +6905,19 @@ uint8_t SM83::srl_d() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(d_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     d_reg = d_reg >> 1;
     // Check for zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -7001,19 +6931,19 @@ uint8_t SM83::srl_e() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(e_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     e_reg = e_reg >> 1;
     // Check for zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -7027,19 +6957,19 @@ uint8_t SM83::srl_h() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(h_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     h_reg = h_reg >> 1;
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -7053,19 +6983,19 @@ uint8_t SM83::srl_l() {
     // Check if bit 0 is set
     // If so, set carry flag
     if(l_reg & 0x01)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     // Shift right one bit
     l_reg = l_reg >> 1;
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset the rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
     return 0;
 }
 
@@ -7086,11 +7016,11 @@ uint8_t SM83::stop_d8() {
 uint8_t SM83::sub_a() {
     a_reg -= a_reg;
     // Set the Zero and Sign flags
-    setFlag(Z, 1);
-    setFlag(N, 1);
+    set_flag(Z, 1);
+    set_flag(N, 1);
     // Reset the Half carry and Carry flags
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7111,23 +7041,23 @@ uint8_t SM83::sub_abs_hl() {
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
     if(data > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7142,22 +7072,22 @@ uint8_t SM83::sub_b() {
     uint8_t h_check = (a_reg & 0xf) - (b_reg & 0xf);
     // Check for carry flag
     if(b_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= b_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7172,23 +7102,23 @@ uint8_t SM83::sub_c() {
     uint8_t h_check = (a_reg & 0xf) - (c_reg & 0xf);
     // Check for carry flag
     if(c_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= c_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7203,23 +7133,23 @@ uint8_t SM83::sub_d() {
     uint8_t h_check = (a_reg & 0xf) - (d_reg & 0xf);
     // Check for carry flag
     if(d_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= d_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7236,23 +7166,23 @@ uint8_t SM83::sub_d8() {
     uint8_t h_check = (a_reg & 0xf) - (data & 0xf);
     // Check for carry flag
     if(data > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= data;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7267,23 +7197,23 @@ uint8_t SM83::sub_e() {
     uint8_t h_check = (a_reg & 0xf) - (e_reg & 0xf);
     // Check for carry flag
     if(e_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= e_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7298,23 +7228,23 @@ uint8_t SM83::sub_h() {
     uint8_t h_check = (a_reg & 0xf) - (h_reg & 0xf);
     // Check for carry flag
     if(h_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= h_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7329,23 +7259,23 @@ uint8_t SM83::sub_l() {
     uint8_t h_check = (a_reg & 0xf) - (l_reg & 0xf);
     // Check for carry flag
     if(l_reg > a_reg)
-        setFlag(C, 1);
+        set_flag(C, 1);
     else
-        setFlag(C, 0);
+        set_flag(C, 0);
     a_reg -= l_reg;
     // Zero flag check
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Half carry check - checking to see if the addition enabled bit 4
     if((h_check & 0x10) == 0x10)
-        setFlag(H, 1);
+        set_flag(H, 1);
     else
-        setFlag(H, 0);
+        set_flag(H, 0);
 
     // Set the sign flag
-    setFlag(N, 1);
+    set_flag(N, 1);
     return 0;
 }
 
@@ -7359,13 +7289,13 @@ uint8_t SM83::swap_a() {
     a_reg = ((a_reg & 0x0f) << 4 | (a_reg & 0xf0) >> 4);
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7386,13 +7316,13 @@ uint8_t SM83::swap_abs_hl() {
     cpu_write(addr_abs, data, false);
     // Check for zero flag
     if(data == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7406,13 +7336,13 @@ uint8_t SM83::swap_b() {
     b_reg = ((b_reg & 0x0f) << 4 | (b_reg & 0xf0) >> 4);
     // Check for zero flag
     if(b_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7426,13 +7356,13 @@ uint8_t SM83::swap_c() {
     c_reg = ((c_reg & 0x0f) << 4 | (c_reg & 0xf0) >> 4);
     // Check for zero flag
     if(c_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7446,13 +7376,13 @@ uint8_t SM83::swap_d() {
     d_reg = ((d_reg & 0x0f) << 4 | (d_reg & 0xf0) >> 4);
     // Check for zero flag
     if(d_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7466,13 +7396,13 @@ uint8_t SM83::swap_e() {
     e_reg = ((e_reg & 0x0f) << 4 | (e_reg & 0xf0) >> 4);
     // Check for zero flag
     if(e_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7486,13 +7416,13 @@ uint8_t SM83::swap_h() {
     h_reg = ((h_reg & 0x0f) << 4 | (h_reg & 0xf0) >> 4);
     // Check for zero flag
     if(h_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7506,13 +7436,13 @@ uint8_t SM83::swap_l() {
     l_reg = ((l_reg & 0x0f) << 4 | (l_reg & 0xf0) >> 4);
     // Check for zero flag
     if(l_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset rest of the flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7526,13 +7456,13 @@ uint8_t SM83::xor_a() {
     a_reg ^= a_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7552,13 +7482,13 @@ uint8_t SM83::xor_abs_hl() {
     a_reg ^= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7572,13 +7502,13 @@ uint8_t SM83::xor_b() {
     a_reg ^= b_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7593,13 +7523,13 @@ uint8_t SM83::xor_c() {
     a_reg ^= c_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7613,13 +7543,13 @@ uint8_t SM83::xor_d() {
     a_reg ^= d_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 // Exclusive or the A register with the immediate 8-bit data. Store in A.
@@ -7634,13 +7564,13 @@ uint8_t SM83::xor_d8() {
     a_reg ^= data;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7654,13 +7584,13 @@ uint8_t SM83::xor_e() {
     a_reg ^= e_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7674,13 +7604,13 @@ uint8_t SM83::xor_h() {
     a_reg ^= h_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
@@ -7694,13 +7624,13 @@ uint8_t SM83::xor_l() {
     a_reg ^= l_reg;
     // Check for zero flag
     if(a_reg == 0x00)
-        setFlag(Z, 1);
+        set_flag(Z, 1);
     else
-        setFlag(Z, 0);
+        set_flag(Z, 0);
     // Reset sign, half carry, and carry flags
-    setFlag(N, 0);
-    setFlag(H, 0);
-    setFlag(C, 0);
+    set_flag(N, 0);
+    set_flag(H, 0);
+    set_flag(C, 0);
     return 0;
 }
 
