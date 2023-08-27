@@ -1,7 +1,0 @@
-#+title: Input
-
-* TODO
-+ Fix input so the joypad buttons are working (right now the action keys act as direction keys and vice versa)
-  - Create 2 registers for input, one for direction, and one for action.
-+ Change input so it uses key held instead of key pressed.
-  - This way the input will not be read in incorrectly. I can forsee a case where the emulator this 2 buttons are pressed at the same time when they are not due to the way the current system works.
