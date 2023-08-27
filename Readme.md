@@ -1,4 +1,4 @@
-#GMu
+# GMu
 
 **GMu** is a Game Boy emulator. The goal of this project was to teach myself a little bit about computer architecture, and low level programming.
 
