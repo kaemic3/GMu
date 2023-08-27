@@ -190,7 +190,7 @@ void SM83::clock() {
                 // the dma_copy flag is set so the cpu_read function will return the byte we actually want
                 uint8_t buffer_byte = cpu_read(bus->dma_addr, true);
                 // Technically, DMA can write to OAM without VBLANK, so write directly to the OAM
-                cpu_write((bus->dma_addr & 0x00ff) | 0xfe00, buffer_byte, true);
+                cpu_write((bus->dma_addr & 0xff) | 0xfe00, buffer_byte, true);
                 // Increment the DMA address
                 bus->dma_addr++;
             }
@@ -606,7 +606,7 @@ uint8_t SM83::add_hl_bc() {
     else
         set_flag(H, 0);
     // Check for bit 15 overflow
-    if ((uint32_t)(hl + bc) > 0xffff)
+    if (hl > 0 && bc > UINT16_MAX - hl)
         set_flag(C, 1);
     else
         set_flag(C, 0);
@@ -633,7 +633,7 @@ uint8_t SM83::add_hl_de() {
     else
         set_flag(H, 0);
     // Check for bit 15 overflow
-    if ((uint32_t)(hl + de) > 0xffff)
+    if (hl > 0 && de > UINT16_MAX - hl)
         set_flag(C, 1);
     else
         set_flag(C, 0);
@@ -659,7 +659,7 @@ uint8_t SM83::add_hl_hl() {
     else
         set_flag(H, 0);
     // Check for bit 15 overflow
-    if ((uint32_t)(hl + hl) > 0xffff)
+    if (hl > 0 && hl > UINT16_MAX - hl)
         set_flag(C, 1);
     else
         set_flag(C, 0);
@@ -685,7 +685,7 @@ uint8_t SM83::add_hl_sp() {
     else
         set_flag(H, 0);
     // Check for bit 15 overflow
-    if ((uint32_t)(hl + sp) > 0xffff)
+    if (hl > 0 && sp > UINT16_MAX - hl)
         set_flag(C, 1);
     else
         set_flag(C, 0);
@@ -710,8 +710,8 @@ uint8_t SM83::add_sp_r8() {
     uint8_t data = cpu_read(pc++);
     // Need to have a signed version of the data
     int8_t sData = data;
-    uint8_t h_check = (sp & 0x000f) + (data & 0xf);
-    uint16_t overflow = (sp & 0x00ff) + data;
+    uint8_t h_check = (sp & 0xf) + (data & 0xf);
+    uint16_t overflow = (sp & 0xff) + data;
     // Add the signed data
     sp += sData;
     // Check for half carry
@@ -737,40 +737,29 @@ uint8_t SM83::add_sp_r8() {
 //  -H: Set if the addition sets bit 4 or if the carry sets bit 4
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_a() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (a_old & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (a_old & 0xf);
-    a_reg += a_old;
-    a_16 += a_old;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + a_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (a_old & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && a_old > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
-}
+   }
 
 // Add the data stored at the absolute address in HL to the A register with carry.
 // Flags:
@@ -785,38 +774,26 @@ uint8_t SM83::adc_a_abs_hl() {
     addr_abs = (highByte << 8) | lowByte;
     // Fetch the data
     uint8_t data = fetch();
-
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (data & 0xf);
-    a_reg += data;
-    a_16 += data;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + data + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (data & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && data> UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -825,40 +802,29 @@ uint8_t SM83::adc_a_abs_hl() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_b() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (b_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (b_reg & 0xf);
-    a_reg += b_reg;
-    a_16 += b_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + b_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (b_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && b_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -867,40 +833,29 @@ uint8_t SM83::adc_a_b() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_c() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (c_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (c_reg & 0xf);
-    a_reg += c_reg;
-    a_16 += c_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + c_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (c_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && c_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -909,40 +864,29 @@ uint8_t SM83::adc_a_c() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_d() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (d_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (d_reg & 0xf);
-    a_reg += d_reg;
-    a_16 += d_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + d_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (d_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && d_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -951,42 +895,31 @@ uint8_t SM83::adc_a_d() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_d8() {
     // Get the data
     uint8_t data = cpu_read(pc++);
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (data & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (data & 0xf);
-    a_reg += data;
-    a_16 += data;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + data + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (data & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && data > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -995,40 +928,29 @@ uint8_t SM83::adc_a_d8() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_e() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (e_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (e_reg & 0xf);
-    a_reg += e_reg;
-    a_16 += e_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + e_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (e_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && e_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -1037,40 +959,29 @@ uint8_t SM83::adc_a_e() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_h() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (h_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (h_reg & 0xf);
-    a_reg += h_reg;
-    a_16 += h_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + h_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (h_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && h_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -1079,40 +990,29 @@ uint8_t SM83::adc_a_h() {
 // Flags:
 //  -Z: If the result is 0
 //  -N: Reset to 0
-//  -H: Set if the addition sets bit 4 or if the carry sets bit 4
+//  -H: Set if the addition sets bit 4 
 //  -C: Set if A overflows
 uint8_t SM83::adc_a_l() {
-    // Create a 16-bit copy of A
-    uint16_t a_16 = a_reg;
+    // Create copy of A for flag checks
     uint8_t a_old = a_reg;
-    // Need to see if the carry flag is enabled and inc A if so
-    if(get_flag(C) == 1) {
-        a_reg++;
-        a_16++;
-    }
-    // Used in half carry check to see if the carry being added to A causes it to be 0x10
-    uint8_t a_h10 = a_reg;
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) + (l_reg & 0xf);
-    uint8_t h_old_check = (a_old & 0xf) + (l_reg & 0xf);
-    a_reg += l_reg;
-    a_16 += l_reg;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (h_old_check & 0x10) == 0x10 || a_h10 == 0x10)
+    // Update A
+    a_reg = a_reg + l_reg + get_flag(C);
+    // Check half carry
+    if ((((a_old & 0xf) + (l_reg & 0xf) + get_flag(C)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Carry check
-    if(a_16 > 0xff)
+    // Check carry
+    if (a_old + get_flag(C) > 0 && l_reg > UINT8_MAX - (a_old + get_flag(C)))
         set_flag(C, 1);
     else
         set_flag(C, 0);
-    // Reset the sign flag
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Reset sign flag
     set_flag(N, 0);
     return 0;
 }
@@ -4154,8 +4054,8 @@ uint8_t SM83::ld_hl_sp_r8() {
     uint8_t data = cpu_read(pc++);
     // Need to have a signed version of the data
     int8_t sData = data;
-    uint8_t h_check = (sp_cp & 0x000f) + (data & 0xf);
-    uint16_t overflow = (sp_cp & 0x00ff) + data;
+    uint8_t h_check = (sp_cp & 0xf) + (data & 0xf);
+    uint16_t overflow = (sp_cp & 0xff) + data;
     // Add the signed data
     sp_cp += sData;
     // Check for half carry
@@ -4172,7 +4072,7 @@ uint8_t SM83::ld_hl_sp_r8() {
     set_flag(Z, 0);
     set_flag(N, 0);
     // Load the SP into HL
-    l_reg = (0x00ff & sp_cp);
+    l_reg = (0xff & sp_cp);
     // Shift the high byte of sp_cp into the low byte
     h_reg = (sp_cp >> 8);
     return 0;
@@ -5991,37 +5891,29 @@ uint8_t SM83::sbc_a_abs_hl() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if B overflows after carry has been added.
-//  -C: Set if (B + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < B
 uint8_t SM83::sbc_a_b() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = b_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = b_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - b_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (b_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < b_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6030,37 +5922,29 @@ uint8_t SM83::sbc_a_b() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if C overflows after carry has been added.
-//  -C: Set if (C + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < C 
 uint8_t SM83::sbc_a_c() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = c_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = c_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - c_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (c_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < c_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6069,37 +5953,29 @@ uint8_t SM83::sbc_a_c() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if D overflows after carry has been added.
-//  -C: Set if (D + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < D
 uint8_t SM83::sbc_a_d() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = d_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = d_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - d_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (d_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < d_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6108,39 +5984,31 @@ uint8_t SM83::sbc_a_d() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if d8 overflows after carry has been added.
-//  -C: Set if (d8 + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < d8
 uint8_t SM83::sbc_a_d8() {
     // Need to load data
     uint8_t data = cpu_read(pc++);
-    // Create a copy of operand r8
-    uint8_t cp_r8 = data;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = data;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - data;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (data & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < data)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6149,37 +6017,29 @@ uint8_t SM83::sbc_a_d8() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if E overflows after carry has been added.
-//  -C: Set if (E + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < E
 uint8_t SM83::sbc_a_e() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = e_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = e_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - e_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (e_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < e_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6188,37 +6048,29 @@ uint8_t SM83::sbc_a_e() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if H overflows after carry has been added.
-//  -C: Set if (H + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < H
 uint8_t SM83::sbc_a_h() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = h_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = h_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - h_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (h_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < h_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
@@ -6227,37 +6079,29 @@ uint8_t SM83::sbc_a_h() {
 // Flags:
 //  -Z: Set if the result is 0
 //  -N: Set to 1
-//  -H: Set if the result resets bit 4, if (A & 0xf) = 0xf, or if L overflows after carry has been added.
-//  -C: Set if (L + carry) > A
+//  -H: Set if the result resets bit 4
+//  -C: Set if A - Carry < L
 uint8_t SM83::sbc_a_l() {
-    // Create a copy of operand r8
-    uint8_t cp_r8 = l_reg;
-    // 16-bit copy for overflow check
-    uint16_t cp_r8_16 = l_reg;
-    // Need to see if the carry flag is enabled and inc r8
-    if(get_flag(C) == 1) {
-        cp_r8++;
-        cp_r8_16++;
-    }
-    // Carry check
-    if(cp_r8_16 > a_reg)
-        set_flag(C, 1);
-    else
-        set_flag(C, 0);
-    // Disable high nibble bits for the half carry check
-    uint8_t h_check = (a_reg & 0xf) - (cp_r8 & 0xf);
-    a_reg -= cp_r8;
-    // Zero flag check
-    if(a_reg == 0x00)
-        set_flag(Z, 1);
-    else
-        set_flag(Z, 0);
-    // Half carry check
-    if((h_check & 0x10) == 0x10 || (a_reg & 0xf) == 0x0f || cp_r8_16 > 0xff)
+    // Create copy of A for flag checks
+    uint8_t a_old = a_reg;
+    // Update A
+    a_reg = a_reg - get_flag(C) - l_reg;
+    // Check half carry
+    if ((((a_old & 0xf) - get_flag(C) - (l_reg & 0xf)) & 0x10) == 0x10)
         set_flag(H, 1);
     else
         set_flag(H, 0);
-    // Set the sign flag
+    // Check carry
+    if (a_old - get_flag(C) < l_reg)
+        set_flag(C, 1);
+    else
+        set_flag(C, 0);
+    // Check Z flag
+    if (a_reg == 0)
+        set_flag(Z, 1);
+    else
+        set_flag(Z, 0);
+    // Set sign flag
     set_flag(N, 1);
     return 0;
 }
