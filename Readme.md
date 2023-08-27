@@ -8,7 +8,7 @@ This is my first programming project, so keep that in mind.
 WIP
 
 ## TODO
-- Need to re-write UI, currently uses SDL.
+- Need to re-write UI, currently uses SDL. It's also a mess!!
 - Need to implement STOP opcode, currently resets the system.
 - Clean up the code, lots of inconsistencies.
 - Fully add support for MBC1, MBC2, MBC3, and MBC5.
