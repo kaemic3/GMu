@@ -13,3 +13,5 @@ WIP
 - Clean up the code, lots of inconsistencies.
 - Fully add support for MBC1, MBC2, MBC3, and MBC5.
 - Port emulator to Win32. 
+
+# Special thanks to Casey Muratori for the handmade hero project! 
