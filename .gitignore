@@ -2,10 +2,11 @@
 /shelf/
 /.idea/
 
-.obj
-.pdb
-.map
-.ilk
+*.obj
+*.pdb
+*.map
+*.ilk
+*.exe
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
