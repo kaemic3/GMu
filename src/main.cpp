@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     // Event handler
     SDL_Event e;
     // Load the example ROM into memory
-    GMu::gb_cart = std::make_shared<Cartridge>("../ROMS/Mario.gb");
+    GMu::gb_cart = std::make_shared<Cartridge>("../data/ROMs/gb_snek.gb");
     // Load the GB boot rom into the GB
     // Need to figure out how to load this independently of the cartridge, probably
     //GMu::gb_cart->load_boot_rom();
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
         std::chrono::duration<float, std::milli> elapsed_time = tp_1 - tp_2;
         if (emulation_run) {
             if (elapsed_time.count() < FRAME_TIME_MS) {
-                std::chrono::system_clock::now();
+                //std::chrono::system_clock::now();
                 std::chrono::duration<float, std::milli> delta_ms(FRAME_TIME_MS - elapsed_time.count());
                 auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
                 std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_duration));

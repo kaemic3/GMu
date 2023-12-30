@@ -1,5 +1,6 @@
 #include "nenjin.h"
 
+#if 0
 internal void
 OutputSound(engine_sound_output_buffer *SoundBuffer, engine_state *EngineState, int ToneHz) {
 	int16_t ToneVolume = 300;
@@ -19,25 +20,7 @@ OutputSound(engine_sound_output_buffer *SoundBuffer, engine_state *EngineState, 
 			EngineState->tSine -= 2.0f*Pi32;
 	}
 }
-
-// Populates the passed buffer with a blue and green gradient. It's position is relative
-// to the params.
-internal void
-RenderWeirdGradient(engine_offscreen_buffer *Buffer, int BlueOffset, int GreenOffset) {
-    // Cast void pointer into uint8_t
-    uint8_t* Row = (uint8_t*)Buffer->Memory;
-    // Iterate through the whole bit map
-    for (int Y = 0; Y < Buffer->Height; ++Y) {
-        uint32_t *Pixel = (uint32_t *)Row;
-        for (int X = 0; X < Buffer->Width; ++X) {
-            uint8_t Blue = (uint8_t)(X + BlueOffset);
-            uint8_t Green = (uint8_t)(Y + GreenOffset);
-            *Pixel++ = (Green << 8 | Blue);
-        }
-		// Buffer->Pitch is the width of each row of our BitMap in bytes.
-        Row += Buffer->WidthInBytes;
-    }
-}
+#endif
 
 internal void
 RenderPlayer(engine_offscreen_buffer *Buffer, int PlayerX, int PlayerY, uint32_t Color){
@@ -108,7 +91,6 @@ ENGINE_UPDATE_AND_RENDER(EngineUpdateAndRender) {
 		}
 		EngineState->tJump -= 0.033f;
 	}
-	RenderWeirdGradient(Buffer, EngineState->BlueOffset, EngineState->GreenOffset);
 	RenderPlayer(Buffer, EngineState->PlayerX, EngineState->PlayerY, 0xFFFF0000);
 	for(int MouseIndex = 0; MouseIndex < ArrayCount(Input->MouseButtons); ++MouseIndex) {
 		if(Input->MouseButtons[MouseIndex].EndedDown) {
@@ -122,5 +104,5 @@ extern "C"
 ENGINE_GET_SOUND_SAMPLES(EngineGetSoundSamples) {
 	Assert((sizeof(engine_state) <= Memory->PermanentStorageSize));
 	engine_state *EngineState = (engine_state *)Memory->PermanentStorage;
-	OutputSound(SoundBuffer, EngineState, EngineState->ToneHz);
+//	OutputSound(SoundBuffer, EngineState, EngineState->ToneHz);
 }
