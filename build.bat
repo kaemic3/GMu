@@ -13,8 +13,8 @@ REM set CommonLinkerFlags= -incremental:no -opt:ref user32.lib gdi32.lib winmm.l
 REM For SDL build
 REM set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi -WX -W4 -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -FC -Zi -Fm
 REM TODO(kaelan): Need to add -WX again, but there are a lot of warnings....
-set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -FC -Zi -Fm -PDB
-set CommonLinkerFlags= 
+set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -FC -Zi -Fm
+set CommonLinkerFlags= -incremental:no /DEBUG:FULL
 set SDLCompilerFlags= /I ..\SDL\Windows\include /I..\SDL\Windows\ttf\include\ /EHsc
 set SDLLinkerFlags= -LIBPATH:..\SDL\Windows\lib\x64\ -LIBPATH:..\SDL\Windows\ttf\lib\x64\ /subsystem:windows SDL2.lib SDL2main.lib SDL2_ttf.lib shell32.lib
 
