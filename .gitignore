@@ -17,5 +17,6 @@
 CMakeLists.txt
 /ROMs/dmg.bin
 /CppProperties.json/
+/build/.vs/main/v17/ipch/
 
 
