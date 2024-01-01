@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "build.bat",
+            "command": "win32_build.bat",
             "args": [
                 // Ask msbuild to generate full paths for file names.
                 "/property:GenerateFullPaths=true",
