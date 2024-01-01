@@ -7,6 +7,9 @@
 *.map
 *.ilk
 *.exe
+nenjin.dll
+nenjin_temp.dll
+lock.tmp
 # Editor-based HTTP Client requests
 /httpRequests/
 # Datasource local storage ignored files
