@@ -1,6 +1,8 @@
 #if !defined(NENJIN_H)
 
 #include "nenjin_platform.h"
+#include "nenjin_intrinsic.h"
+#include "nenjin_render.h"
 
 // Engine internal functions and structs
 
@@ -42,7 +44,7 @@ struct nenjin_state
 {
 	memory_arena bus_arena;
 	memory_arena cartridge_arena;
-	loaded_bitmap background;
+	loaded_bitmap test_txt;
 
 };
 #define NENJIN_H
