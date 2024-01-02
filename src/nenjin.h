@@ -19,13 +19,12 @@ InitializeArena(memory_arena *arena, size_t size, u8 *storage) {
 	arena->bytes_used = 0;
 }
 // Macros that allow us to allocate memory for structs and arrays!
-#define PushStruct(Pool, type) (type *)PushSize_(Pool, sizeof(type))
-#define PushArray(Pool, Count, type) (type *) PushSize_(Pool, (Count)*sizeof(type))
+#define PushStruct(pool, type) (type *)PushSize_(pool, sizeof(type))
+#define PushArray(pool, count, type) (type *) PushSize_(pool, (count)*sizeof(type))
 // Allocates a chunk of memory in the pased memory arena. The size of the chunk
 // is passed in, and the BytesUsed in the arena is updated accordingly.
 // An assert is fired if the size of the desired allocation causes the 
 // total arena size to overflow.
-// TODO(kaelan): Make a way to free memory from the pool???
 internal void * 
 PushSize_(memory_arena *arena, size_t size) {
 	Assert((arena->bytes_used + size) <= arena->size);
@@ -42,9 +41,10 @@ struct loaded_bitmap
 };
 struct nenjin_state 
 {
-	memory_arena bus_arena;
 	memory_arena cartridge_arena;
 	loaded_bitmap test_txt;
+	Bus game_boy_bus;
+    std::shared_ptr<Cartridge> gb_cart;
 
 };
 #define NENJIN_H

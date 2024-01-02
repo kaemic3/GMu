@@ -3584,7 +3584,7 @@ uint8_t SM83::ld_abs_a16_sp() {
     addr_abs = (highByte << 8) | lowByte;
 
     // Write the SP to the absolute address in little-endian
-    cpu_write(addr_abs++, sp, false);
+    cpu_write(addr_abs++, (uint8_t)sp, false);
     cpu_write(addr_abs, (sp >> 8), false);
     return 0;
 }
