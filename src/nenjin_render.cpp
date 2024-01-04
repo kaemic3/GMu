@@ -2,6 +2,9 @@
 // NOTE: Keeping coordinate system relative to the top left corner.
 // TODO(kaelan): Need a function that will draw the PPU vram to the screen!
 // TODO(kaelan): Need to add support for ttf fonts using STB!
+// TODO(kaelan): Add alpha blending for all draw functions?
+
+// NOTE: Game Boy screen is 160 x 144 pixels, and has a 10:9 aspect ratio.
 
 internal void
 DrawRectangle(nenjin_offscreen_buffer *buffer, f32 f_min_x, f32 f_min_y, f32 f_max_x, f32 f_max_y, f32 r, f32 g, f32 b) {
@@ -176,3 +179,68 @@ DEBUGLoadBMP(thread_context *thread, debug_platform_read_entire_file *ReadEntire
 	}
 	return result;
 }
+inline u32
+NenjinColorToU32(nenjin_color *color) {
+    u32 result = 0;
+    f32 a = color->alpha;
+    f32 r = color->red;
+    f32 g = color->green;
+    f32 b = color->blue;
+    // De-normalize.
+    result = (u32)(RoundFloat32ToU32(a * 255.0f) << 24 |
+                   RoundFloat32ToU32(r * 255.0f) << 16 | 
+				   RoundFloat32ToU32(g * 255.0f) << 8 | 
+				   RoundFloat32ToU32(b * 255.0f) << 0);
+    return result;
+}
+// TODO(kaelan): Create a DrawPixel funciton?
+// TODO(kaelan): Need to scale the render up!
+internal void
+DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *palette) {
+    // GameBoy has 4 colors
+    // 0x00 White 0x01 Light gray 0x02 Dark gray 0x03 Black
+    // TODO(kaelan): Create a color palette for these?
+    // NOTE: GameBoy screen size is 160x144 pixles
+    u32 screen_width = 160;
+    u32 screen_height = 144;
+    u8 *dest_row = (u8*)buffer->memory;
+    enum color_index
+    {
+        WHITE, LIGHT_GRAY, DARK_GRAY, BLACK
+    };
+    for(s32 y = 0; y < screen_height; ++y)
+    {
+        u32 *dest = (u32 *)dest_row;
+        for(s32 x = 0; x < screen_width; ++x)
+        {
+            // Grab the color index from the screen memory.
+            u32 color_index = gb->screen[x + y*screen_width];
+			Assert(x + y*screen_width < gb->screen.size())
+            nenjin_color color = {};
+            // Pick the pixel color based on the passed color palette.
+            switch(color_index)
+            {
+                case WHITE:
+                {
+                    color = palette->index_0;
+                } break;
+                case LIGHT_GRAY:
+                {
+                    color = palette->index_1;
+                } break;
+                case DARK_GRAY:
+                {
+                    color = palette->index_2;
+                } break;
+                case BLACK:
+                {
+                    color = palette->index_3;
+                } break;
+            }
+            // Write the pixel to memory.
+            *dest++ = NenjinColorToU32(&color);
+        }
+        dest_row += buffer->width_in_bytes;
+    }
+}
+

@@ -7,6 +7,14 @@ struct nenjin_color
     f32 green;
     f32 blue;
 };
+struct gb_color_palette
+{
+    nenjin_color index_0;
+    nenjin_color index_1;
+    nenjin_color index_2;
+    nenjin_color index_3;
+};
+// TODO(kaelan): Do we need bitmap support?
 // TODO(kaelan): Add support for BITMAPV5HEADER, which seems like it will be the main BMP
 //				 format that is used, at least in the modern day.
 // pragma pack allows us to adjust the way the compiler packs our struct.
