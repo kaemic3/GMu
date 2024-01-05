@@ -34,6 +34,8 @@ internal void
 InitializeGameBoy(nenjin_state *state) {
     if(state->gb_cart)
     {
+        // FIXME: This uses "new" which is not what we want at all! It should use a memory arena.
+        // TODO(kaelan): Will look into fixing this after the scaling algorithm gets faster.
         state->game_boy_bus = new Bus();
         Bus *gb = state->game_boy_bus;
         gb->insert_cartridge(state->gb_cart);
@@ -77,7 +79,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     palette.index_2 = {1.0f, 0.33f, 0.33f, 0.33f};
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
     ClockGameBoy(emulator_state->game_boy_bus);
-    // TODO(kaelan): The algorithm to upscale the pixel output to 4x is ungodly slow.
+    // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
     // With optimizations its not un-usable, but this is not going to work on slower systems.
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
 }

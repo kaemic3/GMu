@@ -237,49 +237,13 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
 	u32 scaled_screen_width = 4 * screen_width;
 	u32 scaled_screen_height = 4 * screen_height;
     u8 *dest_row = (u8*)buffer->memory;
-	enum gb_color
-    {
-        WHITE, LIGHT_GRAY, DARK_GRAY, BLACK
-    };
-   	#if 0
-    for(s32 y = 0; y < screen_height; ++y)
-    {
-        u32 *dest = (u32 *)dest_row;
-        for(s32 x = 0; x < screen_width; ++x)
-        {
-            // Grab the color index from the screen memory.
-            u32 color_index = gb->screen[x + y*screen_width];
-			Assert(x + y*screen_width < gb->screen.size())
-            nenjin_color color = {};
-            // Pick the pixel color based on the passed color palette.
-            switch(color_index)
-            {
-                case WHITE:
-                {
-                    color = palette->index_0;
-                } break;
-                case LIGHT_GRAY:
-                {
-                    color = palette->index_1;
-                } break;
-                case DARK_GRAY:
-                {
-                    color = palette->index_2;
-                } break;
-                case BLACK:
-                {
-                    color = palette->index_3;
-                } break;
-            }
-            // Write the pixel to memory.
-			// TODO(kaelan): Make this draw 4x pixels?
-            *dest++ = NenjinColorToU32(&color);
-        }
-        dest_row += buffer->width_in_bytes;
-    }
-	#else
-	// Draw 4 X pixels and 4 Y pixels, for every pixel in gb screen memory.
-	// TODO(kaelan): IDK if this really works yet.
+
+	// Draw 4 X pixels and 4 Y pixels, for every pixel in gb screen memory.'
+	// TODO(kaelan): Make this algorithm faster!
+	// TODO(kaelan): At this point, it can be made to have a scale factor passed in, rather than having a hardcoded one.
+	//				 Is this a good idea??
+	// NOTE: A possbile way to make this even faster would be to load a set of pixels into a buffer, and then copy that 
+	//		 buffer 4 times into our offscreen buffer in the Y axis. Right now the Y axis has to do 4x the number of passes.
 	u32 gb_screen_index = 0;
 	for(s32 y = 1; y <= scaled_screen_height; ++y)
 	{
@@ -303,6 +267,5 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
 		}
         dest_row += buffer->width_in_bytes;
 	}
-#endif
 }
 
