@@ -284,17 +284,17 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
 	for(s32 y = 1; y <= scaled_screen_height; ++y)
 	{
 		u32 *dest = (u32 *)dest_row;
-		for(s32 x = 1; x <= scaled_screen_width; ++x)
+		for(s32 x = 0; x < screen_width; ++x)
 		{
 			// Get gb color
 			u32 screen_color = gb->screen[gb_screen_index];
 			nenjin_color *screen_nenjin_color = GetNenjinColor(screen_color, palette);
 			u32 u32_color = NenjinColorToU32(screen_nenjin_color);
-			*dest++ = u32_color;
-			if(x % 4 == 0)
+			for(s32 index = 0; index < 4; ++index)
 			{
-				++gb_screen_index;
+				*dest++ = u32_color;
 			}
+			++gb_screen_index;
 		}
 
 		if(y % 4 != 0)
