@@ -36,7 +36,6 @@ InitializeGameBoy(nenjin_state *state) {
     {
         state->game_boy_bus = new Bus();
         Bus *gb = state->game_boy_bus;
-        // Manually call the constructor to the bus class.
         gb->insert_cartridge(state->gb_cart);
         // TODO(kaelan): Need to load the boot rom
         // For now set pc to 0x0100 and sp to 0xfffe
@@ -79,5 +78,6 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
     ClockGameBoy(emulator_state->game_boy_bus);
     // TODO(kaelan): The algorithm to upscale the pixel output to 4x is ungodly slow.
+    // With optimizations its not un-usable, but this is not going to work on slower systems.
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
 }

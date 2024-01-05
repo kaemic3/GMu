@@ -416,6 +416,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     engine_buffer.height = global_back_buffer.height;
                     engine_buffer.width_in_bytes = global_back_buffer.width_in_bytes;
                     engine_buffer.bytes_per_pixel = global_back_buffer.bytes_per_pixel;
+                    // TODO(kaelan): Setup a fixed timestep for the emulator to run at!
                     if(engine_code.UpdateAndRender)
                     {
                         engine_code.UpdateAndRender(&thread, &engine_memory, engine_input, &engine_buffer);
