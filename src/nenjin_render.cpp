@@ -193,6 +193,37 @@ NenjinColorToU32(nenjin_color *color) {
 				   RoundFloat32ToU32(b * 255.0f) << 0);
     return result;
 }
+inline nenjin_color *
+GetNenjinColor(u32 color_index, gb_color_palette *palette) {
+	nenjin_color *result = 0;
+	enum gb_color
+    {
+        WHITE, LIGHT_GRAY, DARK_GRAY, BLACK
+    };
+
+
+	switch(color_index)
+    {
+		case WHITE:
+		{
+			result = &palette->index_0;
+		} break;
+		case LIGHT_GRAY:
+		{
+			result = &palette->index_1;
+		} break;
+		case DARK_GRAY:
+		{
+			result = &palette->index_2;
+		} break;
+		case BLACK:
+		{
+			result = &palette->index_3;
+		} break;
+	}
+	Assert(result);
+	return result;
+}
 // TODO(kaelan): Create a DrawPixel funciton?
 // TODO(kaelan): Need to scale the render up!
 internal void
@@ -203,11 +234,14 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
     // NOTE: GameBoy screen size is 160x144 pixles
     u32 screen_width = 160;
     u32 screen_height = 144;
+	u32 scaled_screen_width = 4 * screen_width;
+	u32 scaled_screen_height = 4 * screen_height;
     u8 *dest_row = (u8*)buffer->memory;
-    enum color_index
+	enum gb_color
     {
         WHITE, LIGHT_GRAY, DARK_GRAY, BLACK
     };
+   	#if 0
     for(s32 y = 0; y < screen_height; ++y)
     {
         u32 *dest = (u32 *)dest_row;
@@ -238,9 +272,37 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
                 } break;
             }
             // Write the pixel to memory.
+			// TODO(kaelan): Make this draw 4x pixels?
             *dest++ = NenjinColorToU32(&color);
         }
         dest_row += buffer->width_in_bytes;
     }
+	#else
+	// Draw 4 X pixels and 4 Y pixels, for every pixel in gb screen memory.
+	// TODO(kaelan): IDK if this really works yet.
+	u32 gb_screen_index = 0;
+	for(s32 y = 1; y <= scaled_screen_height; ++y)
+	{
+		u32 *dest = (u32 *)dest_row;
+		for(s32 x = 1; x <= scaled_screen_width; ++x)
+		{
+			// Get gb color
+			u32 screen_color = gb->screen[gb_screen_index];
+			nenjin_color *screen_nenjin_color = GetNenjinColor(screen_color, palette);
+			u32 u32_color = NenjinColorToU32(screen_nenjin_color);
+			*dest++ = u32_color;
+			if(x % 4 == 0)
+			{
+				++gb_screen_index;
+			}
+		}
+
+		if(y % 4 != 0)
+		{
+			gb_screen_index -= 160;
+		}
+        dest_row += buffer->width_in_bytes;
+	}
+#endif
 }
 

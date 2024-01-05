@@ -34,7 +34,9 @@ internal void
 InitializeGameBoy(nenjin_state *state) {
     if(state->gb_cart)
     {
-        Bus *gb = &state->game_boy_bus;
+        state->game_boy_bus = new Bus();
+        Bus *gb = state->game_boy_bus;
+        // Manually call the constructor to the bus class.
         gb->insert_cartridge(state->gb_cart);
         // TODO(kaelan): Need to load the boot rom
         // For now set pc to 0x0100 and sp to 0xfffe
@@ -48,6 +50,12 @@ InitializeGameBoy(nenjin_state *state) {
     }
 
 }
+internal void
+ClockGameBoy(Bus *gb) {
+    do {
+        gb->clock();
+    }while(!gb->ppu.get_frame_state());
+}
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
@@ -58,6 +66,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
         LoadCartridge(emulator_state, "./ROMs/gb_snek.gb");
         InitializeGameBoy(emulator_state);
+        memory->is_initialized = true;
     }
     //Clear screen to black
     ClearBackBufferToBlack(buffer);
@@ -68,5 +77,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
     palette.index_2 = {1.0f, 0.33f, 0.33f, 0.33f};
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    DrawGameBoyScreen(buffer, &emulator_state->game_boy_bus, &palette);
+    ClockGameBoy(emulator_state->game_boy_bus);
+    // TODO(kaelan): The algorithm to upscale the pixel output to 4x is ungodly slow.
+    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
 }

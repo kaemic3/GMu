@@ -43,7 +43,7 @@ struct nenjin_state
 {
 	memory_arena cartridge_arena;
 	loaded_bitmap test_txt;
-	Bus game_boy_bus;
+	Bus *game_boy_bus;
     std::shared_ptr<Cartridge> gb_cart;
 
 };
