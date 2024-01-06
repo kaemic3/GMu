@@ -65,7 +65,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     if(!memory->is_initialized)
     {
         emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
-        LoadCartridge(emulator_state, "./ROMs/gb_snek.gb");
+        LoadCartridge(emulator_state, "./ROMs/scroll_test.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
     }
@@ -79,7 +79,15 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     palette.index_2 = {1.0f, 0.33f, 0.33f, 0.33f};
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
     ClockGameBoy(emulator_state->game_boy_bus);
+
     // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
-    // With optimizations its not un-usable, but this is not going to work on slower systems.
+    // TODO(kaelan): I think that the best optimization would be to use StretchDIBits on Windows to scale up the image. 
+    //               This would be by far the fastest option, and with optimizations, so far this algorithm works well enough.
+    //               To do this, I need to make a callback of some kind, or add a flag to the nenjin_offscreen_buffer and 
+    //               win32_offscreen_buffer structs that would scale the buffer somehow.
+
+    // IDEA: Create a separate function that updates the GameBoy screen based on a buffer that updates in this engine update function.
+    // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
+    //         - Each buffer would have coordinates, size and scale??
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
 }

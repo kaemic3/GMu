@@ -239,11 +239,8 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
     u8 *dest_row = (u8*)buffer->memory;
 
 	// Draw 4 X pixels and 4 Y pixels, for every pixel in gb screen memory.'
-	// TODO(kaelan): Make this algorithm faster!
 	// TODO(kaelan): At this point, it can be made to have a scale factor passed in, rather than having a hardcoded one.
 	//				 Is this a good idea??
-	// NOTE: A possbile way to make this even faster would be to load a set of pixels into a buffer, and then copy that 
-	//		 buffer 4 times into our offscreen buffer in the Y axis. Right now the Y axis has to do 4x the number of passes.
 	u32 gb_screen_index = 0;
 	for(s32 y = 1; y <= scaled_screen_height; ++y)
 	{

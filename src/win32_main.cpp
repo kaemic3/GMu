@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <malloc.h>
+#include <stdio.h>
 
 #include "nenjin_platform.h"
 #include "win32_main.h"
@@ -18,6 +19,7 @@ global_variable bool32 global_running;
 global_variable WINDOWPLACEMENT global_prev_window_placement;
 global_variable bool32 global_is_fullscreen;
 global_variable HCURSOR global_cursor;
+global_variable LARGE_INTEGER global_perf_counter_frequency;
 
 // Basic, kinda slow, string contatenation. Will need to create a proper string library at some point!
 internal void
@@ -339,9 +341,34 @@ Win32ProcessMessageQueue(win32_state *state) {
         DispatchMessage(&message);
     }
 }
-
+// Returns the current wall clock time. Used for timing calculations.
+inline LARGE_INTEGER
+Win32GetWallClock(void) {
+    LARGE_INTEGER result;
+    QueryPerformanceCounter(&result);
+    return result;
+}
+// Returns the difference in time between to time points.
+inline f32
+Win32GetSecondsElapsed(LARGE_INTEGER start, LARGE_INTEGER end) {
+    f32 result = ((f32)(end.QuadPart - start.QuadPart)) / (f32)global_perf_counter_frequency.QuadPart;
+    return result; 
+}
 int WINAPI
 wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int show_code) {
+// Windows 11 sleep nonsense!
+
+// Windows 11 locks away change of timer resolution, so we need to force allow
+// changes to the timer resolution.
+#ifndef PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION
+#define PROCESS_POWER_THROTTLING_IGNORE_TIME_RESOLUTION 0x4
+#endif
+	PROCESS_POWER_THROTTLING_STATE power_state = {};
+	power_state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+	power_state.ControlMask = PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+	power_state.StateMask = 0;
+	SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &power_state, sizeof(power_state));
+
 // TODO(kaelan): Need to get the monitor resolution from Windows.
 #define SCREEN_HORIZONTAL 1280 
 #define SCREEN_VERTICAL 720 
@@ -399,6 +426,22 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                 char lock_full_path[WIN32_STATE_FILE_NAME_COUNT];
                 Win32BuildEXEDirectoryPath(&platform_state, lock_file_name, sizeof(lock_full_path), lock_full_path);
                 engine_code = Win32LoadEngineCode(engine_dll_full_path, temp_engine_dll_full_path, lock_full_path);
+                // Setup engine timing/sleep settings.
+                LARGE_INTEGER perf_counter_frequency_result;
+                QueryPerformanceFrequency(&perf_counter_frequency_result);
+                // This can be global since the frequency is set on boot. The program only needs to get this value one time.
+                global_perf_counter_frequency = perf_counter_frequency_result;
+                // Set scheduler granularity to 1 ms
+                UINT desired_scheduler_ms = 1;
+                // Check if our change to the scheduler went through.
+                bool32 sleep_is_granular = (timeBeginPeriod(desired_scheduler_ms) == TIMERR_NOERROR);
+                // Since the Game Boy updates it's screen at a fixed rate, the frame rate will be locked for now.
+                // TODO(kaelan): const or DEFINE???
+                // TODO(kaelan): Does the emulator need access to the update frequency??
+                const f32 engine_update_freq_ms = 16.74f;
+                // Convert our update hz in ms to seconds.
+                f32 target_seconds_per_frame = engine_update_freq_ms/1000.0f;
+                LARGE_INTEGER last_counter = Win32GetWallClock();
                 while(global_running)
                 {
                     // Reload the engine dll if it has been re-built.
@@ -416,16 +459,57 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     engine_buffer.height = global_back_buffer.height;
                     engine_buffer.width_in_bytes = global_back_buffer.width_in_bytes;
                     engine_buffer.bytes_per_pixel = global_back_buffer.bytes_per_pixel;
-                    // TODO(kaelan): Setup a fixed timestep for the emulator to run at!
+                    Win32ProcessMessageQueue(&platform_state);
+
                     if(engine_code.UpdateAndRender)
                     {
                         engine_code.UpdateAndRender(&thread, &engine_memory, engine_input, &engine_buffer);
                     }
-                    Win32ProcessMessageQueue(&platform_state);
+                    LARGE_INTEGER work_counter = Win32GetWallClock();
+                    f32 work_seconds_elapsed = Win32GetSecondsElapsed(last_counter, work_counter);
+
+                    if(work_seconds_elapsed < target_seconds_per_frame)
+                    {
+                        // Only sleep if we could set the scheduler granularity to 1ms.
+                        // TODO(kaelan): Check to see if there is a better way to sleep the program.
+                        //               This method has some inconsistencies.
+                        if(sleep_is_granular)
+                        {
+                            INT int_sleep_ms = (INT)(1000.0f*(target_seconds_per_frame-work_seconds_elapsed-1.0f));
+                            DWORD sleep_ms = (int_sleep_ms < 0 ? 0 : (DWORD)int_sleep_ms);
+                            if(sleep_ms > 0)
+                            {
+                                Sleep(sleep_ms);
+                            }
+                        }
+                        f32 test_seconds_per_frame = Win32GetSecondsElapsed(last_counter, Win32GetWallClock());
+                        // NOTE: This burns the rest of the cycles required to meet the frame time.
+                        while(work_seconds_elapsed < target_seconds_per_frame)
+                        {
+                            work_seconds_elapsed = (Win32GetSecondsElapsed(last_counter, Win32GetWallClock()));
+                        }
+                    }
+                    else
+                    {
+                        // Missed frame.
+                    }
+                    LARGE_INTEGER end_counter = Win32GetWallClock();
+                    // Perf metrics.
+                    f32 ms_per_frame = 1000.0f * Win32GetSecondsElapsed(last_counter, end_counter);
+                    f32 fps = 1000.0f/ms_per_frame;
+                    // Update last_counter so it can be re-used again in the next frame time calculation.
+                    last_counter = end_counter;
+                    // TODO(kaelan): Setup a fixed timestep for the emulator to run at!
                     HDC device_context = GetDC(window);
                     win32_window_dimensions win_dim = Win32GetWindowDimensions(window);
                     Win32DisplayBufferInWindow(device_context, &global_back_buffer, win_dim.width, win_dim.height);
                     ReleaseDC(window, device_context);
+
+                    // Debug output 
+                    char Buffer[256];
+                    _snprintf_s(Buffer, sizeof(Buffer), " %.02f FPS, %.02fms\n", fps, ms_per_frame);
+                    OutputDebugStringA(Buffer);
+
                 }
             }
             else
