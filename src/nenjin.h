@@ -55,7 +55,6 @@ struct nenjin_state
 	memory_arena cartridge_arena;
 	memory_arena bitmap_arena;
 	font_bitmap test_text;
-	loaded_bitmap test_txt;
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 
 	// 		 Also, even after forcing it to be called, I had issues with memory access violations.
 	//		 This is probably due to the way the bus class default intializes the CPU and PPU.

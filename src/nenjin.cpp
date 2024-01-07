@@ -123,7 +123,6 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
     if(!memory->is_initialized)
     {
-        emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
         LoadCartridge(emulator_state, "./ROMs/Mario.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
@@ -133,11 +132,10 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->test_text = STBFontTest(memory->DEBUGPlatformReadEntireFile, thread, &emulator_state->bitmap_arena);
     }
 
-    //Clear screen to black
+    // Clear screen to black.
     ClearBackBufferToBlack(buffer);
-    // Draw test text to the center of the window.
-    DrawBitmap(buffer, &emulator_state->test_txt, 1280.0f/2.0f, 720.0f/2.0f, 319, 100);
-    DrawBitmap(buffer, &emulator_state->test_text.bitmap, 1000.0f, 300.0f, emulator_state->test_text.x_offset, emulator_state->test_text.y_offset);
+    // Draw a K generated with stb_ttf.
+    DrawBitmap(buffer, &emulator_state->test_text.bitmap, 1000.0f, 200.0f, emulator_state->test_text.x_offset, emulator_state->test_text.y_offset);
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
