@@ -28,7 +28,7 @@ REM 64-bit build
 REM Optimization switches /O2 /Oi /fp:fast 
 del *.pdb > NUL 2> NUL
 echo WAITING FOR PDB > lock.tmp
-cl %CommonCompilerFlags% ..\src\nenjin.cpp -LD /link -incremental:no -opt:ref -PDB:nenjin_%random%.pdb -EXPORT:NenjinUpdateAndRender
+cl %CommonCompilerFlags% ..\src\nenjin.cpp -LD /I ..\dependencies\stb\ /link -incremental:no -opt:ref -PDB:nenjin_%random%.pdb -EXPORT:NenjinUpdateAndRender
 del lock.tmp
  cl %CommonCompilerFlags% ..\src\win32_main.cpp /link %CommonLinkerFlags%
 

@@ -5,6 +5,8 @@
 #include "nenjin_render.h"
 
 // Engine internal functions and structs
+#define Minimum(a, b) ((a < b) ? (a) : (b))
+#define Maximum(a, b) ((a > b) ? (a) : (b))
 
 struct memory_arena
 {
@@ -20,6 +22,7 @@ InitializeArena(memory_arena *arena, size_t size, u8 *storage) {
 }
 // Macros that allow us to allocate memory for structs and arrays!
 #define PushStruct(pool, type) (type *)PushSize_(pool, sizeof(type))
+#define PushSize(pool, size) PushSize_(pool, size)
 #define PushArray(pool, count, type) (type *) PushSize_(pool, (count)*sizeof(type))
 // Allocates a chunk of memory in the pased memory arena. The size of the chunk
 // is passed in, and the BytesUsed in the arena is updated accordingly.
@@ -37,12 +40,21 @@ struct loaded_bitmap
 {
 	s32 width;
 	s32 height;
-	u32 *pixels;
+	s32 width_in_bytes;
+	u32 *memory;
+};
+struct font_bitmap
+{
+	loaded_bitmap bitmap;
+	s32 x_offset;
+	s32 y_offset;
 };
 struct nenjin_state 
 {
 	bool32 run_emulator;
 	memory_arena cartridge_arena;
+	memory_arena bitmap_arena;
+	font_bitmap test_text;
 	loaded_bitmap test_txt;
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 
 	// 		 Also, even after forcing it to be called, I had issues with memory access violations.

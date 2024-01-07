@@ -22,6 +22,10 @@
 #include "Mapper_01.cpp"
 #include "nenjin.h"
 #include "nenjin_render.cpp"
+// STB TTF
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+// TODO(kaelan): Implement memory allocation, change stb's allocator to it.
 
 // FIXME: USES ALLOCATED MEMORY FROM STL.
 // TODO(kaelan): Need to use a memory arena for this! Rework cartridge class.
@@ -58,6 +62,60 @@ ClockGameBoy(Bus *gb, bool32 run_emulator) {
     }while(!gb->ppu.get_frame_state() && run_emulator);
     gb->joypad_state_change = false;
 }
+#define BITMAP_BYTES_PER_PIXEL 4
+internal loaded_bitmap
+MakeEmptyBitmap(memory_arena *arena, s32 width, s32 height, bool32 clear_to_zero = false) {
+    loaded_bitmap result = {};
+
+    result.width = width;
+    result.height = height;
+    result.width_in_bytes = result.width * BITMAP_BYTES_PER_PIXEL;
+    size_t total_bitmap_size = width*height*BITMAP_BYTES_PER_PIXEL;
+
+    result.memory = (u32 *)PushSize(arena, total_bitmap_size);
+    // TODO(kaelan): Create a ClearBitmap function.
+    #if 0
+    if(clear_to_zero)
+    {
+        ClearBitmap(&result);
+    }
+    #endif
+    return result;
+}
+internal font_bitmap 
+STBFontTest(debug_platform_read_entire_file ReadEntireFile, thread_context *thread, memory_arena *arena) {
+    stbtt_fontinfo font;
+    u8 *mono_bitmap;
+    debug_read_file_result read_result = ReadEntireFile(thread, "../Fonts/amstrad_cpc464.ttf");
+    u8 *ttf_buffer = (u8*)read_result.contents;
+    stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
+    s32 width, height, x_offset, y_offset;
+    mono_bitmap = stbtt_GetCodepointBitmap(&font, 0,stbtt_ScaleForPixelHeight(&font, 64.0f), 'k', 
+                                           &width, &height, &x_offset, &y_offset);
+    loaded_bitmap bitmap = MakeEmptyBitmap(arena, width, height);
+    u8 *dest_row = (u8 *)bitmap.memory + (height-1) * bitmap.width_in_bytes;
+    u8 *source = mono_bitmap;
+    for(s32 y = 0; y < height; ++y)
+    {
+        u32 *dest = (u32 *)dest_row;
+        for(s32 x = 0; x < width; ++x)
+        {
+            u8 alpha = *source++;
+            *dest++ = ((alpha << 24) |
+                       (alpha << 16) |
+                       (alpha << 8) | 
+                       (alpha << 0));
+        }
+        dest_row -= bitmap.width_in_bytes;
+    }
+    font_bitmap result = {};
+    result.bitmap = bitmap;
+    result.x_offset = x_offset;
+    result.y_offset = y_offset;
+    stbtt_FreeBitmap(mono_bitmap, 0);
+    return result;
+}
+
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
@@ -66,16 +124,20 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     if(!memory->is_initialized)
     {
         emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
-        LoadCartridge(emulator_state, "./ROMs/Dr. Mario.gb");
+        LoadCartridge(emulator_state, "./ROMs/Mario.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
         emulator_state->run_emulator = true;
+        InitializeArena(&emulator_state->bitmap_arena, memory->permanent_storage_size - sizeof(nenjin_state),
+                        (u8 *)memory->permanent_storage + sizeof(nenjin_state));
+        emulator_state->test_text = STBFontTest(memory->DEBUGPlatformReadEntireFile, thread, &emulator_state->bitmap_arena);
     }
 
     //Clear screen to black
     ClearBackBufferToBlack(buffer);
     // Draw test text to the center of the window.
     DrawBitmap(buffer, &emulator_state->test_txt, 1280.0f/2.0f, 720.0f/2.0f, 319, 100);
+    DrawBitmap(buffer, &emulator_state->test_text.bitmap, 1000.0f, 300.0f, emulator_state->test_text.x_offset, emulator_state->test_text.y_offset);
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
@@ -184,5 +246,5 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
     //         - Each buffer would have coordinates, size and scale??
     // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
-    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 2);
+    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
 }

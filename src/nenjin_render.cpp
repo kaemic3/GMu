@@ -78,7 +78,7 @@ DrawBitmap(nenjin_offscreen_buffer *buffer, loaded_bitmap *bitmap, f32 fx, f32 f
 	}
 
 	// NOTE: source_row is in pixels not bytes!
-	u32 *source_row = bitmap->pixels + bitmap->width*(bitmap->height-1);
+	u32 *source_row = bitmap->memory + bitmap->width*(bitmap->height-1);
 	source_row += source_offset_x + (-source_offset_y * bitmap->width);
 	u8 *dest_row = ((u8 *)buffer->memory + min_x*buffer->bytes_per_pixel + min_y*buffer->width_in_bytes);
 	for(s32 y = min_y; y < max_y; ++y)
@@ -136,7 +136,7 @@ DEBUGLoadBMP(thread_context *thread, debug_platform_read_entire_file *ReadEntire
 	{
 		bitmap_header *header = (bitmap_header *)file_contents.contents;
 		u32 *pixels = (u32 *)((u8 *)file_contents.contents + header->bitmap_offset);
-		result.pixels = pixels;
+		result.memory = pixels;
 		result.width = header->width;
 		result.height = header->height;
 		// Make sure that we are loading a file that usees bitfields!
