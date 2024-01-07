@@ -380,7 +380,7 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                     {
                         Win32ProcessKeyboardMessage(&keyboard_controller->right, is_down);
                     }
-                    else if(vk_code == 'G' || VK_SPACE)
+                    else if(vk_code == 'G')
                     {
                         Win32ProcessKeyboardMessage(&keyboard_controller->a, is_down);
                     }
