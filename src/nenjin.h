@@ -41,6 +41,7 @@ struct loaded_bitmap
 };
 struct nenjin_state 
 {
+	bool32 run_emulator;
 	memory_arena cartridge_arena;
 	loaded_bitmap test_txt;
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 

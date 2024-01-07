@@ -52,10 +52,11 @@ InitializeGameBoy(nenjin_state *state) {
 
 }
 internal void
-ClockGameBoy(Bus *gb) {
+ClockGameBoy(Bus *gb, bool32 run_emulator) {
     do {
         gb->clock();
-    }while(!gb->ppu.get_frame_state());
+    }while(!gb->ppu.get_frame_state() && run_emulator);
+    gb->joypad_state_change = false;
 }
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
@@ -65,10 +66,12 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     if(!memory->is_initialized)
     {
         emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
-        LoadCartridge(emulator_state, "./ROMs/scroll_test.gb");
+        LoadCartridge(emulator_state, "./ROMs/Mario.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
+        emulator_state->run_emulator = true;
     }
+
     //Clear screen to black
     ClearBackBufferToBlack(buffer);
     // Draw test text to the center of the window.
@@ -78,7 +81,78 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
     palette.index_2 = {1.0f, 0.33f, 0.33f, 0.33f};
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
-    ClockGameBoy(emulator_state->game_boy_bus);
+    // Input handling
+    nenjin_controller_input *controller = GetController(input, 0);
+    if(controller->pause_emulator)
+    {
+        emulator_state->run_emulator = false;
+    }
+    else
+    {
+        emulator_state->run_emulator = true;
+    }
+    if(controller->up.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_directional &= ~(1 << 2);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_directional |= (1 << 2);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->down.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_directional &= ~(1 << 3);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_directional |= (1 << 3);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->left.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_directional &= ~(1 << 1);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_directional |= (1 << 1);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->right.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_directional &= ~(1 << 0);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_directional |= (1 << 0);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->a.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_action &= ~(1 << 0);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_action |= (1 << 0);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->start.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_action &= ~(1 << 3);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_action |= (1 << 3);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+
+    ClockGameBoy(emulator_state->game_boy_bus, emulator_state->run_emulator);
 
     // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
     // TODO(kaelan): I think that the best optimization would be to use StretchDIBits on Windows to scale up the image. 
@@ -89,5 +163,6 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // IDEA: Create a separate function that updates the GameBoy screen based on a buffer that updates in this engine update function.
     // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
     //         - Each buffer would have coordinates, size and scale??
+    // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
 }

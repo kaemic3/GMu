@@ -305,6 +305,13 @@ Win32WindowProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
         {
             global_cursor = SetCursor(global_cursor);
         } break;
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        {
+            Assert("KeyMessage processed in callback rather than message loop.\n");
+        } break;
         case WM_PAINT:
         {
             PAINTSTRUCT paint;
@@ -323,24 +330,86 @@ Win32WindowProc(HWND window, UINT message, WPARAM w_param, LPARAM l_param) {
     }
     return result;
 }
+internal void
+Win32ProcessKeyboardMessage(nenjin_button_state *new_state, bool32 is_down) {
+    // Only process the input when the state has changed.
+    if(is_down != new_state->ended_down)
+    {
+        new_state->ended_down = is_down;
+        ++new_state->half_transition_count;
+    }
+}
 // Handle all window messages that are passed to the emulator.
 internal void
-Win32ProcessMessageQueue(win32_state *state) {
+Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_controller) {
     MSG message;
     while(PeekMessage(&message, 0, 0, 0, PM_REMOVE))
     {
-        #if 0
         switch(message.message)
         {
+            case WM_QUIT:
+            {
+                global_running = false;
+            } break;
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN:
+            case WM_KEYUP:
+            {
+                WPARAM w_param = message.wParam;
+                LPARAM l_param = message.lParam;
+                u32 vk_code = (u32)w_param;
+                bool32 was_down = ((l_param & (1 << 30)) != 0);
+                bool32 is_down = ((l_param & (1 << 31)) == 0);
+                bool32 repeated = ((l_param & 0xffff) > 0);
+                if(was_down != is_down)
+                { // Check vk codes.
+                    if(vk_code == 'W')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->up,is_down);
+                    }
+                    else if(vk_code == 'S')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->down, is_down);
+                    }
+                    else if(vk_code == 'A')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->left, is_down);
+                    }
+                    else if(vk_code == 'D')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->right, is_down);
+                    }
+                    else if(vk_code == 'G' || VK_SPACE)
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->a, is_down);
+                    }
+                    else if(vk_code == 'K')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->start, is_down);
+                    }
+                    else if(vk_code == 'P')
+                    {
+                        if(is_down)
+                        {
+                            keyboard_controller->pause_emulator = !keyboard_controller->pause_emulator;
+                        }
+                    }
+                }
 
+                
+            } break;
+            default:
+            {
+                // IMPORTANT
+                TranslateMessage(&message);
+                DispatchMessage(&message);
+            } break;
         }
-        #endif
 
-        // IMPORTANT
-        TranslateMessage(&message);
-        DispatchMessage(&message);
     }
 }
+
 // Returns the current wall clock time. Used for timing calculations.
 inline LARGE_INTEGER
 Win32GetWallClock(void) {
@@ -426,6 +495,11 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                 char lock_full_path[WIN32_STATE_FILE_NAME_COUNT];
                 Win32BuildEXEDirectoryPath(&platform_state, lock_file_name, sizeof(lock_full_path), lock_full_path);
                 engine_code = Win32LoadEngineCode(engine_dll_full_path, temp_engine_dll_full_path, lock_full_path);
+                // Input vars
+                nenjin_input engine_input[2] = {};
+                nenjin_input *new_input = &engine_input[0];
+                nenjin_input *old_input = &engine_input[1];
+
                 // Setup engine timing/sleep settings.
                 LARGE_INTEGER perf_counter_frequency_result;
                 QueryPerformanceFrequency(&perf_counter_frequency_result);
@@ -444,6 +518,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                 LARGE_INTEGER last_counter = Win32GetWallClock();
                 while(global_running)
                 {
+                    new_input->d_time_for_frame = target_seconds_per_frame;
                     // Reload the engine dll if it has been re-built.
                     FILETIME new_dll_write_time = Win32GetLastWriteTime(engine_dll_full_path);
                     if(CompareFileTime(&new_dll_write_time, &engine_code.dll_last_write_time) == 1)
@@ -451,7 +526,38 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                         Win32UnloadEngineCode(&engine_code);
                         engine_code = Win32LoadEngineCode(engine_dll_full_path, temp_dll_name, lock_full_path);
                     }
-                    nenjin_input *engine_input = 0;
+                    // Process keyboard input
+                    // NOTE: Controller 0 is the keyboard. Gamepad support will be added, eventually.
+                    nenjin_controller_input *new_keyboard_controller = GetController(new_input, 0);
+                    nenjin_controller_input *old_keyboard_controller = GetController(old_input, 0);
+                    // Clear new input buffer
+                    *new_keyboard_controller = {};
+                    new_keyboard_controller->is_connected = true;
+                    new_keyboard_controller->pause_emulator = old_keyboard_controller->pause_emulator;
+                    // Get the down state of the previous input.
+                    for(int button_index = 0; button_index < ArrayCount(new_keyboard_controller->buttons); ++button_index)
+                    {
+                        new_keyboard_controller->buttons[button_index].ended_down = 
+                        old_keyboard_controller->buttons[button_index].ended_down;
+                    }
+                    Win32ProcessMessageQueue(&platform_state, new_keyboard_controller);
+                    // Process mouse input.
+                    POINT mouse_p;
+                    GetCursorPos(&mouse_p);
+                    ScreenToClient(window, &mouse_p);
+                    new_input->mouse_x = mouse_p.x;
+                    new_input->mouse_y = mouse_p.y;
+                    new_input->mouse_z  = 0;
+                    Win32ProcessKeyboardMessage(&new_input->mouse_buttons[0], GetKeyState(VK_LBUTTON) & (1 << 15));
+                    Win32ProcessKeyboardMessage(&new_input->mouse_buttons[1], GetKeyState(VK_RBUTTON) & (1 << 15));
+                    Win32ProcessKeyboardMessage(&new_input->mouse_buttons[2], GetKeyState(VK_MBUTTON) & (1 << 15));
+                    Win32ProcessKeyboardMessage(&new_input->mouse_buttons[3], GetKeyState(VK_XBUTTON1) & (1 << 15));
+                    Win32ProcessKeyboardMessage(&new_input->mouse_buttons[4], GetKeyState(VK_XBUTTON2) & (1 << 15));
+                    // Set controller to not connected.
+                    // TODO(kaelan): Add controller support.
+                    new_input->controllers[1].is_connected = false;
+                    old_input->controllers[1].is_connected = false;
+
 
                     nenjin_offscreen_buffer engine_buffer = {};
                     engine_buffer.memory = global_back_buffer.memory;
@@ -459,7 +565,6 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     engine_buffer.height = global_back_buffer.height;
                     engine_buffer.width_in_bytes = global_back_buffer.width_in_bytes;
                     engine_buffer.bytes_per_pixel = global_back_buffer.bytes_per_pixel;
-                    Win32ProcessMessageQueue(&platform_state);
 
                     if(engine_code.UpdateAndRender)
                     {
@@ -504,6 +609,11 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     win32_window_dimensions win_dim = Win32GetWindowDimensions(window);
                     Win32DisplayBufferInWindow(device_context, &global_back_buffer, win_dim.width, win_dim.height);
                     ReleaseDC(window, device_context);
+
+                    // Swap input buffers to preserve this frames input.
+                    nenjin_input *temp = new_input;
+                    new_input = old_input;
+                    old_input = temp;
 
                     // Debug output 
                     char Buffer[256];

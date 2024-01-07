@@ -106,58 +106,58 @@ typedef struct nenjin_offscreen_buffer
 	int bytes_per_pixel;
 } nenjin_offscreen_buffer;
 typedef struct nenjin_button_state {
-	int HalfTransitionCount;
-	bool32 EndedDown;
+	int half_transition_count;
+	bool32 ended_down;
 } nenjin_button_state;
+// NOTE: With this setup, keys can't really be re-bound easily. 
+// TODO(kaelan): Move the key processing to the engine layer so keys can be re-bound?
 typedef struct nenjin_controller_input 
 {
-	bool32 IsConnected;
-	bool32 Analog;
+	bool32 is_connected;
+	// TODO(kaelan): Need to add controller support!
+	bool32 analog;
 	// Joystick
-	f32 LeftStickAverageX;
-	f32 LeftStickAverageY;
+	f32 left_stick_average_x;
+	f32 left_stick_average_y;
+	bool32 pause_emulator;
 
-	// Buttons
-	// Union so buttons can be accessed via array or directly through members.
+	// Buttons available on the gb.
 	union 
 	{
-		nenjin_button_state Buttons[12];
+		nenjin_button_state buttons[11];
 		struct 
 		{
-			nenjin_button_state MoveUp;
-			nenjin_button_state MoveDown;
-			nenjin_button_state MoveLeft;
-			nenjin_button_state MoveRight;
+			nenjin_button_state up;
+			nenjin_button_state down;
+			nenjin_button_state left;
+			nenjin_button_state right;
 
-			nenjin_button_state ActionUp;
-			nenjin_button_state ActionDown;
-			nenjin_button_state ActionLeft;
-			nenjin_button_state ActionRight;
+			nenjin_button_state a;
+			nenjin_button_state b;
 
-			nenjin_button_state LeftShoulder;
-			nenjin_button_state RightShoulder;
+			nenjin_button_state start;
+			nenjin_button_state select;
 
-			nenjin_button_state Start;
-			nenjin_button_state Back;
+			nenjin_button_state step_frame;
+			nenjin_button_state save_state;
 
 			// All buttons must be added before this line
-			nenjin_button_state Terminator;
+			nenjin_button_state terminator;
 		};
 	};
 } nenjin_controller_input;
 typedef struct nenjin_input 
 {
-	nenjin_button_state MouseButtons[5];
-	s32 MouseX, MouseY, MouseZ;
-	f32 dtForFrame;
-	// TODO(kaelan): Insert clock values here!
-	nenjin_controller_input Controllers[5];
+	nenjin_button_state mouse_buttons[5];
+	s32 mouse_x, mouse_y, mouse_z;
+	f32 d_time_for_frame;
+	nenjin_controller_input controllers[2];
 } nenjin_input;
 inline nenjin_controller_input *
-GetController(nenjin_input *Input, int ControllerIndex) {
-	Assert(ControllerIndex < ArrayCount(Input->Controllers));
-	nenjin_controller_input *Result = &Input->Controllers[ControllerIndex];
-	return Result;
+GetController(nenjin_input *input, int controller_index) {
+	Assert(controller_index < ArrayCount(input->controllers));
+	nenjin_controller_input *result = &input->controllers[controller_index];
+	return result;
 }
 // DEBUG I/O
 // These functions currently do not protect against bad writes!!
