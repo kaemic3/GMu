@@ -137,7 +137,7 @@ typedef struct nenjin_controller_input
 
 			nenjin_button_state start;
 			nenjin_button_state select;
-
+			// TODO(kaelan): Do I want these set as buttons?
 			nenjin_button_state step_frame;
 			nenjin_button_state save_state;
 

@@ -66,7 +66,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     if(!memory->is_initialized)
     {
         emulator_state->test_txt = DEBUGLoadBMP(thread, memory->DEBUGPlatformReadEntireFile, "test_text.bmp");
-        LoadCartridge(emulator_state, "./ROMs/Mario.gb");
+        LoadCartridge(emulator_state, "./ROMs/Dr. Mario.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
         emulator_state->run_emulator = true;
@@ -141,6 +141,16 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_action |= (1 << 0);
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
+    if(controller->b.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_action &= ~(1 << 1);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_action |= (1 << 1);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
     if(controller->start.ended_down)
     {
         emulator_state->game_boy_bus->joypad_action &= ~(1 << 3);
@@ -149,6 +159,16 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     else
     {
         emulator_state->game_boy_bus->joypad_action |= (1 << 3);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->select.ended_down)
+    {
+        emulator_state->game_boy_bus->joypad_action &= ~(1 << 2);
+        emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    else
+    {
+        emulator_state->game_boy_bus->joypad_action |= (1 << 2);
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
 
@@ -164,5 +184,5 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
     //         - Each buffer would have coordinates, size and scale??
     // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
-    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette);
+    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 2);
 }

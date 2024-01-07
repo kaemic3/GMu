@@ -227,15 +227,15 @@ GetNenjinColor(u32 color_index, gb_color_palette *palette) {
 // TODO(kaelan): Create a DrawPixel funciton?
 // TODO(kaelan): Need to scale the render up!
 internal void
-DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *palette) {
+DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *palette, u32 scale_factor) {
     // GameBoy has 4 colors
     // 0x00 White 0x01 Light gray 0x02 Dark gray 0x03 Black
     // TODO(kaelan): Create a color palette for these?
     // NOTE: GameBoy screen size is 160x144 pixles
     u32 screen_width = 160;
     u32 screen_height = 144;
-	u32 scaled_screen_width = 4 * screen_width;
-	u32 scaled_screen_height = 4 * screen_height;
+	u32 scaled_screen_width = scale_factor * screen_width;
+	u32 scaled_screen_height = scale_factor * screen_height;
     u8 *dest_row = (u8*)buffer->memory;
 
 	// Draw 4 X pixels and 4 Y pixels, for every pixel in gb screen memory.'
@@ -251,14 +251,14 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
 			u32 screen_color = gb->screen[gb_screen_index];
 			nenjin_color *screen_nenjin_color = GetNenjinColor(screen_color, palette);
 			u32 u32_color = NenjinColorToU32(screen_nenjin_color);
-			for(s32 index = 0; index < 4; ++index)
+			for(s32 index = 0; index < scale_factor; ++index)
 			{
 				*dest++ = u32_color;
 			}
 			++gb_screen_index;
 		}
 
-		if(y % 4 != 0)
+		if(y % scale_factor != 0)
 		{
 			gb_screen_index -= 160;
 		}

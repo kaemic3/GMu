@@ -384,9 +384,17 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                     {
                         Win32ProcessKeyboardMessage(&keyboard_controller->a, is_down);
                     }
-                    else if(vk_code == 'K')
+                    else if(vk_code == 'F')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->b, is_down);
+                    }
+                    else if(vk_code == 'J')
                     {
                         Win32ProcessKeyboardMessage(&keyboard_controller->start, is_down);
+                    }
+                    else if(vk_code == 'H')
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->select, is_down);
                     }
                     else if(vk_code == 'P')
                     {
@@ -396,8 +404,6 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                         }
                     }
                 }
-
-                
             } break;
             default:
             {
