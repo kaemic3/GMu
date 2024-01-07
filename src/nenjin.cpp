@@ -82,6 +82,9 @@ MakeEmptyBitmap(memory_arena *arena, s32 width, s32 height, bool32 clear_to_zero
     #endif
     return result;
 }
+// TODO(kaelan): Need to generate a font atlas that can be accessed to get a char bitmap.
+// TODO(kaelan): Create a function that will draw strings to the screen.
+// TODO(kaelan): Need to create a render queue for things to be drawn.
 internal font_bitmap 
 STBFontTest(debug_platform_read_entire_file ReadEntireFile, thread_context *thread, memory_arena *arena) {
     stbtt_fontinfo font;
@@ -90,7 +93,7 @@ STBFontTest(debug_platform_read_entire_file ReadEntireFile, thread_context *thre
     u8 *ttf_buffer = (u8*)read_result.contents;
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
     s32 width, height, x_offset, y_offset;
-    mono_bitmap = stbtt_GetCodepointBitmap(&font, 0,stbtt_ScaleForPixelHeight(&font, 64.0f), 'k', 
+    mono_bitmap = stbtt_GetCodepointBitmap(&font, 0,stbtt_ScaleForPixelHeight(&font, 32.0f), 'k', 
                                            &width, &height, &x_offset, &y_offset);
     loaded_bitmap bitmap = MakeEmptyBitmap(arena, width, height);
     u8 *dest_row = (u8 *)bitmap.memory + (height-1) * bitmap.width_in_bytes;
