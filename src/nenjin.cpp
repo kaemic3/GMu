@@ -31,8 +31,10 @@
 // TODO(kaelan): Need to use a memory arena for this! Rework cartridge class.
 // TODO(kaelan): Change these functions to take the cartridge and bus instead of the entire state.
 internal void
+// TODO(kaelan): For some reason, make_shared is not working when the program is not being run in the debugger???
 LoadCartridge(nenjin_state *state, char *file_name) {
     state->gb_cart = std::make_shared<Cartridge>(file_name);
+    Assert(state->gb_cart->cart_rom.size() > 0);
 }
 internal void
 InitializeGameBoy(nenjin_state *state) {
@@ -55,8 +57,10 @@ InitializeGameBoy(nenjin_state *state) {
     }
 
 }
+// TODO(kaelan): Figure out why this function crashes the exe when not loaded in the debugger.
+// NOTE: This crash does not occur when building with SDL.
 internal void
-ClockGameBoy(Bus *gb, bool32 run_emulator) {
+GenerateGameBoyFrame(Bus *gb, bool32 run_emulator) {
     do {
         gb->clock();
     }while(!gb->ppu.get_frame_state() && run_emulator);
@@ -118,7 +122,6 @@ STBFontTest(debug_platform_read_entire_file ReadEntireFile, thread_context *thre
     stbtt_FreeBitmap(mono_bitmap, 0);
     return result;
 }
-
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
@@ -126,7 +129,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
     if(!memory->is_initialized)
     {
-        LoadCartridge(emulator_state, "./ROMs/Mario.gb");
+        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
         InitializeGameBoy(emulator_state);
         memory->is_initialized = true;
         emulator_state->run_emulator = true;
@@ -235,7 +238,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
 
-    ClockGameBoy(emulator_state->game_boy_bus, emulator_state->run_emulator);
+    GenerateGameBoyFrame(emulator_state->game_boy_bus, emulator_state->run_emulator);
 
     // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
     // TODO(kaelan): I think that the best optimization would be to use StretchDIBits on Windows to scale up the image. 

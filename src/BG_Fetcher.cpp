@@ -226,9 +226,9 @@ void BG_Fetcher::clock() {
         return;
     clock_count = 0;
     // Fetcher state machine
+    uint16_t tilemap_address = 0x0000;
     switch (state) {
         case GetTileId:
-            uint16_t tilemap_address;
             // Check to see which tilemap to use based on the fetcher mode
             switch (fetch_mode) {
                 case BackgroundOnly:

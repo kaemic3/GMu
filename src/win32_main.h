@@ -21,14 +21,7 @@ struct win32_window_dimensions
     int width;
     int height;
 };
-struct win32_engine_code 
-{
-	HMODULE engine_dll;
-	FILETIME dll_last_write_time;
-	// Note: Either callback function here can be null.
-	nenjin_update_and_render *UpdateAndRender;
-	bool32 is_valid;
-};
+
 #define WIN32_STATE_FILE_NAME_COUNT MAX_PATH
 struct win32_state 
 {
@@ -38,7 +31,17 @@ struct win32_state
 	char exe_directory[WIN32_STATE_FILE_NAME_COUNT];
 	char *one_past_last_exe_dir_slash;
 };
-
+// NOTE: This is for hot code reload, which for this project, cannot be used in current form.
+#if 0
+struct win32_engine_code 
+{
+	HMODULE engine_dll;
+	FILETIME dll_last_write_time;
+	// Note: Either callback function here can be null.
+	nenjin_update_and_render *UpdateAndRender;
+	bool32 is_valid;
+};
+#endif
 // NOTE: This is from handmade hero. Struct for sound output with DirectSound.
 // TODO(kaelan): Add DirectSound support?? Possbily use wave out instead??
 #if 0

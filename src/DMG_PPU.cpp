@@ -153,7 +153,7 @@ bool DMG_PPU::cpu_read(uint16_t addr, uint8_t &data, bool is_fetcher) {
     }
     // Check for LY register read
     else if (addr == 0xff44) {
-        data = ly;
+        data = (uint8_t)ly;
         return true;
     }
     // Check for LYC register read
@@ -247,7 +247,7 @@ void DMG_PPU::clock() {
                      * being the Y position. Sprites need to have a Y >= 16 in order
                      * to be considered, as anything lower cannot be seen on the screen.
                      */
-                    for (auto i = 0; i < oam.size(); i+=4) {
+                    for (uint8_t i = 0; i < oam.size(); i+=4) {
                         if (oam[i] >= 16) {
                             // Remove the 16 offset from the sprite so that is in line with LY
                             uint8_t current_sprite_y = oam[i] - 16;
@@ -259,7 +259,7 @@ void DMG_PPU::clock() {
                              * checked every scanline. The current_sprite_y + 8 assures that the pixel data is pulled
                              * for all 8 lines of the tile.
                              */
-                            if (ly >= current_sprite_y && ly < (current_sprite_y + 8)) {
+                            if ((uint8_t)ly >= current_sprite_y && (uint8_t)ly < (current_sprite_y + 8)) {
                                 /*
                                  * This line adds sprites to the scanned_sprites vector. This vector contains 10 sprites
                                  * which is all sprites that are on the current scanline. This will be used by the
@@ -279,15 +279,15 @@ void DMG_PPU::clock() {
                 else if (lcdc.obj_enable == 1 && lcdc.obj_size == 1) {
                     // 8x16 sprites
                     fg_fetcher.clear_sprites();
-                    for (auto i = 0; i < oam.size(); i+=4) {
+                    for (uint8_t i = 0; i < oam.size(); i+=4) {
                         if (oam[i] >= 16) {
                             // Remove Y offset
                             uint8_t current_sprite_y = oam[i] - 16;
                             // Need to make sure that a 8x16 tile is acknowledged for all 16 scanlines
-                            if (ly >= current_sprite_y && ly < (current_sprite_y + 16)) {
+                            if ((uint8_t)ly >= current_sprite_y && (uint8_t)ly < (current_sprite_y + 16)) {
                                 // Need to check if we are on the first or second tile
                                 uint8_t current_sprite_y_flip = oam[i + 3];
-                                if (ly < current_sprite_y + 8) {
+                                if ((uint8_t)ly < current_sprite_y + 8) {
                                     // First tile
                                     // Now check the Y-flip bit and select the correct tile
                                     // Check if bit 6 is enabled in the attribute byte
@@ -559,7 +559,7 @@ void DMG_PPU::clock() {
                         std::vector<Pixel_FG> pixels = fg_fetcher.get_pixels();
                         // Create a copy of the fifo in vector form so the fetched pixels can be merged
                         std::vector<Pixel_FG> fifo_vector_copy = {};
-                        uint8_t fg_fifo_size = fg_fifo.size();
+                        uint8_t fg_fifo_size = (uint8_t)fg_fifo.size();
                         for (auto i = 0; i < fg_fifo_size; i++) {
                             fifo_vector_copy.push_back(fg_fifo.front());
                             fg_fifo.pop();

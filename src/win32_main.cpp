@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <stdio.h>
 
+#include "nenjin.cpp"
 #include "nenjin_platform.h"
 #include "win32_main.h"
 
@@ -139,6 +140,7 @@ DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile) {
     return result;
 }
 
+#if 0
 // Hot code reload for engine.
 // Use FindFirstFile API call to get the last write time of the passed file.
 inline FILETIME
@@ -151,6 +153,7 @@ Win32GetLastWriteTime(char *file_name) {
 	}
 	return result;
 }
+// TODO(kaelan): Determine if this code should just be removed?
 // Load our DLL for the engine code.
 internal win32_engine_code
 Win32LoadEngineCode(char *source_dll_name, char *temp_dll_name, char *lock_file_name) {
@@ -189,6 +192,7 @@ Win32UnloadEngineCode(win32_engine_code *engine_code) {
 	engine_code->is_valid = false;	
 	engine_code->UpdateAndRender = 0;
 }
+#endif
 
 // NOTE: This function comes from Handmade hero episode 40, where
 //		 Casey references Raymon Chen's fullscreen function from his blog.
@@ -469,6 +473,8 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
 									 SCREEN_HORIZONTAL, SCREEN_VERTICAL, 0, 0, instance, 0);
         if(window) 
         {
+            // Grab the function pointer to NenjinUpdateAndRender
+            nenjin_update_and_render *UpdateAndRender = NenjinUpdateAndRender;
             nenjin_memory engine_memory = {};
             engine_memory.permanent_storage_size = Megabytes(16);
             engine_memory.transient_storage_size = Megabytes(48);
@@ -476,7 +482,6 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
             engine_memory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
             engine_memory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
             win32_state platform_state = {};
-            win32_engine_code engine_code = {};
             thread_context thread = {};
             LPVOID base_address = (LPVOID *)Terabytes((u64)1);
             // NOTE: Trying 64 MiB for total memory allocated.
@@ -489,18 +494,6 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
             engine_memory.transient_storage = ((u8 *)engine_memory.permanent_storage + engine_memory.permanent_storage_size);
             if(engine_memory.permanent_storage && engine_memory.transient_storage)
             {
-                // Intialize strings for engine DLL's.
-                Win32GetEXEDirectoryString(&platform_state);
-                char dll_name[] = "nenjin.dll";
-                char engine_dll_full_path[WIN32_STATE_FILE_NAME_COUNT];
-                Win32BuildEXEDirectoryPath(&platform_state, dll_name, sizeof(engine_dll_full_path), engine_dll_full_path);
-                char temp_dll_name[] = "nenjin_temp.dll";
-                char temp_engine_dll_full_path[WIN32_STATE_FILE_NAME_COUNT];
-                Win32BuildEXEDirectoryPath(&platform_state, temp_dll_name, sizeof(temp_engine_dll_full_path), temp_engine_dll_full_path);
-                char lock_file_name[] = "lock.tmp";
-                char lock_full_path[WIN32_STATE_FILE_NAME_COUNT];
-                Win32BuildEXEDirectoryPath(&platform_state, lock_file_name, sizeof(lock_full_path), lock_full_path);
-                engine_code = Win32LoadEngineCode(engine_dll_full_path, temp_engine_dll_full_path, lock_full_path);
                 // Input vars
                 nenjin_input engine_input[2] = {};
                 nenjin_input *new_input = &engine_input[0];
@@ -525,13 +518,6 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                 while(global_running)
                 {
                     new_input->d_time_for_frame = target_seconds_per_frame;
-                    // Reload the engine dll if it has been re-built.
-                    FILETIME new_dll_write_time = Win32GetLastWriteTime(engine_dll_full_path);
-                    if(CompareFileTime(&new_dll_write_time, &engine_code.dll_last_write_time) == 1)
-                    {
-                        Win32UnloadEngineCode(&engine_code);
-                        engine_code = Win32LoadEngineCode(engine_dll_full_path, temp_dll_name, lock_full_path);
-                    }
                     // Process keyboard input
                     // NOTE: Controller 0 is the keyboard. Gamepad support will be added, eventually.
                     nenjin_controller_input *new_keyboard_controller = GetController(new_input, 0);
@@ -572,10 +558,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     engine_buffer.width_in_bytes = global_back_buffer.width_in_bytes;
                     engine_buffer.bytes_per_pixel = global_back_buffer.bytes_per_pixel;
 
-                    if(engine_code.UpdateAndRender)
-                    {
-                        engine_code.UpdateAndRender(&thread, &engine_memory, engine_input, &engine_buffer);
-                    }
+                    UpdateAndRender(&thread, &engine_memory, engine_input, &engine_buffer);
                     LARGE_INTEGER work_counter = Win32GetWallClock();
                     f32 work_seconds_elapsed = Win32GetSecondsElapsed(last_counter, work_counter);
 

@@ -242,16 +242,16 @@ DrawGameBoyScreen(nenjin_offscreen_buffer *buffer, Bus *gb, gb_color_palette *pa
 	// TODO(kaelan): At this point, it can be made to have a scale factor passed in, rather than having a hardcoded one.
 	//				 Is this a good idea??
 	u32 gb_screen_index = 0;
-	for(s32 y = 1; y <= scaled_screen_height; ++y)
+	for(u32 y = 1; y <= scaled_screen_height; ++y)
 	{
 		u32 *dest = (u32 *)dest_row;
-		for(s32 x = 0; x < screen_width; ++x)
+		for(u32 x = 0; x < screen_width; ++x)
 		{
 			// Get gb color
 			u32 screen_color = gb->screen[gb_screen_index];
 			nenjin_color *screen_nenjin_color = GetNenjinColor(screen_color, palette);
 			u32 u32_color = NenjinColorToU32(screen_nenjin_color);
-			for(s32 index = 0; index < scale_factor; ++index)
+			for(u32 index = 0; index < scale_factor; ++index)
 			{
 				*dest++ = u32_color;
 			}

@@ -91,7 +91,7 @@ void FG_Fetcher::pop_sprite() {
 }
 
 uint8_t FG_Fetcher::get_sprite_count() {
-    return scanned_sprites.size();
+    return (uint8_t)scanned_sprites.size();
 }
 Sprite FG_Fetcher::get_front_sprite() {
     if (scanned_sprites.empty()) {
