@@ -91,11 +91,6 @@ SafeTruncateU64(u64 value) {
 //	(May expand in the future.)
 // Needs to take four things: timing, controller/keyboard input, bitmap buffer to use, 
 // sound buffer to use
-typedef struct thread_context 
-{
-	int placeholder;
-} thread_context;
-
 typedef struct nenjin_offscreen_buffer 
 {
 	// Pixels are 32-bits wide, memory order BB GG RR XX
@@ -170,13 +165,13 @@ typedef struct debug_read_file_result
 	u32 content_size;
 	void *contents;
 } debug_read_file_result;
-#define DEBUG_PLATFORM_FREE_FILE_MEMORY(name) void name(thread_context *thread, void *memory)
+#define DEBUG_PLATFORM_FREE_FILE_MEMORY(name) void name(void *memory)
 typedef DEBUG_PLATFORM_FREE_FILE_MEMORY(debug_platform_free_file_memory);
 
-#define DEBUG_PLATFORM_READ_ENTIRE_FILE(name) debug_read_file_result name(thread_context *thread, char *file_name)
+#define DEBUG_PLATFORM_READ_ENTIRE_FILE(name) debug_read_file_result name(char *file_name)
 typedef DEBUG_PLATFORM_READ_ENTIRE_FILE(debug_platform_read_entire_file);
 
-#define DEBUG_PLATFORM_WRITE_ENTIRE_FILE(name) bool32 name(thread_context *thread, char *file_name, u32 memory_size, void *memory)
+#define DEBUG_PLATFORM_WRITE_ENTIRE_FILE(name) bool32 name(char *file_name, u32 memory_size, void *memory)
 typedef DEBUG_PLATFORM_WRITE_ENTIRE_FILE(debug_platform_write_entire_file);
 
 #endif
@@ -195,7 +190,7 @@ typedef struct nenjin_memory
 } nenjin_memory;
 
 // Definitions for callback functions
-#define NENJIN_UPDATE_AND_RENDER(name) void name(thread_context *thread, nenjin_memory *memory, nenjin_input *input, nenjin_offscreen_buffer *buffer)
+#define NENJIN_UPDATE_AND_RENDER(name) void name(nenjin_memory *memory, nenjin_input *input, nenjin_offscreen_buffer *buffer)
 typedef NENJIN_UPDATE_AND_RENDER(nenjin_update_and_render);
 #ifdef __cplusplus
 }
@@ -205,7 +200,7 @@ typedef NENJIN_UPDATE_AND_RENDER(nenjin_update_and_render);
 #endif
 // NOTE: Sound stuff.
 #if 0
-#define NENJIN_GET_SOUND_SAMPLES(name) void name(thread_context *Thread, nenjin_memory *Memory, nenjin_sound_output_buffer *SoundBuffer)
+#define NENJIN_GET_SOUND_SAMPLES(name) void name(nenjin_memory *Memory, nenjin_sound_output_buffer *SoundBuffer)
 typedef NENJIN_GET_SOUND_SAMPLES(nenjin_get_sound_samples);
 #endif
 #if 0

@@ -101,7 +101,7 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile) {
 			{
                 //Could not read the file
                 // Free the memory
-                DEBUGPlatformFreeFileMemory(thread, result.contents);
+                DEBUGPlatformFreeFileMemory(result.contents);
                 result.contents = 0;
             }
         }
@@ -482,7 +482,6 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
             engine_memory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
             engine_memory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
             win32_state platform_state = {};
-            thread_context thread = {};
             LPVOID base_address = (LPVOID *)Terabytes((u64)1);
             // NOTE: Trying 64 MiB for total memory allocated.
             platform_state.total_memory_size = engine_memory.permanent_storage_size + engine_memory.transient_storage_size;
@@ -558,7 +557,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     engine_buffer.width_in_bytes = global_back_buffer.width_in_bytes;
                     engine_buffer.bytes_per_pixel = global_back_buffer.bytes_per_pixel;
 
-                    UpdateAndRender(&thread, &engine_memory, engine_input, &engine_buffer);
+                    UpdateAndRender(&engine_memory, engine_input, &engine_buffer);
                     LARGE_INTEGER work_counter = Win32GetWallClock();
                     f32 work_seconds_elapsed = Win32GetSecondsElapsed(last_counter, work_counter);
 

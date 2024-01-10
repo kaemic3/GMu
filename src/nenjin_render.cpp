@@ -126,9 +126,9 @@ DrawBitmap(nenjin_offscreen_buffer *buffer, loaded_bitmap *bitmap, f32 fx, f32 f
 //				 for this function is allocated by the platform, for every file we read! 
 //				 This memory should allocated to our exisiting memory store??
 internal loaded_bitmap 
-DEBUGLoadBMP(thread_context *thread, debug_platform_read_entire_file *ReadEntireFile, char *file_name) {
+DEBUGLoadBMP(debug_platform_read_entire_file *ReadEntireFile, char *file_name) {
 	loaded_bitmap result = {};
-	debug_read_file_result file_contents = ReadEntireFile(thread, file_name);
+	debug_read_file_result file_contents = ReadEntireFile(file_name);
 	// NOTE(kaelan): Looks like GIMP uses BITMAPV5HEADER. It encodes the color masks in the DIB header.
 	// 				 This can be extracted to determine the order of pixels!
 	// https://en.wikipedia.org/wiki/BMP_file_format 

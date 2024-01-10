@@ -31,20 +31,24 @@
 // TODO(kaelan): Need to use a memory arena for this! Rework cartridge class.
 // TODO(kaelan): Change these functions to take the cartridge and bus instead of the entire state.
 internal void
-// TODO(kaelan): For some reason, make_shared is not working when the program is not being run in the debugger???
 LoadCartridge(nenjin_state *state, char *file_name) {
     state->gb_cart = std::make_shared<Cartridge>(file_name);
     Assert(state->gb_cart->cart_rom.size() > 0);
 }
-internal void
-InitializeGameBoy(nenjin_state *state) {
-    if(state->gb_cart)
+// TODO(kaelan): Remove shared_ptr.
+// TODO(kaelan): This function should return void, but becuase the Bus class is not setup for memory arenas, it has to be this way for now.
+internal Bus * 
+InitializeGameBoy(memory_arena *gb_arena, const std::shared_ptr<Cartridge> &gb_cart) {
+    Bus *gb = 0;
+    if(gb_cart)
     {
-        // FIXME: This uses "new" which is not what we want at all! It should use a memory arena.
-        // TODO(kaelan): Will look into fixing this after the scaling algorithm gets faster.
-        state->game_boy_bus = new Bus();
-        Bus *gb = state->game_boy_bus;
-        gb->insert_cartridge(state->gb_cart);
+
+        // TODO(kaelan): This seems like a bad idea, the Bus class is not setup for memory arenas, so it looks super sketchy here.
+        // Still, there are no other allocations to the Bus class, and to use pre allocated memory, this is the best for now.
+        u32 size = sizeof(Bus);
+        gb_arena->base_ptr = (u8 *)PushSize(gb_arena, sizeof(Bus));
+        gb = new(gb_arena->base_ptr) Bus();
+        gb->insert_cartridge(gb_cart);
         // TODO(kaelan): Need to load the boot rom
         // For now set pc to 0x0100 and sp to 0xfffe
         gb->cpu.pc = 0x0100;
@@ -55,10 +59,8 @@ InitializeGameBoy(nenjin_state *state) {
     {
 
     }
-
+    return gb;
 }
-// TODO(kaelan): Figure out why this function crashes the exe when not loaded in the debugger.
-// NOTE: This crash does not occur when building with SDL.
 internal void
 GenerateGameBoyFrame(Bus *gb, bool32 run_emulator) {
     do {
@@ -86,41 +88,44 @@ MakeEmptyBitmap(memory_arena *arena, s32 width, s32 height, bool32 clear_to_zero
     #endif
     return result;
 }
-// TODO(kaelan): Need to generate a font atlas that can be accessed to get a char bitmap.
-// TODO(kaelan): Create a function that will draw strings to the screen.
 // TODO(kaelan): Need to create a render queue for things to be drawn.
-internal font_bitmap 
-STBFontTest(debug_platform_read_entire_file ReadEntireFile, thread_context *thread, memory_arena *arena) {
+internal void
+GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, debug_platform_read_entire_file ReadEntireFile) {
+    // Generate ascii chars!
+    // https://www.cs.cmu.edu/~pattis/15-1XX/common/handouts/ascii.html 
     stbtt_fontinfo font;
     u8 *mono_bitmap;
-    debug_read_file_result read_result = ReadEntireFile(thread, "../Fonts/amstrad_cpc464.ttf");
-    u8 *ttf_buffer = (u8*)read_result.contents;
-    stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
-    s32 width, height, x_offset, y_offset;
-    mono_bitmap = stbtt_GetCodepointBitmap(&font, 0,stbtt_ScaleForPixelHeight(&font, 32.0f), 'k', 
-                                           &width, &height, &x_offset, &y_offset);
-    loaded_bitmap bitmap = MakeEmptyBitmap(arena, width, height);
-    u8 *dest_row = (u8 *)bitmap.memory + (height-1) * bitmap.width_in_bytes;
-    u8 *source = mono_bitmap;
-    for(s32 y = 0; y < height; ++y)
+    debug_read_file_result read_result = ReadEntireFile(file_name);
+    u8* ttf_buffer = (u8 *)read_result.contents;
+    stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer, 0));
+    for(u32 char_index = 0; char_index < 127; ++char_index)
     {
-        u32 *dest = (u32 *)dest_row;
-        for(s32 x = 0; x < width; ++x)
+        s32 width, height, x_offset, y_offset;
+        mono_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, 32.0f), char_index,
+                                            &width, &height, &x_offset, &y_offset);
+        loaded_bitmap bitmap = MakeEmptyBitmap(arena, width, height);
+        u8 *dest_row = (u8 *)bitmap.memory + (height-1) * bitmap.width_in_bytes;
+        u8 *source = mono_bitmap;
+        for(s32 y = 0; y < height; ++y)
         {
-            u8 alpha = *source++;
-            *dest++ = ((alpha << 24) |
-                       (alpha << 16) |
-                       (alpha << 8) | 
-                       (alpha << 0));
+            u32 *dest = (u32 *)dest_row;
+            for(s32 x = 0; x < width; ++x)
+            {
+                u8 alpha = *source++;
+                *dest++ = ((alpha << 24) |
+                        (alpha << 16) |
+                        (alpha << 8) | 
+                        (alpha << 0));
+            }
+            dest_row -= bitmap.width_in_bytes;
         }
-        dest_row -= bitmap.width_in_bytes;
+        font_bitmap result = {};
+        result.bitmap = bitmap;
+        result.x_offset = x_offset;
+        result.y_offset = y_offset;
+        stbtt_FreeBitmap(mono_bitmap, 0);
+        font_map[char_index] = result;
     }
-    font_bitmap result = {};
-    result.bitmap = bitmap;
-    result.x_offset = x_offset;
-    result.y_offset = y_offset;
-    stbtt_FreeBitmap(mono_bitmap, 0);
-    return result;
 }
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
@@ -129,19 +134,32 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
     if(!memory->is_initialized)
     {
-        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
-        InitializeGameBoy(emulator_state);
-        memory->is_initialized = true;
         emulator_state->run_emulator = true;
-        InitializeArena(&emulator_state->bitmap_arena, memory->permanent_storage_size - sizeof(nenjin_state),
+        // TODO(kaelan): Is this enough memory for this?
+        // Allocate 4 MiB for bitmaps.
+        InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
                         (u8 *)memory->permanent_storage + sizeof(nenjin_state));
-        emulator_state->test_text = STBFontTest(memory->DEBUGPlatformReadEntireFile, thread, &emulator_state->bitmap_arena);
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_map, 
+                          "../Fonts/amstrad_cpc464.ttf", memory->DEBUGPlatformReadEntireFile);
+        InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
+                        (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
+        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
+        emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
+        memory->is_initialized = true;
     }
 
     // Clear screen to black.
     ClearBackBufferToBlack(buffer);
-    // Draw a K generated with stb_ttf.
-    DrawBitmap(buffer, &emulator_state->test_text.bitmap, 1000.0f, 200.0f, emulator_state->test_text.x_offset, emulator_state->test_text.y_offset);
+    u32 screen_width = 1280;
+    u32 screen_height = 720;
+    // Write my name to the screen.
+    // TODO(kaelan): Make a better way to draw strings. This way sucks!
+    DrawBitmap(buffer, &emulator_state->font_map['K'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, 0-emulator_state->font_map['K'].x_offset, -emulator_state->font_map['K'].y_offset);
+    DrawBitmap(buffer, &emulator_state->font_map['a'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -32-emulator_state->font_map['a'].x_offset, -emulator_state->font_map['a'].y_offset);
+    DrawBitmap(buffer, &emulator_state->font_map['e'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -64-emulator_state->font_map['e'].x_offset, -emulator_state->font_map['e'].y_offset);
+    DrawBitmap(buffer, &emulator_state->font_map['l'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -96-emulator_state->font_map['l'].x_offset, -emulator_state->font_map['l'].y_offset);
+    DrawBitmap(buffer, &emulator_state->font_map['a'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -128-emulator_state->font_map['a'].x_offset, -emulator_state->font_map['a'].y_offset);
+    DrawBitmap(buffer, &emulator_state->font_map['n'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -160-emulator_state->font_map['n'].x_offset, -emulator_state->font_map['n'].y_offset);
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
@@ -238,6 +256,8 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
 
+// NOTE: Disable the emulator while text rendering is being developed.
+#if 1
     GenerateGameBoyFrame(emulator_state->game_boy_bus, emulator_state->run_emulator);
 
     // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
@@ -251,4 +271,5 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     //         - Each buffer would have coordinates, size and scale??
     // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
+#endif
 }

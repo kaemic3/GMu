@@ -52,8 +52,10 @@ struct font_bitmap
 struct nenjin_state 
 {
 	bool32 run_emulator;
+	memory_arena game_boy_arena;
 	memory_arena bitmap_arena;
 	font_bitmap test_text;
+	font_bitmap font_map[128];
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 
 	// 		 Also, even after forcing it to be called, I had issues with memory access violations.
 	//		 This is probably due to the way the bus class default intializes the CPU and PPU.
