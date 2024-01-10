@@ -14,7 +14,7 @@
 */
 
 // NOTE: Hot code reload will not work with the CPU, could make the CPU interpreter apart of win32_main.cpp translation unit.
-//       This would then allow everything else to not need it! Can test ROMS in real time this way!
+//       Also need to remove all allocations from the emulator, which means removing all STL stuff like std::vector.
 global_variable win32_offscreen_buffer global_back_buffer;
 global_variable bool32 global_running;
 global_variable WINDOWPLACEMENT global_prev_window_placement;

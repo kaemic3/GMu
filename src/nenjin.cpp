@@ -89,6 +89,7 @@ MakeEmptyBitmap(memory_arena *arena, s32 width, s32 height, bool32 clear_to_zero
     return result;
 }
 // TODO(kaelan): Need to create a render queue for things to be drawn.
+// NOTE: I know this generates stuff that is not actually char data, but IDK if have empty spaces is better??
 internal void
 GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, debug_platform_read_entire_file ReadEntireFile) {
     // Generate ascii chars!
