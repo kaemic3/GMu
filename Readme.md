@@ -10,7 +10,6 @@ Assuming MSVC is installed, the win32_build.bat file should generate an exe that
 If the build fails, you will need to locate the vcvarsall.bat file on your system, and change line 3 of the bat file to that directory.
 
 ## TODO
-- Add string rendering support.
 - Add UI again.
     - Add the ability to load new ROMs in without having to recompile.
     - Make toggles for debug info.
