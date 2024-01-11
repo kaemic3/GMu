@@ -3,7 +3,6 @@
 #include "nenjin_platform.h"
 #include "nenjin_intrinsic.h"
 #include "nenjin_render.h"
-
 // Engine internal functions and structs
 #define Minimum(a, b) ((a < b) ? (a) : (b))
 #define Maximum(a, b) ((a > b) ? (a) : (b))
@@ -35,7 +34,6 @@ PushSize_(memory_arena *arena, size_t size) {
 	arena->bytes_used += size;
 	return result;
 }
-
 struct loaded_bitmap
 {
 	s32 width;
@@ -48,13 +46,14 @@ struct font_bitmap
 	loaded_bitmap bitmap;
 	s32 x_offset;
 	s32 y_offset;
+	f32 font_size;
 };
 struct nenjin_state 
 {
 	bool32 run_emulator;
 	memory_arena game_boy_arena;
 	memory_arena bitmap_arena;
-	font_bitmap test_text;
+	nenjin_color font_color;
 	font_bitmap font_map[128];
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 
 	// 		 Also, even after forcing it to be called, I had issues with memory access violations.
@@ -62,8 +61,6 @@ struct nenjin_state
 	// TODO(kaelan): Need to re-write the bus class!
 	Bus *game_boy_bus;
     std::shared_ptr<Cartridge> gb_cart;
-
 };
 #define NENJIN_H
 #endif
-

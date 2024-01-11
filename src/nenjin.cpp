@@ -1,14 +1,12 @@
 // TODO(kaelan): Remove all std library dependencies.
 // TODO(kaelan): Implement proper memory allocator.
 
-// FIXME(kaelan): LOTS OF COMPILE WARNINGS!!
 // FIXME(kaelan): Program state is all over the place!
-// FIXME(kaelan): All dynamic memory needs to be processed through memory arenas
-
+// FIXME(kaelan): All dynamic memory needs to be processed through memory arenas.
 // NOTE: Any header file that depends on iostream will need to be included before nenjin.h, since this file uses the internal keyword.
 
 // TODO(kaelan): IDK how this just works, but it seems suspicous...
-// NOTE: Things with the emualtor are bad, but working on getting it running first!
+// TODO(kaelan): Need to add support for re-sizeable arrays? Also need to create a queue/deque so I can remove stl.
 #include "Bus.h"
 #include "Bus.cpp"
 #include "SM83.cpp"
@@ -22,6 +20,7 @@
 #include "Mapper_01.cpp"
 #include "nenjin.h"
 #include "nenjin_render.cpp"
+#include "nenjin_string.h"
 // STB TTF
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -89,9 +88,12 @@ MakeEmptyBitmap(memory_arena *arena, s32 width, s32 height, bool32 clear_to_zero
     return result;
 }
 // TODO(kaelan): Need to create a render queue for things to be drawn.
+// TODO(kaelan): Where does this function belong?
+// TODO(kaelan): Add support for different font colors?
+// NOTE: This is an asset generator, so maybe create an asset file?
 // NOTE: I know this generates stuff that is not actually char data, but IDK if have empty spaces is better??
 internal void
-GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, debug_platform_read_entire_file ReadEntireFile) {
+GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, f32 font_size, nenjin_color font_color, debug_platform_read_entire_file ReadEntireFile) {
     // Generate ascii chars!
     // https://www.cs.cmu.edu/~pattis/15-1XX/common/handouts/ascii.html 
     stbtt_fontinfo font;
@@ -99,10 +101,14 @@ GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, d
     debug_read_file_result read_result = ReadEntireFile(file_name);
     u8* ttf_buffer = (u8 *)read_result.contents;
     stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer, 0));
+    u32 color = NenjinColorToU32(&font_color);
+    u32 red = (color & 0x00ff0000) >> 16;
+    u32 green = (color & 0x0000ff00) >> 8;
+    u32 blue = (color & 0x000000ff) >> 0;
     for(u32 char_index = 0; char_index < 127; ++char_index)
     {
         s32 width, height, x_offset, y_offset;
-        mono_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, 32.0f), char_index,
+        mono_bitmap = stbtt_GetCodepointBitmap(&font, 0, stbtt_ScaleForPixelHeight(&font, font_size), char_index,
                                             &width, &height, &x_offset, &y_offset);
         loaded_bitmap bitmap = MakeEmptyBitmap(arena, width, height);
         u8 *dest_row = (u8 *)bitmap.memory + (height-1) * bitmap.width_in_bytes;
@@ -114,9 +120,9 @@ GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, d
             {
                 u8 alpha = *source++;
                 *dest++ = ((alpha << 24) |
-                        (alpha << 16) |
-                        (alpha << 8) | 
-                        (alpha << 0));
+                           (red << 16) |
+                           (green << 8) | 
+                           (blue << 0));
             }
             dest_row -= bitmap.width_in_bytes;
         }
@@ -124,49 +130,62 @@ GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, d
         result.bitmap = bitmap;
         result.x_offset = x_offset;
         result.y_offset = y_offset;
+        result.font_size = font_size;
         stbtt_FreeBitmap(mono_bitmap, 0);
         font_map[char_index] = result;
     }
 }
+
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
-    Assert((sizeof(nenjin_state) <= memory->permanent_storage_size));
+    //Assert((sizeof(nenjin_state) <= memory->permanent_storage_size));
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
     if(!memory->is_initialized)
     {
         emulator_state->run_emulator = true;
-        // TODO(kaelan): Is this enough memory for this?
         // Allocate 4 MiB for bitmaps.
+        // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
                         (u8 *)memory->permanent_storage + sizeof(nenjin_state));
+        emulator_state->font_color = {1.0f, 0.3f, 0.6f, 1.0f};
         GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_map, 
-                          "../Fonts/amstrad_cpc464.ttf", memory->DEBUGPlatformReadEntireFile);
+                          "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color, memory->DEBUGPlatformReadEntireFile);
         InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
-        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
+        LoadCartridge(emulator_state, "../data/ROMs/Mario.gb");
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
     }
-
     // Clear screen to black.
     ClearBackBufferToBlack(buffer);
     u32 screen_width = 1280;
     u32 screen_height = 720;
+    f32 text_width_offset = 700.0f;
     // Write my name to the screen.
-    // TODO(kaelan): Make a better way to draw strings. This way sucks!
-    DrawBitmap(buffer, &emulator_state->font_map['K'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, 0-emulator_state->font_map['K'].x_offset, -emulator_state->font_map['K'].y_offset);
-    DrawBitmap(buffer, &emulator_state->font_map['a'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -32-emulator_state->font_map['a'].x_offset, -emulator_state->font_map['a'].y_offset);
-    DrawBitmap(buffer, &emulator_state->font_map['e'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -64-emulator_state->font_map['e'].x_offset, -emulator_state->font_map['e'].y_offset);
-    DrawBitmap(buffer, &emulator_state->font_map['l'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -96-emulator_state->font_map['l'].x_offset, -emulator_state->font_map['l'].y_offset);
-    DrawBitmap(buffer, &emulator_state->font_map['a'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -128-emulator_state->font_map['a'].x_offset, -emulator_state->font_map['a'].y_offset);
-    DrawBitmap(buffer, &emulator_state->font_map['n'].bitmap, screen_width/2.0f + 15.0f, screen_height/2.0f, -160-emulator_state->font_map['n'].x_offset, -emulator_state->font_map['n'].y_offset);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, screen_width/2.0f + 15.0f, 
+               screen_height/2.0f + 64.0f, "Kaelan.");
+#define U8_REG_STRING_SIZE 5
+    char a_hex[3];
+    char a_text[4] = "A: ";
+    char a_reg_text[U8_REG_STRING_SIZE];
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.a_reg, a_hex);
+    CatString(U32StringLength(a_text), a_text, U32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
+
+    char b_hex[3];
+    char b_text[4] = "B: ";
+    char b_reg_text[U8_REG_STRING_SIZE];
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.b_reg, b_hex);
+    CatString(U32StringLength(b_text), b_text, U32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 100.0f, a_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset + 200.0f, 100.0f, b_reg_text);
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
     palette.index_2 = {1.0f, 0.33f, 0.33f, 0.33f};
     palette.index_3 = {0.0f, 0.0f, 0.0f, 0.0f};
     // Input handling
+    // TODO(kaelan): Maybe move this to a function? This is a lot of code to look at.
     nenjin_controller_input *controller = GetController(input, 0);
     if(controller->pause_emulator)
     {

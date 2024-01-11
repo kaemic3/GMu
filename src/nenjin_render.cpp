@@ -149,7 +149,7 @@ DEBUGLoadBMP(debug_platform_read_entire_file *ReadEntireFile, char *file_name) {
 		// Use BitScan to find the shift value for each mask. We are trying to shift the corresponding value to the first eight bits,
 		// and then shifting into place accoriding to how we want the memory pushed into the offscreen buffer.
 		bit_scan_result alpha_scan = FindLeastSignificantSetBit(alpha_mask);
-		bit_scan_result red_scan= FindLeastSignificantSetBit(red_mask);
+		bit_scan_result red_scan = FindLeastSignificantSetBit(red_mask);
 		bit_scan_result green_scan = FindLeastSignificantSetBit(green_mask);
 		bit_scan_result blue_scan = FindLeastSignificantSetBit(blue_mask);
 		Assert(alpha_scan.found);
@@ -200,8 +200,6 @@ GetNenjinColor(u32 color_index, gb_color_palette *palette) {
     {
         WHITE, LIGHT_GRAY, DARK_GRAY, BLACK
     };
-
-
 	switch(color_index)
     {
 		case WHITE:
