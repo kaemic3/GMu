@@ -41,7 +41,6 @@ InitializeGameBoy(memory_arena *gb_arena, const std::shared_ptr<Cartridge> &gb_c
     Bus *gb = 0;
     if(gb_cart)
     {
-
         // TODO(kaelan): This seems like a bad idea, the Bus class is not setup for memory arenas, so it looks super sketchy here.
         // Still, there are no other allocations to the Bus class, and to use pre allocated memory, this is the best for now.
         u32 size = sizeof(Bus);
@@ -148,12 +147,12 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
                         (u8 *)memory->permanent_storage + sizeof(nenjin_state));
-        emulator_state->font_color = {1.0f, 0.3f, 0.6f, 1.0f};
+        emulator_state->font_color = {1.0f, 0.95f, 0.51f, 0.78f};
         GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_map, 
                           "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color, memory->DEBUGPlatformReadEntireFile);
         InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
-        LoadCartridge(emulator_state, "../data/ROMs/Mario.gb");
+        LoadCartridge(emulator_state, "../data/ROMs/Tetris.gb");
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
     }
@@ -165,6 +164,8 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // Write my name to the screen.
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, screen_width/2.0f + 15.0f, 
                screen_height/2.0f + 64.0f, "Kaelan.");
+    // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
+    //               code for the register text into a function.
 #define U8_REG_STRING_SIZE 5
     char a_hex[3];
     char a_text[4] = "A: ";
