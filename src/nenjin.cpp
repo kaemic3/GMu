@@ -152,7 +152,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                           "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color, memory->DEBUGPlatformReadEntireFile);
         InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
-        LoadCartridge(emulator_state, "../data/ROMs/Tetris.gb");
+        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
     }
