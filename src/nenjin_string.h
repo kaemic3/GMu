@@ -1,8 +1,8 @@
 #if !defined(NENJIN_STRING_H)
 // TODO(kaelan): This function is also in the win32_main.cpp. Should I create a string library?
-internal u32
-U32StringLength(char *string) {
-    u32 result = 0;
+internal s32
+S32StringLength(char *string) {
+    s32 result = 0;
     while(*string++)
     {
         ++result;
@@ -12,7 +12,7 @@ U32StringLength(char *string) {
 // Draw a string to a given position on the screen.
 internal void
 DrawString(nenjin_offscreen_buffer *buffer, font_bitmap *font_map, f32 fx, f32 fy, char *string) {
-    u32 string_length = U32StringLength(string);
+    u32 string_length = S32StringLength(string);
     f32 x = fx;
     f32 y = fy;
     for(u32 string_index = 0; string_index < string_length; ++string_index)
@@ -51,7 +51,7 @@ ToHexStringU8(u8 value, char *dest) {
     const u32 string_size = 3;
     char buf[string_size];
     _itoa_s(value, buf, 16);
-    if(value < 16)
+    if(value < 0x10)
     {
         // Prepend 0.
         buf[1] = buf[0];
@@ -59,6 +59,39 @@ ToHexStringU8(u8 value, char *dest) {
         buf[2] = '\0';
     }
     StringCopy(string_size, buf, string_size, dest);
+}
+internal void
+ToHexStringU16(u16 value, char *dest){
+    const u32 string_size = 5;
+    char buf[string_size];
+    _itoa_s(value, buf, 16);
+    if(value < 0x10)
+    {
+        buf[3] = buf[0];
+        buf[0] = '0';
+        buf[1] = '0';
+        buf[2] = '0';
+        buf[4] = '\0';
+    }
+    else if(value < 0x100)
+    {
+        buf[3] = buf[1];
+        buf[2] = buf[0];
+        buf[0] = '0';
+        buf[1] = '0';
+        buf[4] = '\0';
+    }
+    else if(value < 0x1000)
+    {
+        buf[3] = buf[2];
+        buf[2] = buf[1];
+        buf[1] = buf[0];
+        buf[0] = '0';
+        buf[4] = '\0';
+    }
+    // TODO(kaelan): Prefix 0's need to be added to the string.
+    StringCopy(string_size, buf, string_size, dest);
+
 }
 #define NENJIN_STRING_H
 #endif

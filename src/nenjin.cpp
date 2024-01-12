@@ -166,20 +166,41 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                screen_height/2.0f + 64.0f, "Kaelan.");
     // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
     //               code for the register text into a function.
-#define U8_REG_STRING_SIZE 5
-    char a_hex[3];
+#define U8_REG_STRING_SIZE 6
+    char a_hex[3] = "";
     char a_text[4] = "A: ";
-    char a_reg_text[U8_REG_STRING_SIZE];
+    char a_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.a_reg, a_hex);
-    CatString(U32StringLength(a_text), a_text, U32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
+    // TODO(kaelan): I do not know why, but this does not pass the arguments properly!
+    CatString(S32StringLength(a_text), a_text, S32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
 
-    char b_hex[3];
+    char b_hex[3] = "";
     char b_text[4] = "B: ";
-    char b_reg_text[U8_REG_STRING_SIZE];
+    char b_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.b_reg, b_hex);
-    CatString(U32StringLength(b_text), b_text, U32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
+    CatString(S32StringLength(b_text), b_text, S32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 100.0f, a_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset + 200.0f, 100.0f, b_reg_text);
+
+    #define U16_REG_STRING_SIZE 9
+    char sp_hex[5] = "";
+    char sp_text[5] = "SP: ";
+    char sp_reg_text[9] = "";
+    ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
+    CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 200.0f, sp_reg_text);
+    char pc_hex[5] = "";
+    char pc_text[5] = "PC: ";
+    char pc_reg_text[U16_REG_STRING_SIZE] = "";
+    ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex);
+    CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 300.0f, pc_reg_text);
+    char d_hex[3] = "";
+    char d_text[4] = "D: ";
+    char d_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.d_reg, d_hex);
+    CatString(S32StringLength(d_text), d_text, S32StringLength(d_hex), d_hex, U8_REG_STRING_SIZE, d_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 150.0f, d_reg_text);
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
