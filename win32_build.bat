@@ -9,7 +9,7 @@ cd %~dp0
 REM NOTE: This REMed stuff below is for reference. Pulled from handmade hero!
 set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi  -WX -W4 -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -D NENJIN_INTERNAL=1 -D NENJIN_W32=1 -D NENJIN_SLOW=1 -Zi /std:c++14 /EHsc 
 
-set CommonLinkerFlags= /subsystem:windows -incremental:no -opt:ref user32.lib gdi32.lib winmm.lib shell32.lib coremessaging.lib advapi32.lib 
+set CommonLinkerFlags= /subsystem:windows -incremental:no -opt:ref user32.lib gdi32.lib winmm.lib shell32.lib coremessaging.lib advapi32.lib Comdlg32.lib
 
 IF NOT EXIST build mkdir build
 pushd build

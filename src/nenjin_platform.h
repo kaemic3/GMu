@@ -136,6 +136,8 @@ typedef struct nenjin_controller_input
 			nenjin_button_state step_frame;
 			nenjin_button_state save_state;
 
+			nenjin_button_state load_rom;
+
 			// All buttons must be added before this line
 			nenjin_button_state terminator;
 		};
@@ -171,6 +173,9 @@ typedef DEBUG_PLATFORM_FREE_FILE_MEMORY(debug_platform_free_file_memory);
 #define DEBUG_PLATFORM_READ_ENTIRE_FILE(name) debug_read_file_result name(char *file_name)
 typedef DEBUG_PLATFORM_READ_ENTIRE_FILE(debug_platform_read_entire_file);
 
+#define DEBUG_PLATFORM_FIND_ROM_FILE(name) void name(char **file_name)
+typedef DEBUG_PLATFORM_FIND_ROM_FILE(debug_platform_find_rom_file);
+
 #define DEBUG_PLATFORM_WRITE_ENTIRE_FILE(name) bool32 name(char *file_name, u32 memory_size, void *memory)
 typedef DEBUG_PLATFORM_WRITE_ENTIRE_FILE(debug_platform_write_entire_file);
 
@@ -186,6 +191,7 @@ typedef struct nenjin_memory
 	// Pointers to File/IO functions
 	debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory;
 	debug_platform_read_entire_file *DEBUGPlatformReadEntireFile;
+	debug_platform_find_rom_file *DEBUGPlatformFindROMFile;
 	debug_platform_write_entire_file *DEBUGPlatformWriteEntireFile;
 } nenjin_memory;
 

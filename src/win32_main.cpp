@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <malloc.h>
 #include <stdio.h>
+#include <commdlg.h>
 
 #include "nenjin.cpp"
 #include "nenjin_platform.h"
@@ -116,6 +117,25 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile) {
         // Could not get Handle
     }
     return result;
+}
+DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
+    OPENFILENAMEA open_file;
+    ZeroMemory(&open_file, sizeof(open_file));
+    open_file.lStructSize = sizeof(open_file);
+    open_file.hwndOwner = GetActiveWindow();
+    open_file.lpstrFile = *file_name;
+    // IMPORTANT Assign null terminator 
+    open_file.lpstrFile[0] = 0;
+    // FIXME: Magic number
+    open_file.nMaxFile = 260;
+    open_file.lpstrFilter = "All\0*.*\0ROM\0*.gb\0";
+    open_file.nFilterIndex = 1;
+    open_file.lpstrFileTitle = NULL;
+    open_file.nMaxFileTitle = 0;
+    open_file.lpstrInitialDir = NULL;
+    open_file.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+    GetOpenFileNameA(&open_file);
+    Assert(*file_name);
 }
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile) {
     bool32 result = false;
@@ -407,6 +427,32 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                             keyboard_controller->pause_emulator = !keyboard_controller->pause_emulator;
                         }
                     }
+                   	if(is_down)
+					{
+						bool32 alt_key_was_down = (((1 << 29) & l_param) != 0);
+						if((vk_code== VK_F4) && alt_key_was_down) 
+						{
+							global_running = false;
+						}
+						// Toggle fullscreen mode!
+						if((vk_code == VK_RETURN) && alt_key_was_down)
+						{
+							if(message.hwnd)
+							{
+								ToggleFullScreen(message.hwnd);
+								global_is_fullscreen = !global_is_fullscreen;
+							}
+						}
+                        // NOTE: This will open a file dialog when alt + F are pressed.
+                        // TODO(kaelan): Need to make this a function that can be called in the engine.
+                        // TODO(kaelan): Create a button in the nenjin_controller_input struct for this?
+                        // IDEA: This should call DEBUGPlatformReadEntireFile once the file name has been grabbed.
+                        //       Also, this function should be call DEBUGPlatformFindROMFile.
+                        if((vk_code == 'F' && alt_key_was_down))
+                        {
+                            Win32ProcessKeyboardMessage(&keyboard_controller->load_rom, is_down);
+                        }
+					} 
                 }
             } break;
             default:
@@ -433,6 +479,7 @@ Win32GetSecondsElapsed(LARGE_INTEGER start, LARGE_INTEGER end) {
     f32 result = ((f32)(end.QuadPart - start.QuadPart)) / (f32)global_perf_counter_frequency.QuadPart;
     return result; 
 }
+
 int WINAPI
 wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int show_code) {
 // Windows 11 sleep nonsense!
@@ -480,6 +527,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
             engine_memory.transient_storage_size = Megabytes(48);
             engine_memory.DEBUGPlatformFreeFileMemory = DEBUGPlatformFreeFileMemory;
             engine_memory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
+            engine_memory.DEBUGPlatformFindROMFile = DebugPlatfromFindROMFile;
             engine_memory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
             win32_state platform_state = {};
             LPVOID base_address = (LPVOID *)Terabytes((u64)1);

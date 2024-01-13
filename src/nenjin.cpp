@@ -31,6 +31,11 @@
 // TODO(kaelan): Change these functions to take the cartridge and bus instead of the entire state.
 internal void
 LoadCartridge(nenjin_state *state, char *file_name) {
+    // FIXME: Cannot manually destroy a shared_ptr!
+    if(state->gb_cart)
+    {
+
+    }
     state->gb_cart = std::make_shared<Cartridge>(file_name);
     Assert(state->gb_cart->cart_rom.size() > 0);
 }
@@ -138,11 +143,11 @@ GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, f
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
-    //Assert((sizeof(nenjin_state) <= memory->permanent_storage_size));
+    Assert((sizeof(nenjin_state) <= memory->permanent_storage_size));
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
     if(!memory->is_initialized)
     {
-        emulator_state->run_emulator = true;
+        emulator_state->run_emulator = false;
         // Allocate 4 MiB for bitmaps.
         // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
@@ -166,12 +171,24 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                screen_height/2.0f + 64.0f, "Kaelan.");
     // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
     //               code for the register text into a function.
+    // TODO(kaelan): Looking at the stuff below, could create an intialization function that
+    //               gets called and assigns all of the strings. Move the strings into nenjin_state, 
+    //               where they would exist in our permanent storage. 
+    // TODO(kaelan): Consider the trasient storage space, what will this be used for? Should there be a 
+    //               distinction in this program?
+    // NOTE: The size of every string remains static. However, when toggling the text on/off the screen, 
+    //       the memory could be freed. Does this even matter? The size of these strings is puny, and allocating
+    //       would most likely have more overhead in comparison to just leaving them assigned in the permanent store.
+    //      
+    //       For this program, I feel that every string should be static. Even in the case of showing the ROM name
+    //       somewhere in the window, we should be able to assign a static max size, and truncate if needed to avoid any
+    //       allocations. But, if I am already going to make a local allocator, then shouldn't it be as memory
+    //       efficient as possible, with the speed as well?
 #define U8_REG_STRING_SIZE 6
     char a_hex[3] = "";
     char a_text[4] = "A: ";
     char a_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.a_reg, a_hex);
-    // TODO(kaelan): I do not know why, but this does not pass the arguments properly!
     CatString(S32StringLength(a_text), a_text, S32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
 
     char b_hex[3] = "";
@@ -185,22 +202,25 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     #define U16_REG_STRING_SIZE 9
     char sp_hex[5] = "";
     char sp_text[5] = "SP: ";
-    char sp_reg_text[9] = "";
+    char sp_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
     CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 200.0f, sp_reg_text);
+
     char pc_hex[5] = "";
     char pc_text[5] = "PC: ";
     char pc_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex);
     CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 300.0f, pc_reg_text);
+
     char d_hex[3] = "";
     char d_text[4] = "D: ";
     char d_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.d_reg, d_hex);
     CatString(S32StringLength(d_text), d_text, S32StringLength(d_hex), d_hex, U8_REG_STRING_SIZE, d_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 150.0f, d_reg_text);
+
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};
@@ -296,6 +316,26 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     {
         emulator_state->game_boy_bus->joypad_action |= (1 << 2);
         emulator_state->game_boy_bus->joypad_state_change = true;
+    }
+    if(controller->load_rom.ended_down)
+    {
+        // TODO(kaelan): So, I need to allocate memory for this call. I need to be able to get a string back
+        //               from the platform layer, and having the memory allocated in the stack here is preventing
+        //               it from being accessed there, for some reason. IDK.
+        // TODO(kaelan): To make this work, I am pretty sure I need to re-write part of the cartridge class.
+        //               The easier way would be to write the class to take a debug_read_file_result.
+
+        // FIXME This terribleness works. But I don't really think this should be how I do this.
+        // IDEA: Fix this by returning a read_file_result! Then can also free the cart memory!
+        char file_name[260] = "";
+        char *p_file_name = (char *)file_name;
+        char **file_ptr = &p_file_name;
+        memory->DEBUGPlatformFindROMFile(file_ptr);
+        controller->load_rom.ended_down = false;
+        LoadCartridge(emulator_state, file_name);
+        emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
+
+        s32 test = 0;
     }
 
 // NOTE: Disable the emulator while text rendering is being developed.

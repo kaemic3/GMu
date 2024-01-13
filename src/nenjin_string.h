@@ -10,6 +10,9 @@ S32StringLength(char *string) {
     return result;
 }
 // Draw a string to a given position on the screen.
+// TODO(kaelan): Need to determine where some of these string functions go.
+//               This function for example, does not get used in the platform layer, but S32StringLength could. 
+//               Should the functions that could be used in the platform layer go into nenjin_platform.h
 internal void
 DrawString(nenjin_offscreen_buffer *buffer, font_bitmap *font_map, f32 fx, f32 fy, char *string) {
     u32 string_length = S32StringLength(string);
@@ -51,12 +54,12 @@ ToHexStringU8(u8 value, char *dest) {
     const u32 string_size = 3;
     char buf[string_size];
     _itoa_s(value, buf, 16);
+    // Prepend 0.
     if(value < 0x10)
     {
-        // Prepend 0.
         buf[1] = buf[0];
         buf[0] = '0';
-        buf[2] = '\0';
+        buf[2] = 0;
     }
     StringCopy(string_size, buf, string_size, dest);
 }
@@ -65,13 +68,14 @@ ToHexStringU16(u16 value, char *dest){
     const u32 string_size = 5;
     char buf[string_size];
     _itoa_s(value, buf, 16);
+    // Prepend zeros.
     if(value < 0x10)
     {
         buf[3] = buf[0];
         buf[0] = '0';
         buf[1] = '0';
         buf[2] = '0';
-        buf[4] = '\0';
+        buf[4] = 0;
     }
     else if(value < 0x100)
     {
@@ -79,7 +83,7 @@ ToHexStringU16(u16 value, char *dest){
         buf[2] = buf[0];
         buf[0] = '0';
         buf[1] = '0';
-        buf[4] = '\0';
+        buf[4] = 0;
     }
     else if(value < 0x1000)
     {
@@ -87,7 +91,7 @@ ToHexStringU16(u16 value, char *dest){
         buf[2] = buf[1];
         buf[1] = buf[0];
         buf[0] = '0';
-        buf[4] = '\0';
+        buf[4] = 0;
     }
     // TODO(kaelan): Prefix 0's need to be added to the string.
     StringCopy(string_size, buf, string_size, dest);
