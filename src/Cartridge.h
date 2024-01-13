@@ -7,6 +7,7 @@
 #include <fstream>
 #include "Mapper_00.h"
 #include "Mapper_01.h"
+//#include "nenjin.h"
 
 class Cartridge {
 public:
@@ -16,6 +17,10 @@ public:
     // Communication with the Main Bus
     bool cpu_write(uint16_t addr, uint8_t data);
     bool cpu_read(uint16_t addr, uint8_t &data);
+
+    // Create Cartridge
+    //void CreateCartridge(memory_arena *arena, debug_platform_find_rom_file *DebugPlatfromFindROMFile, char *file_name);
+    // Free Cartridge
 
     // Load boot rom
     void load_boot_rom(const std::string &directory = "../ROMs/dmg.bin");

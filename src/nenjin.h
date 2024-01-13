@@ -34,6 +34,18 @@ PushSize_(memory_arena *arena, size_t size) {
 	arena->bytes_used += size;
 	return result;
 }
+// TODO(kaelan): Should this zero the memory? This function will only really
+//				 be called when the cartridge gets reloaded, at this point anyway.
+internal void
+ClearArena(memory_arena *arena) {
+	arena->base_ptr = (u8 *)arena->base_ptr - arena->bytes_used;
+	u8 *byte = (u8 *)arena->base_ptr;
+	for(u32 index = 0; index < arena->bytes_used; ++index)
+	{
+		*byte++ = 0;
+	}
+	arena->bytes_used = 0;
+}
 struct loaded_bitmap
 {
 	s32 width;
@@ -60,7 +72,7 @@ struct nenjin_state
 	//		 This is probably due to the way the bus class default intializes the CPU and PPU.
 	// TODO(kaelan): Need to re-write the bus class!
 	Bus *game_boy_bus;
-    std::shared_ptr<Cartridge> gb_cart;
+    Cartridge *gb_cart;
 };
 #define NENJIN_H
 #endif

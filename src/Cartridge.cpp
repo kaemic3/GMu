@@ -156,6 +156,11 @@ bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
     }
     return false;
 }
+#if 0
+void Cartridge::CreateCartridge(memory_arena *arena, debug_platform_find_rom_file *DEBUGPlatformFindROMFile, char *file_name) {
+
+}
+#endif
 
 bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
     uint32_t mapped_addr = 0;

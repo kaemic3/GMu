@@ -31,18 +31,18 @@
 // TODO(kaelan): Change these functions to take the cartridge and bus instead of the entire state.
 internal void
 LoadCartridge(nenjin_state *state, char *file_name) {
-    // FIXME: Cannot manually destroy a shared_ptr!
+    // Free the existing cartridge.
     if(state->gb_cart)
     {
-
+        delete state->gb_cart;
     }
-    state->gb_cart = std::make_shared<Cartridge>(file_name);
+    state->gb_cart = new Cartridge(file_name);
     Assert(state->gb_cart->cart_rom.size() > 0);
 }
 // TODO(kaelan): Remove shared_ptr.
 // TODO(kaelan): This function should return void, but becuase the Bus class is not setup for memory arenas, it has to be this way for now.
 internal Bus * 
-InitializeGameBoy(memory_arena *gb_arena, const std::shared_ptr<Cartridge> &gb_cart) {
+InitializeGameBoy(memory_arena *gb_arena, Cartridge *gb_cart) {
     Bus *gb = 0;
     if(gb_cart)
     {
@@ -65,11 +65,25 @@ InitializeGameBoy(memory_arena *gb_arena, const std::shared_ptr<Cartridge> &gb_c
     return gb;
 }
 internal void
+InsertCartridge(Bus *gb, Cartridge *gb_cart) {
+    gb->insert_cartridge(gb_cart);
+}
+internal void
+ResetGameBoy(Bus *gb) {
+    gb->reset();
+    gb->cpu.pc = 0x0100;
+    gb->cpu.sp = 0xfffe;
+    gb->if_reg.data = 0xe1;
+}
+internal void
 GenerateGameBoyFrame(Bus *gb, bool32 run_emulator) {
-    do {
-        gb->clock();
-    }while(!gb->ppu.get_frame_state() && run_emulator);
-    gb->joypad_state_change = false;
+    if(run_emulator)
+    {
+        do {
+            gb->clock();
+        }while(!gb->ppu.get_frame_state());
+    }
+        gb->joypad_state_change = false;
 }
 #define BITMAP_BYTES_PER_PIXEL 4
 internal loaded_bitmap
@@ -148,6 +162,8 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     if(!memory->is_initialized)
     {
         emulator_state->run_emulator = false;
+        nenjin_controller_input *controller = GetController(input, 0);
+        controller->pause_emulator = true;
         // Allocate 4 MiB for bitmaps.
         // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
@@ -317,6 +333,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_action |= (1 << 2);
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
+    // This kinda works, but has bugs with Mario for some reason.
     if(controller->load_rom.ended_down)
     {
         // TODO(kaelan): So, I need to allocate memory for this call. I need to be able to get a string back
@@ -332,10 +349,10 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         char **file_ptr = &p_file_name;
         memory->DEBUGPlatformFindROMFile(file_ptr);
         controller->load_rom.ended_down = false;
+        ResetGameBoy(emulator_state->game_boy_bus);
+        // This does not work. Need to create functions for this, or just change the constructor for the Cartridge.
         LoadCartridge(emulator_state, file_name);
-        emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
-
-        s32 test = 0;
+        InsertCartridge(emulator_state->game_boy_bus, emulator_state->gb_cart);
     }
 
 // NOTE: Disable the emulator while text rendering is being developed.

@@ -128,7 +128,7 @@ DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
     open_file.lpstrFile[0] = 0;
     // FIXME: Magic number
     open_file.nMaxFile = 260;
-    open_file.lpstrFilter = "All\0*.*\0ROM\0*.gb\0";
+    open_file.lpstrFilter = "All\0*.*\0ROM (.gb)\0*.gb\0";
     open_file.nFilterIndex = 1;
     open_file.lpstrFileTitle = NULL;
     open_file.nMaxFileTitle = 0;
