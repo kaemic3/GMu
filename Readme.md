@@ -10,7 +10,7 @@ The emulator will only see ROM files that are put into the data/ROMs directory. 
 
 By default, gb_snek.gb is loaded. 
 - To unpause the emulator, press "P".
-- To load another ROM file, you can use the keybind combo "left alt + F". The use the arrow keys to pick one from the list, then enter to load it.
+- To load another ROM file, you can use the keybind combo "left alt + F". Then use the arrow keys to pick one from the list, then enter to load it.
 - "WASD" control up, down, left, and right.
 - "F" = B, "G" = A, "H" = select, "J" = start.
 
