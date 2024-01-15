@@ -260,7 +260,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state)) + emulator_state->bitmap_arena.size + 
                         emulator_state->game_boy_arena.size);
         CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
-                        "../data/ROMs/Mario.gb");
+                        "../data/ROMs/gb_snek.gb");
                         
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
@@ -374,6 +374,11 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                         (char *)file_location);
             InsertCartridge(emulator_state->game_boy_bus, emulator_state->gb_cart);
             emulator_state->show_rom_select = false;
+
+            //DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
+            controller->pause_emulator = false;
+            emulator_state->run_emulator = true;
+
         }
     }
     if(controller->pause_emulator)
@@ -502,7 +507,6 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->reset();
     }
 
-// NOTE: Disable the emulator while text rendering is being developed.
 #if 1
     GenerateGameBoyFrame(emulator_state->game_boy_bus, emulator_state->run_emulator);
 
