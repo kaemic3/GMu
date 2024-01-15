@@ -120,6 +120,13 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile) {
     }
     return result;
 }
+/*
+    NOTE: This function does not work well with emulator. For some reason, when a file dialog window
+          use opened, and playing certain ROMs (Mario confirmed), the player character will move
+          faster. I suspect this has to do with input in some way. Loading the ROM without using a file dialog
+          works fine though. A potential solution to this could be starting a new thread for the file dialog,
+          but for now I will be leaving this functionality out.
+ */
 DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
     #if 0
     HWND hwnd = GetActiveWindow();
@@ -184,7 +191,7 @@ DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
     #endif
     Assert(*file_name);
 }
-// Returns all of the ROM file names from the data/ROMs directory.
+// Returns all of the ROM file names from the data/ROMs directory via the directory_string_array out parameter.
 DEBUG_PLATFORM_GET_ROM_DIRECTORY(DEBUGPlatformGetROMDirectory) {
     WIN32_FIND_DATAA data;
     // Skip the . and .. strings

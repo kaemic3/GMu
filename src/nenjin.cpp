@@ -272,7 +272,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     f32 text_width_offset = 700.0f;
     // Write my name to the screen.
     DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, screen_width/2.0f + 15.0f, 
-               screen_height/2.0f + 64.0f, "Kaelan.");
+               screen_height/2.0f + 64.0f, "Kaelan :3");
     // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
     //               code for the register text into a function.
     // TODO(kaelan): Looking at the stuff below, could create an intialization function that
@@ -469,6 +469,39 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_action |= (1 << 2);
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
+
+    if(controller->load_rom_abs.ended_down)
+    {
+        controller->load_rom_abs.ended_down = false;
+        controller->pause_emulator = true;
+        emulator_state->run_emulator = false;
+        memory->DEBUGPlatformGetROMDirectory(&emulator_state->directory_struct);
+    }
+    if(controller->reset.ended_down)
+    {
+        controller->reset.ended_down = false;
+        emulator_state->game_boy_bus->reset();
+    }
+
+    GenerateGameBoyFrame(emulator_state->game_boy_bus, emulator_state->run_emulator);
+
+    // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
+    // TODO(kaelan): I think that the best optimization would be to use StretchDIBits on Windows to scale up the image. 
+    //               This would be by far the fastest option, and with optimizations, so far this algorithm works well enough.
+    //               To do this, I need to make a callback of some kind, or add a flag to the nenjin_offscreen_buffer and 
+    //               win32_offscreen_buffer structs that would scale the buffer somehow.
+
+    // IDEA: Create a separate function that updates the GameBoy screen based on a buffer that updates in this engine update function.
+    // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
+    //         - Each buffer would have coordinates, size and scale??
+    // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
+    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
+    if(emulator_state->show_rom_select)
+    {
+        DrawROMSelectMenu(buffer, memory, &emulator_state->font_maps, &emulator_state->directory_struct, emulator_state->selected_rom);
+    }
+}
+
     // This kinda works, but has bugs with Mario for some reason.
     // TODO(kaelan): Figure out why the heck this does not work with Mario.
     #if 0
@@ -494,36 +527,3 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->show_rom_select = !emulator_state->show_rom_select;
     }
     #endif
-    if(controller->load_rom_abs.ended_down)
-    {
-        controller->load_rom_abs.ended_down = false;
-        controller->pause_emulator = true;
-        emulator_state->run_emulator = false;
-        memory->DEBUGPlatformGetROMDirectory(&emulator_state->directory_struct);
-    }
-    if(controller->reset.ended_down)
-    {
-        controller->reset.ended_down = false;
-        emulator_state->game_boy_bus->reset();
-    }
-
-#if 1
-    GenerateGameBoyFrame(emulator_state->game_boy_bus, emulator_state->run_emulator);
-
-    // TODO(kaelan): The algorithm to upscale the pixel out is better, but I feel like it can get even faster.
-    // TODO(kaelan): I think that the best optimization would be to use StretchDIBits on Windows to scale up the image. 
-    //               This would be by far the fastest option, and with optimizations, so far this algorithm works well enough.
-    //               To do this, I need to make a callback of some kind, or add a flag to the nenjin_offscreen_buffer and 
-    //               win32_offscreen_buffer structs that would scale the buffer somehow.
-
-    // IDEA: Create a separate function that updates the GameBoy screen based on a buffer that updates in this engine update function.
-    // IDEA: Create a rendering queue? Queue the gb screen as a separate buffer entirely?
-    //         - Each buffer would have coordinates, size and scale??
-    // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
-    DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
-#endif
-    if(emulator_state->show_rom_select)
-    {
-        DrawROMSelectMenu(buffer, memory, &emulator_state->font_maps, &emulator_state->directory_struct, emulator_state->selected_rom);
-    }
-}
