@@ -15,8 +15,10 @@ Bus::Bus() {
 }
 
 void Bus::clear_screen() {
-    std::array<uint8_t, 160 * 144> empty = {};
-    std::swap(screen, empty);
+    for(auto index : screen)
+    {
+        index = 0;
+    }
 }
 
 void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
@@ -354,7 +356,8 @@ void Bus::reset() {
     cpu.reset();
     ppu.reset();
     clear_screen();
-
+    wram = {};
+    hram = {};
     system_clock_counter = 0;
     joypad_input_select = 0x03;
     joypad_action = 0x0f;
@@ -363,6 +366,14 @@ void Bus::reset() {
     tima = 0;
     tma = 0;
     tac = 0;
+    div = 0;
+    dma = 0;
+    dma_addr = 0x0000;
+    dma_cycle_count = 0;
+    ie_reg.data = 0;
+    if_reg.data = 0;
+    ime = 0;
+    dma_flag = false;
 
 }
 void Bus::push_pixel(uint8_t pixel, uint32_t index) {

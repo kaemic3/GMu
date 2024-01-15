@@ -119,7 +119,7 @@ typedef struct nenjin_controller_input
 	// Buttons available on the gb.
 	union 
 	{
-		nenjin_button_state buttons[11];
+		nenjin_button_state buttons[16];
 		struct 
 		{
 			nenjin_button_state up;
@@ -137,6 +137,11 @@ typedef struct nenjin_controller_input
 			nenjin_button_state save_state;
 
 			nenjin_button_state load_rom;
+			nenjin_button_state reset;
+			nenjin_button_state load_rom_abs;
+			nenjin_button_state rom_up;
+			nenjin_button_state rom_down;
+			nenjin_button_state rom_select;
 
 			// All buttons must be added before this line
 			nenjin_button_state terminator;
@@ -156,6 +161,18 @@ GetController(nenjin_input *input, int controller_index) {
 	nenjin_controller_input *result = &input->controllers[controller_index];
 	return result;
 }
+// TODO(kaelan): Need to figure out where this should actually go.
+// NOTE: This struct is made so strings can be stored in an array
+#define MAX_DIR_STRING MAX_PATH
+typedef struct directory_string 
+{
+	char value[MAX_DIR_STRING];
+} directory_string;
+typedef struct directory_string_array
+{
+	directory_string *strings;
+	s32 size;
+} directory_string_array;
 // DEBUG I/O
 // These functions currently do not protect against bad writes!!
 // The write function overwrites the old file, it should create a new
@@ -176,6 +193,9 @@ typedef DEBUG_PLATFORM_READ_ENTIRE_FILE(debug_platform_read_entire_file);
 #define DEBUG_PLATFORM_FIND_ROM_FILE(name) void name(char **file_name)
 typedef DEBUG_PLATFORM_FIND_ROM_FILE(debug_platform_find_rom_file);
 
+#define DEBUG_PLATFORM_GET_ROM_DIRECTORY(name) void name(directory_string_array *string_array)
+typedef DEBUG_PLATFORM_GET_ROM_DIRECTORY(debug_platform_get_rom_directory);
+
 #define DEBUG_PLATFORM_WRITE_ENTIRE_FILE(name) bool32 name(char *file_name, u32 memory_size, void *memory)
 typedef DEBUG_PLATFORM_WRITE_ENTIRE_FILE(debug_platform_write_entire_file);
 
@@ -192,6 +212,7 @@ typedef struct nenjin_memory
 	debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory;
 	debug_platform_read_entire_file *DEBUGPlatformReadEntireFile;
 	debug_platform_find_rom_file *DEBUGPlatformFindROMFile;
+	debug_platform_get_rom_directory *DEBUGPlatformGetROMDirectory;
 	debug_platform_write_entire_file *DEBUGPlatformWriteEntireFile;
 } nenjin_memory;
 

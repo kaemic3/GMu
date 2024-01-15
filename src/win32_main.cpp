@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <commdlg.h>
+#include <shobjidl.h>
+#include <stdlib.h>
 
 #include "nenjin.cpp"
 #include "nenjin_platform.h"
@@ -119,13 +121,15 @@ DEBUG_PLATFORM_READ_ENTIRE_FILE(DEBUGPlatformReadEntireFile) {
     return result;
 }
 DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
+    #if 0
+    HWND hwnd = GetActiveWindow();
     OPENFILENAMEA open_file;
     ZeroMemory(&open_file, sizeof(open_file));
     open_file.lStructSize = sizeof(open_file);
-    open_file.hwndOwner = GetActiveWindow();
+    open_file.hwndOwner = hwnd;
     open_file.lpstrFile = *file_name;
     // IMPORTANT Assign null terminator 
-    open_file.lpstrFile[0] = 0;
+    open_file.lpstrFile[0] = '\0';
     // FIXME: Magic number
     open_file.nMaxFile = 260;
     open_file.lpstrFilter = "All\0*.*\0ROM (.gb)\0*.gb\0";
@@ -135,7 +139,71 @@ DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
     open_file.lpstrInitialDir = NULL;
     open_file.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
     GetOpenFileNameA(&open_file);
+    // TODO(kaelan): This crashes the program if the user does not select a file.
+    #else
+    IFileDialog *file_dialog = 0;
+    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&file_dialog));
+    if(SUCCEEDED(hr))
+    {
+        // Get the flags.
+        DWORD flags;
+        hr = file_dialog->GetOptions(&flags);
+        if(SUCCEEDED(hr))
+        {
+            // Shell items only??
+            hr = file_dialog->SetOptions(flags | FOS_FORCEFILESYSTEM);
+            if(SUCCEEDED(hr))
+            {
+                hr = file_dialog->SetDefaultExtension(L".gb");
+                if(SUCCEEDED(hr))
+                {
+                    hr = file_dialog->Show(0);
+                    if(SUCCEEDED(hr))
+                    {
+                        IShellItem *result;
+                        hr = file_dialog->GetResult(&result);
+                        if(SUCCEEDED(hr))
+                        {
+                            PWSTR file_path = 0;
+                            hr = result->GetDisplayName(SIGDN_FILESYSPATH, &file_path);
+                            if(SUCCEEDED(hr))
+                            {
+                                wcstombs(*file_name, file_path, 260);
+                                result->Release();
+                                CoTaskMemFree(file_path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    file_dialog->Close(hr);
+    file_dialog->ClearClientData();
+    file_dialog->Release();
+    #endif
     Assert(*file_name);
+}
+// Returns all of the ROM file names from the data/ROMs directory.
+DEBUG_PLATFORM_GET_ROM_DIRECTORY(DEBUGPlatformGetROMDirectory) {
+    WIN32_FIND_DATAA data;
+    // Skip the . and .. strings
+    HANDLE find = FindFirstFileA("../data/ROMs/*", &data);
+    FindNextFileA(find, &data);
+    s32 string_index = 0;
+    while(FindNextFileA(find, &data) != 0)
+    {
+        char *string = data.cFileName;
+        s32 string_length = StringLength(string);
+        for(s32 index = 0; index < string_length; ++index)
+        {
+            string_array->strings[string_index].value[index] = string[index];
+        }
+        // Add null term.
+        string_array->strings[string_index].value[string_length] = 0;
+        ++string_index;
+    }
+    string_array->size = string_index;
 }
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile) {
     bool32 result = false;
@@ -427,6 +495,25 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                             keyboard_controller->pause_emulator = !keyboard_controller->pause_emulator;
                         }
                     }
+                    else if(vk_code == 'R')
+                    {
+                        if(is_down)
+                        {
+                            Win32ProcessKeyboardMessage(&keyboard_controller->reset, is_down);
+                        }
+                    }
+                    else if(vk_code == VK_UP)
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->rom_up, is_down);
+                    }
+                    else if(vk_code == VK_DOWN)
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->rom_down, is_down);
+                    }
+                    else if(vk_code == VK_RETURN)
+                    {
+                        Win32ProcessKeyboardMessage(&keyboard_controller->rom_select, is_down);
+                    }
                    	if(is_down)
 					{
 						bool32 alt_key_was_down = (((1 << 29) & l_param) != 0);
@@ -452,7 +539,12 @@ Win32ProcessMessageQueue(win32_state *state, nenjin_controller_input *keyboard_c
                         {
                             Win32ProcessKeyboardMessage(&keyboard_controller->load_rom, is_down);
                         }
+                        if((vk_code == 'G' && alt_key_was_down))
+                        {
+                            Win32ProcessKeyboardMessage(&keyboard_controller->load_rom_abs, is_down);
+                        }
 					} 
+
                 }
             } break;
             default:
@@ -528,6 +620,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
             engine_memory.DEBUGPlatformFreeFileMemory = DEBUGPlatformFreeFileMemory;
             engine_memory.DEBUGPlatformReadEntireFile = DEBUGPlatformReadEntireFile;
             engine_memory.DEBUGPlatformFindROMFile = DebugPlatfromFindROMFile;
+            engine_memory.DEBUGPlatformGetROMDirectory = DEBUGPlatformGetROMDirectory;
             engine_memory.DEBUGPlatformWriteEntireFile = DEBUGPlatformWriteEntireFile;
             win32_state platform_state = {};
             LPVOID base_address = (LPVOID *)Terabytes((u64)1);
@@ -652,10 +745,11 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     old_input = temp;
 
                     // Debug output 
+                    #if 1
                     char Buffer[256];
                     _snprintf_s(Buffer, sizeof(Buffer), " %.02f FPS, %.02fms\n", fps, ms_per_frame);
                     OutputDebugStringA(Buffer);
-
+                    #endif
                 }
             }
             else

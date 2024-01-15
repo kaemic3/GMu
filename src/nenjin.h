@@ -40,7 +40,7 @@ internal void
 ClearArena(memory_arena *arena) {
 	arena->base_ptr = (u8 *)arena->base_ptr - arena->bytes_used;
 	u8 *byte = (u8 *)arena->base_ptr;
-	for(u32 index = 0; index < arena->bytes_used; ++index)
+	for(u32 index = 0; index < arena->size; ++index)
 	{
 		*byte++ = 0;
 	}
@@ -60,13 +60,25 @@ struct font_bitmap
 	s32 y_offset;
 	f32 font_size;
 };
+struct font_maps 
+{
+	font_bitmap font_large[128];
+	font_bitmap font_small[128];
+	font_bitmap font_selected[128];
+};
 struct nenjin_state 
 {
 	bool32 run_emulator;
+	bool32 show_rom_select;
 	memory_arena game_boy_arena;
 	memory_arena bitmap_arena;
-	nenjin_color font_color;
-	font_bitmap font_map[128];
+	memory_arena cartridge_arena;
+	nenjin_color font_color_large;
+	nenjin_color font_color_small;
+	font_maps font_maps;
+	directory_string_array directory_struct;
+	// Starting at 0.
+	s32 selected_rom;
 	// NOTE: The Game Boy bus CANNOT be a "stack" based thing, because the constructor does not get called! 
 	// 		 Also, even after forcing it to be called, I had issues with memory access violations.
 	//		 This is probably due to the way the bus class default intializes the CPU and PPU.

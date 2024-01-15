@@ -14,13 +14,13 @@
 #include "BG_Fetcher.cpp"
 #include "Sprite.cpp"
 #include "DMG_PPU.cpp"
-#include "Cartridge.cpp"
 #include "Mapper.cpp"
 #include "Mapper_00.cpp"
 #include "Mapper_01.cpp"
 #include "nenjin.h"
 #include "nenjin_render.cpp"
 #include "nenjin_string.h"
+#include "Cartridge.cpp"
 // STB TTF
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -34,11 +34,43 @@ LoadCartridge(nenjin_state *state, char *file_name) {
     // Free the existing cartridge.
     if(state->gb_cart)
     {
-        delete state->gb_cart;
+        state->gb_cart->~Cartridge();
+        memset(state->gb_cart, 0, sizeof(Cartridge));
+        free(state->gb_cart);
+        state->game_boy_bus->cart = 0;
     }
-    state->gb_cart = new Cartridge(file_name);
+    state->gb_cart = (Cartridge *)calloc(1, sizeof(Cartridge));
+    new (state->gb_cart) Cartridge();
     Assert(state->gb_cart->cart_rom.size() > 0);
 }
+internal void
+CreateCartridge(nenjin_state *state, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
+                debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory, char *file_name) {
+    if(!state->gb_cart)
+    {
+        state->gb_cart = (Cartridge *)calloc(1, sizeof(Cartridge));
+        new (state->gb_cart) Cartridge();
+    }
+    state->gb_cart->CreateCartridge(&state->game_boy_arena, DEBUGPlatformReadEntireFile, DEBUGPlatformFreeFileMemory, file_name);
+}
+internal void
+CreateCartridge(nenjin_state *state, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
+                debug_platform_find_rom_file *DEBUGPlatformFindRomFile,
+                debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory) {
+    #if 0
+    if(state->gb_cart)
+    {
+        state->gb_cart->~Cartridge();
+        free(state->gb_cart);
+
+    }
+    state->gb_cart = (Cartridge *)calloc(1, sizeof(Cartridge));
+    new (state->gb_cart) Cartridge();
+    #endif
+    state->gb_cart->CreateCartridge(&state->game_boy_arena, DEBUGPlatformReadEntireFile, DEBUGPlatformFindRomFile, DEBUGPlatformFreeFileMemory);
+
+}
+
 // TODO(kaelan): Remove shared_ptr.
 // TODO(kaelan): This function should return void, but becuase the Bus class is not setup for memory arenas, it has to be this way for now.
 internal Bus * 
@@ -69,11 +101,11 @@ InsertCartridge(Bus *gb, Cartridge *gb_cart) {
     gb->insert_cartridge(gb_cart);
 }
 internal void
-ResetGameBoy(Bus *gb) {
-    gb->reset();
-    gb->cpu.pc = 0x0100;
-    gb->cpu.sp = 0xfffe;
-    gb->if_reg.data = 0xe1;
+ResetGameBoy(nenjin_state *state) {
+    state->game_boy_bus->reset();
+    state->game_boy_bus->cpu.pc = 0x0100;
+    state->game_boy_bus->cpu.sp = 0xfffe;
+    state->game_boy_bus->if_reg.data = 0xe1;
 }
 internal void
 GenerateGameBoyFrame(Bus *gb, bool32 run_emulator) {
@@ -153,27 +185,83 @@ GenerateFontTable(memory_arena *arena, font_bitmap *font_map, char *file_name, f
         font_map[char_index] = result;
     }
 }
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
+internal void
+DrawROMSelectMenu(nenjin_offscreen_buffer *buffer, nenjin_memory *memory, font_maps *font_maps, directory_string_array *directory_struct, s32 selected_rom) {
+    f32 left_x = SCREEN_WIDTH/2.0f - 400.0f;
+    f32 top_y = 50.0f;
+    f32 right_x = SCREEN_WIDTH/2.0f + 400.0f;
+    f32 bottom_y = 500.0f;
+    f32 padding_y = 25.0f;
+    f32 first_rom_y = top_y+padding_y*3;
+    DrawRectangle(buffer, left_x, top_y, right_x, bottom_y, 0.34f, 0.33f, 0.33f);
+
+    DrawString(buffer, (font_bitmap *)font_maps->font_large, left_x + 50.0f, top_y + padding_y*2, "ROMS:");
+    for(s32 index = 0; index < directory_struct->size; ++index)
+    {
+        if(index == selected_rom)
+        {
+            DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*(3 + index), directory_struct->strings[index].value);
+        }
+        else
+        {
+            DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*(3 + index), directory_struct->strings[index].value);
+        }
+    }
+#if 0
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*3, directory_struct->strings[0].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*4, directory_struct->strings[1].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*5, directory_struct->strings[2].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*6, directory_struct->strings[3].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*7, directory_struct->strings[4].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*8, directory_struct->strings[5].value);
+    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*9, directory_struct->strings[6].value);
+#endif
+}
 
 extern "C"
 NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // nenjin_state acts as the structure for the permanent storage.
     Assert((sizeof(nenjin_state) <= memory->permanent_storage_size));
     nenjin_state *emulator_state = (nenjin_state *)memory->permanent_storage;
+
+    // TODO(kaelan): Create proper allocation for this.
+    directory_string *directory_array = (directory_string *)memory->transient_storage;
+    Assert((sizeof(directory_array) <= memory->transient_storage_size));
     if(!memory->is_initialized)
     {
+        emulator_state->directory_struct = {};
+        emulator_state->directory_struct.strings = directory_array;
         emulator_state->run_emulator = false;
+        emulator_state->show_rom_select = false;
+        emulator_state->selected_rom = 0;
         nenjin_controller_input *controller = GetController(input, 0);
         controller->pause_emulator = true;
         // Allocate 4 MiB for bitmaps.
         // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
                         (u8 *)memory->permanent_storage + sizeof(nenjin_state));
-        emulator_state->font_color = {1.0f, 0.95f, 0.51f, 0.78f};
-        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_map, 
-                          "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color, memory->DEBUGPlatformReadEntireFile);
+        emulator_state->font_color_large = {1.0f, 0.95f, 0.51f, 0.78f};
+        emulator_state->font_color_small = {1.0f, 1.0f, 1.0f, 1.0f};
+        // Generate large fonts.
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_large, 
+                          "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color_large, memory->DEBUGPlatformReadEntireFile);
+        // Generate small fonts. 
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_small, 
+                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_small, memory->DEBUGPlatformReadEntireFile);
+        // Generate small selected fonts. 
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_selected, 
+                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_large, memory->DEBUGPlatformReadEntireFile);
+
         InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
-        LoadCartridge(emulator_state, "../data/ROMs/gb_snek.gb");
+        InitializeArena(&emulator_state->cartridge_arena, Kilobytes(3), 
+                        (u8 *)memory->permanent_storage + (sizeof(nenjin_state)) + emulator_state->bitmap_arena.size + 
+                        emulator_state->game_boy_arena.size);
+        CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
+                        "../data/ROMs/Mario.gb");
+                        
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
     }
@@ -183,7 +271,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     u32 screen_height = 720;
     f32 text_width_offset = 700.0f;
     // Write my name to the screen.
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, screen_width/2.0f + 15.0f, 
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, screen_width/2.0f + 15.0f, 
                screen_height/2.0f + 64.0f, "Kaelan.");
     // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
     //               code for the register text into a function.
@@ -212,8 +300,8 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     char b_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.b_reg, b_hex);
     CatString(S32StringLength(b_text), b_text, S32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 100.0f, a_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset + 200.0f, 100.0f, b_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 100.0f, a_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 200.0f, 100.0f, b_reg_text);
 
     #define U16_REG_STRING_SIZE 9
     char sp_hex[5] = "";
@@ -221,21 +309,21 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     char sp_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
     CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 200.0f, sp_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 200.0f, sp_reg_text);
 
     char pc_hex[5] = "";
     char pc_text[5] = "PC: ";
     char pc_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex);
     CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 300.0f, pc_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 300.0f, pc_reg_text);
 
     char d_hex[3] = "";
     char d_text[4] = "D: ";
     char d_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.d_reg, d_hex);
     CatString(S32StringLength(d_text), d_text, S32StringLength(d_hex), d_hex, U8_REG_STRING_SIZE, d_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_map, text_width_offset, 150.0f, d_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 150.0f, d_reg_text);
 
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -245,6 +333,49 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // Input handling
     // TODO(kaelan): Maybe move this to a function? This is a lot of code to look at.
     nenjin_controller_input *controller = GetController(input, 0);
+    if(controller->load_rom.ended_down)
+    {
+        controller->load_rom.ended_down = false;
+        emulator_state->show_rom_select = !emulator_state->show_rom_select;
+        memory->DEBUGPlatformGetROMDirectory(&emulator_state->directory_struct);
+    }
+    if(emulator_state->show_rom_select)
+    {
+        if(controller->rom_up.ended_down)
+        {
+            --emulator_state->selected_rom;
+            controller->rom_up.ended_down = false;
+            if(emulator_state->selected_rom < 0)
+            {
+                emulator_state->selected_rom = 0;
+            }
+        }
+        if(controller->rom_down.ended_down)
+        {
+            controller->rom_down.ended_down = false;
+            ++emulator_state->selected_rom;
+            if(emulator_state->selected_rom > emulator_state->directory_struct.size-1)
+            {
+                emulator_state->selected_rom = emulator_state->directory_struct.size-1;
+            }
+        }
+        if(controller->rom_select.ended_down)
+        {
+            controller->pause_emulator = true;
+            emulator_state->run_emulator = false;
+            controller->rom_select.ended_down = false;
+            ResetGameBoy(emulator_state);
+            char *file_name = (char *)emulator_state->directory_struct.strings[emulator_state->selected_rom].value;
+            char file_directory[32] = "../data/ROMs/";
+            char file_location[260] = "";
+            CatString(S32StringLength((char *)file_directory), (char*)file_directory, S32StringLength(file_name), file_name, 
+                        260, (char *)file_location);
+            CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
+                        (char *)file_location);
+            InsertCartridge(emulator_state->game_boy_bus, emulator_state->gb_cart);
+            emulator_state->show_rom_select = false;
+        }
+    }
     if(controller->pause_emulator)
     {
         emulator_state->run_emulator = false;
@@ -334,25 +465,41 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         emulator_state->game_boy_bus->joypad_state_change = true;
     }
     // This kinda works, but has bugs with Mario for some reason.
+    // TODO(kaelan): Figure out why the heck this does not work with Mario.
+    #if 0
     if(controller->load_rom.ended_down)
     {
-        // TODO(kaelan): So, I need to allocate memory for this call. I need to be able to get a string back
-        //               from the platform layer, and having the memory allocated in the stack here is preventing
-        //               it from being accessed there, for some reason. IDK.
-        // TODO(kaelan): To make this work, I am pretty sure I need to re-write part of the cartridge class.
-        //               The easier way would be to write the class to take a debug_read_file_result.
-
-        // FIXME This terribleness works. But I don't really think this should be how I do this.
-        // IDEA: Fix this by returning a read_file_result! Then can also free the cart memory!
-        char file_name[260] = "";
-        char *p_file_name = (char *)file_name;
-        char **file_ptr = &p_file_name;
-        memory->DEBUGPlatformFindROMFile(file_ptr);
         controller->load_rom.ended_down = false;
-        ResetGameBoy(emulator_state->game_boy_bus);
-        // This does not work. Need to create functions for this, or just change the constructor for the Cartridge.
-        LoadCartridge(emulator_state, file_name);
+        //LoadCartridge(emulator_state, "../data/ROMs/Mario.gb");
+        controller->pause_emulator = true;
+        emulator_state->run_emulator = false;
+        ResetGameBoy(emulator_state);
+        #if 1
+        CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFindROMFile,
+                        memory->DEBUGPlatformFreeFileMemory);
+        #else
+        CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
+                        "../data/ROMs/Mario.gb");
+        #endif
         InsertCartridge(emulator_state->game_boy_bus, emulator_state->gb_cart);
+    }
+    if(controller->load_rom.ended_down)
+    {
+        controller->load_rom.ended_down = false;
+        emulator_state->show_rom_select = !emulator_state->show_rom_select;
+    }
+    #endif
+    if(controller->load_rom_abs.ended_down)
+    {
+        controller->load_rom_abs.ended_down = false;
+        controller->pause_emulator = true;
+        emulator_state->run_emulator = false;
+        memory->DEBUGPlatformGetROMDirectory(&emulator_state->directory_struct);
+    }
+    if(controller->reset.ended_down)
+    {
+        controller->reset.ended_down = false;
+        emulator_state->game_boy_bus->reset();
     }
 
 // NOTE: Disable the emulator while text rendering is being developed.
@@ -371,4 +518,8 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     // NOTE: Currently, this algorithm is fast enough in O2 mode to run on my zenbook. Without O2, it runs slower than 16.74 ms.
     DrawGameBoyScreen(buffer, emulator_state->game_boy_bus, &palette, 4);
 #endif
+    if(emulator_state->show_rom_select)
+    {
+        DrawROMSelectMenu(buffer, memory, &emulator_state->font_maps, &emulator_state->directory_struct, emulator_state->selected_rom);
+    }
 }

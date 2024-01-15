@@ -7,19 +7,23 @@
 #include <fstream>
 #include "Mapper_00.h"
 #include "Mapper_01.h"
-//#include "nenjin.h"
-
+#include "nenjin_platform.h"
+struct memory_arena;
 class Cartridge {
 public:
-    Cartridge(const std::string &directory);
-    ~Cartridge() = default;
+    Cartridge();
+    ~Cartridge() { cart_ram.clear(); cart_rom.clear();}
 
     // Communication with the Main Bus
     bool cpu_write(uint16_t addr, uint8_t data);
     bool cpu_read(uint16_t addr, uint8_t &data);
 
     // Create Cartridge
-    //void CreateCartridge(memory_arena *arena, debug_platform_find_rom_file *DebugPlatfromFindROMFile, char *file_name);
+    void CreateCartridge(memory_arena *arena, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
+                         debug_platform_find_rom_file *DEBUGPlatfromFindROMFile, 
+                         debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory);
+    void CreateCartridge(memory_arena *arena, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
+    debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory, char *file_name);
     // Free Cartridge
 
     // Load boot rom

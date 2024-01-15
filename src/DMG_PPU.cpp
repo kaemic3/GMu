@@ -678,7 +678,37 @@ void DMG_PPU::clock() {
 }
 
 void DMG_PPU::reset() {
-
+    ly = 0;
+    lyc = 0;
+    scx = 0;
+    scy = 0;
+    wx = 0;
+    wy = 0;
+    bgp = 0;
+    obp0 = 0;
+    obp1 = 0;
+    scanline_x = 0;
+    old_clock = 0;
+    bg_win_swap_pos = 0xff;
+    win_pixel_offset = 0;
+    bg_pixel_offset = 0;
+    sprite_offscreen_offset = 0;
+    clock_count = 0;
+    cpu_access = false;
+    fetcher_access = false;
+    stat_oam_flag = false;
+    stat_pixel_transfer_flag = false;
+    stat_hblank_flag = false;
+    stat_ly_lyc_flag = false;
+    vblank_flag = false;
+    ppu_on_flag = false;
+    clear_fifos();
+    vram = {};
+    oam = {};
+    bg_fetcher.init();
+    fg_fetcher.init();
+    lcdc.data = 0x91;
+    stat.data = 0x85;
 }
 
 void DMG_PPU::clear_fifos() {

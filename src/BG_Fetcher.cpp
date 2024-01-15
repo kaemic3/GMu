@@ -27,6 +27,9 @@ void BG_Fetcher::init() {
     // Grab the state of the relevant PPU members via the ppu_read function
 
     // Create a temporary copy of the lcdc_register union
+    // TODO(kaelan): Looking at this, encapsulation is causing some issues here.
+    //               ideally, we should not be copying things this way. 
+    //               Most likely a lot slower than just exposing the register.
     union lcdc_register {
         struct {
             uint8_t bg_window_enable        : 1;

@@ -218,12 +218,13 @@ bool SM83::complete() {
 void SM83::reset() {
     // Reset all registers to initial values
     a_reg = 0; f_reg = 0; b_reg = 0; c_reg = 0; d_reg = 0; e_reg = 0; h_reg = 0; l_reg = 0;
-    sp = 0xfffe; pc = 0x0100;
+    sp = 0xfffe; pc = 0x0100; debug_pc = 0x0000;
     cycles = 0x00;
     fetched = 0x00;
     addr_abs = 0x0000;
     opcode = 0x00;
     state = Execute;
+    halt_flag = false;
 
 }
 bool SM83::interrupt(uint8_t addr) {
