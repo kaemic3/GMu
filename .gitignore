@@ -9,6 +9,8 @@
 *.exe
 Mario.gb
 Dr. Mario.gb
+Battletoads.gb
+Tetris.gb
 nenjin.dll
 nenjin_temp.dll
 lock.tmp
