@@ -195,19 +195,36 @@ DrawROMSelectMenu(nenjin_offscreen_buffer *buffer, nenjin_memory *memory, font_m
     f32 bottom_y = 500.0f;
     f32 padding_y = 25.0f;
     f32 first_rom_y = top_y+padding_y*3;
+    // Backdrop for the ROM menu.
     DrawRectangle(buffer, left_x, top_y, right_x, bottom_y, 0.34f, 0.33f, 0.33f);
 
     DrawString(buffer, (font_bitmap *)font_maps->font_large, left_x + 50.0f, top_y + padding_y*2, "ROMS:");
-    for(s32 index = 0; index < directory_struct->size; ++index)
+    // NOTE: Max number of ROMs on screen at one time is 15.
+    s32 rom_count = directory_struct->size;
+    s32 base_index = 0;
+
+    if(rom_count >= 15)
     {
-        if(index == selected_rom)
+        rom_count = 15;
+    }
+    s32 last_index = rom_count;
+    if((selected_rom + 1) / 15 > 0)
+    {
+        base_index = base_index + 15*((selected_rom + 1)/15)-1;
+        last_index = base_index + rom_count;
+    }
+    s32 draw_offset = 0;
+    for(s32 index = base_index; index < last_index; ++index)
+    {
+        if(selected_rom == index)
         {
-            DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*(3 + index), directory_struct->strings[index].value);
+            DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
         }
         else
         {
-            DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*(3 + index), directory_struct->strings[index].value);
+            DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
         }
+        ++draw_offset;
     }
 }
 
