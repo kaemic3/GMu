@@ -209,15 +209,6 @@ DrawROMSelectMenu(nenjin_offscreen_buffer *buffer, nenjin_memory *memory, font_m
             DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*(3 + index), directory_struct->strings[index].value);
         }
     }
-#if 0
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*3, directory_struct->strings[0].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*4, directory_struct->strings[1].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*5, directory_struct->strings[2].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*6, directory_struct->strings[3].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*7, directory_struct->strings[4].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*8, directory_struct->strings[5].value);
-    DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*9, directory_struct->strings[6].value);
-#endif
 }
 
 extern "C"
@@ -288,42 +279,80 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     //       somewhere in the window, we should be able to assign a static max size, and truncate if needed to avoid any
     //       allocations. But, if I am already going to make a local allocator, then shouldn't it be as memory
     //       efficient as possible, with the speed as well?
-#define U8_REG_STRING_SIZE 6
+#define U8_REG_STRING_SIZE 5
+    // DEBUG text code.
     char a_hex[3] = "";
-    char a_text[4] = "A: ";
+    char a_text[3] = "A:";
     char a_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.a_reg, a_hex);
     CatString(S32StringLength(a_text), a_text, S32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 50.0f, a_reg_text);
+
+    char f_hex[3] = "";
+    char f_text[3] = "F:";
+    char f_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.f_reg, f_hex);
+    CatString(S32StringLength(f_text), f_text, S32StringLength(f_hex), f_hex, U8_REG_STRING_SIZE, f_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 50.0f, f_reg_text);
 
     char b_hex[3] = "";
-    char b_text[4] = "B: ";
+    char b_text[3] = "B:";
     char b_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.b_reg, b_hex);
     CatString(S32StringLength(b_text), b_text, S32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 100.0f, a_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 200.0f, 100.0f, b_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 100.0f, b_reg_text);
 
-    #define U16_REG_STRING_SIZE 9
-    char sp_hex[5] = "";
-    char sp_text[5] = "SP: ";
-    char sp_reg_text[U16_REG_STRING_SIZE] = "";
-    ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
-    CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 200.0f, sp_reg_text);
+    char c_hex[3] = "";
+    char c_text[3] = "C:";
+    char c_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.c_reg, c_hex);
+    CatString(S32StringLength(c_text), c_text, S32StringLength(c_hex), c_hex, U8_REG_STRING_SIZE, c_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 100.0f, c_reg_text);
 
-    char pc_hex[5] = "";
-    char pc_text[5] = "PC: ";
-    char pc_reg_text[U16_REG_STRING_SIZE] = "";
-    ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex);
-    CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 300.0f, pc_reg_text);
 
     char d_hex[3] = "";
-    char d_text[4] = "D: ";
+    char d_text[3] = "D:";
     char d_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.d_reg, d_hex);
     CatString(S32StringLength(d_text), d_text, S32StringLength(d_hex), d_hex, U8_REG_STRING_SIZE, d_reg_text);
     DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 150.0f, d_reg_text);
+
+    char e_hex[3] = "";
+    char e_text[3] = "E:";
+    char e_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.e_reg, e_hex);
+    CatString(S32StringLength(e_text), e_text, S32StringLength(e_hex), e_hex, U8_REG_STRING_SIZE, e_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 150.0f, e_reg_text);
+
+    char h_hex[3] = "";
+    char h_text[3] = "H:";
+    char h_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.h_reg, h_hex);
+    CatString(S32StringLength(h_text), h_text, S32StringLength(h_hex), h_hex, U8_REG_STRING_SIZE, h_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 200.0f, h_reg_text);
+
+    char l_hex[3] = "";
+    char l_text[3] = "L:";
+    char l_reg_text[U8_REG_STRING_SIZE] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cpu.l_reg, l_hex);
+    CatString(S32StringLength(l_text), l_text, S32StringLength(l_hex), l_hex, U8_REG_STRING_SIZE, l_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 200.0f, l_reg_text);
+
+    #define U16_REG_STRING_SIZE 8
+
+    char pc_hex[5] = "";
+    char pc_text[4] = "PC:";
+    char pc_reg_text[U16_REG_STRING_SIZE] = "";
+    ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex); // NOTE: It is important that cpu.debug_pc is used here!
+    CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 250.0f, pc_reg_text);
+
+    char sp_hex[5] = "";
+    char sp_text[4] = "SP:";
+    char sp_reg_text[U16_REG_STRING_SIZE] = "";
+    ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
+    CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 300.0f, sp_reg_text);
 
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};

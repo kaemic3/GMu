@@ -192,9 +192,12 @@ DEBUG_PLATFORM_FIND_ROM_FILE(DebugPlatfromFindROMFile) {
     Assert(*file_name);
 }
 // Returns all of the ROM file names from the data/ROMs directory via the directory_string_array out parameter.
+// Only files with a .gb extension will be returned.
+// TODO(kaelan): Should probably create a max size for this. I don't necessarily know what that should be, but
+//               for now, this is the only transient storage type, and that memory pool is very large.
 DEBUG_PLATFORM_GET_ROM_DIRECTORY(DEBUGPlatformGetROMDirectory) {
     WIN32_FIND_DATAA data;
-    // Skip the . and .. strings
+    // Skip the . and .. strings, from what I can find, they always show up as the first two files.
     HANDLE find = FindFirstFileA("../data/ROMs/*", &data);
     FindNextFileA(find, &data);
     s32 string_index = 0;
@@ -202,13 +205,41 @@ DEBUG_PLATFORM_GET_ROM_DIRECTORY(DEBUGPlatformGetROMDirectory) {
     {
         char *string = data.cFileName;
         s32 string_length = StringLength(string);
-        for(s32 index = 0; index < string_length; ++index)
+        // Traverse the string to the end of the string, then get the file ext.
+        for(s32 ext_index = 0; ext_index < string_length; ++ext_index)
         {
-            string_array->strings[string_index].value[index] = string[index];
+            ++string;
         }
-        // Add null term.
-        string_array->strings[string_index].value[string_length] = 0;
-        ++string_index;
+        // Now go backwards until we see a . Store the number of chars.
+        s32 ext_length = 0;
+        while(*string != '.')
+        {
+            --string;
+            ++ext_length;
+        }
+        // String should be at the last period now, which should be the beginning of the ext.
+        // NOTE: I am not sure how long file extensions can be, but 8 seems like it would be long enough.
+        // Store the ext.
+        char ext[8];
+        for(s32 ext_index = 0; ext_index < ext_length; ++ext_index)
+        {
+            // Store as lowercase!
+            ext[ext_index] = (char)tolower(*++string);
+        }
+        // Now check the first two indicies of the ext array to see if they are gb
+        if(ext[0] == 'g' && ext[1] == 'b')
+        {
+            // Reset the string pointer
+            string = data.cFileName;
+            for(s32 index = 0; index < string_length; ++index)
+            {
+                string_array->strings[string_index].value[index] = string[index];
+            }
+            // Add null term.
+            string_array->strings[string_index].value[string_length] = 0;
+            ++string_index;
+        }
+        
     }
     string_array->size = string_index;
 }
