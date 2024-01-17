@@ -395,6 +395,14 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     char flags_label[9] = "ZNHC----";
     DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + 6.0f*24.0f, 380.0f, flags_label);
 
+    // Cartridge bank
+    char bank_hex[3] = "";
+    char bank_text[6] = "Bank:";
+    char bank_reg_text[8] = "";
+    ToHexStringU8(emulator_state->game_boy_bus->cart->p_mapper->get_current_rom_bank(), bank_hex);
+    CatString(S32StringLength(bank_text), bank_text, S32StringLength(bank_hex), bank_hex, 8, bank_reg_text);
+    DrawString(buffer, emulator_state->font_maps.font_large_pink, text_width_offset + REGISTER_GAP*2, 50.0f, bank_reg_text);
+
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
     palette.index_1 = {1.0f, 0.66f, 0.66f, 0.66f};

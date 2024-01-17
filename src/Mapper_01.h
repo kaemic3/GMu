@@ -9,7 +9,7 @@ public:
     ~Mapper_01() = default;
 
     bool cpu_map_read(uint16_t addr, uint32_t &mapper_addr, bool &ram) override;
-    bool cpu_map_write(uint16_t addr, uint8_t data) override;
+    bool cpu_map_write(uint16_t addr, uint8_t data, uint32_t &mapped_addr, bool &ram) override;
     uint8_t get_current_rom_bank() override { return (uint8_t) reg.rom_bank_number; };
 //private:
     // This flag should be set to true when the cartridge uses the RAM bank number register to expand the available ROM
@@ -25,6 +25,7 @@ public:
         };
         uint16_t data : 9;
     } reg;
+    // TODO(kaelan): Are these used, ever?
         // Store the addresses to the according ROM and RAM - these are defined to support the largest ROM and RAM sizes.
     struct Mapper_Addresses {
         uint32_t rom_address : 21;

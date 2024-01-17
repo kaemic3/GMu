@@ -280,6 +280,11 @@ void BG_Fetcher::clock() {
                 case 0x9000:
                     // Functions the same as 0x8000, just uses signed addressing so cast signed int to the tile id
                     tiledata_addr = tiledata_base_addr + ((int8_t) tile_id * 0x10);
+                    if(tiledata_addr == 0x9000)
+                    {
+                        int test = 0;
+                        printf("tiledata: 0x%X\ntileindex: 0x%X\ntilemap_address: 0x%X\n", tiledata_addr, tile_index, tilemap_bg);
+                    }
                     break;
             }
             // Now that we have the correct tiledata, find the correct byte for the current tile line.

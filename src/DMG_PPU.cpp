@@ -25,6 +25,10 @@ bool DMG_PPU::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     // Will need to have 2 different cpu access conditions since during OAM search VRAM is accessible,
     // but OAM is not
     if(addr >= 0x8000 && addr <= 0x9fff) {
+        if (addr == 0x9982)
+        {
+            int test = 0;
+        }
         // Check if ppu is using VRAM
         if (!cpu_access && !is_dma) {
             printf("Cannot write \"0x%x\" to 0x%x. VRAM is being used by PPU.\n",data, addr);

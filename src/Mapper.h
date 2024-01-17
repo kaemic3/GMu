@@ -11,7 +11,7 @@ public:
     ~Mapper() = default;
 
     virtual bool cpu_map_read(uint16_t addr, uint32_t &mapped_addr, bool &ram) = 0;
-    virtual bool cpu_map_write(uint16_t addr, uint8_t data) = 0;
+    virtual bool cpu_map_write(uint16_t addr, uint8_t data, uint32_t &mapped_addr, bool &ram) = 0;
     virtual uint8_t get_current_rom_bank() = 0;
 
 protected:

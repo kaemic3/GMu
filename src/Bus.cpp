@@ -50,6 +50,10 @@ void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     }
     // Check for writing to HRAM
     else if (addr >= 0xff80 && addr <= 0xfffe) {
+        if (addr == 0xffe8)
+        {
+            int test = 0;
+        }
         // Apply the mask to the address
        hram[addr - 0xff80] = data;
     }
@@ -200,7 +204,7 @@ uint8_t Bus::cpu_read(uint16_t addr, bool dma_copy) {
     else if (ppu.cpu_read(addr, data)) {
     }
     else {
-        printf("Cannot read from address: 0x%X is not readable.\n", addr);
+        //printf("Cannot read from address: 0x%X is not readable.\n", addr);
     }
     // If the address in not valid, return 0x00
     return data;
