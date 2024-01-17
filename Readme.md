@@ -8,6 +8,8 @@ This is my first programming project, so keep that in mind.
 
 Currently, Windows is the only OS that is supported.
 
+Additionally, MBC0 and most MBC1 games are supported.
+
 The emulator will only see ROM files that are put into the data/ROMs directory. For now, file dialog boxes are not working. I am planning on looking into this later on, but due to a lack of understanding on my part, it will take some time.
 
 By default, gb_snek.gb is loaded. 
@@ -16,11 +18,20 @@ By default, gb_snek.gb is loaded.
 - "WASD" control up, down, left, and right.
 - "F" = B, "G" = A, "H" = select, "J" = start.
 
-
 ## Build
 Assuming MSVC is installed, the win32_build.bat file should generate an exe that can run.
 
-If the build fails, you will need to locate the vcvarsall.bat file on your system and change line 3 of the bat file to that directory.
+If the build fails, you will need to locate the vcvarsall.bat file on your system and change line 3 of the bat file to that directory. 
+
+Build with -O2 for faster performance!
+
+## Bugs
+There a a lot of bugs at the moment. But most games are playable.
+
+Known:
+- Zelda dialogue does not work correctly.
+- Top of the screen in Mario has tearing.
+- Transparency issues.
 
 ## TODO
 - Finish UI.
