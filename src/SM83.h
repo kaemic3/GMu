@@ -89,7 +89,7 @@ public:
     // Instructions
     uint8_t opcode = 0x00;
     uint8_t cycles = 0x00;
-    // Function that returns a string of vectors
+    // Get the current instruction in the form of a vector of strings.
     std::vector<std::string> return_instruction();
 
 public:
@@ -114,6 +114,7 @@ public:
         std::vector<uint8_t*> operands;             // This is currently un-used. Will implement it later
         uint8_t n;                                  // Used for when we are acting on a specific bit and need to specify it
     };
+    // TODO(kaelan): Change these to static arrays?
     // Use initializer list to initialize the opcode table
     std::vector<INSTRUCTION> opcode_lookup;
     // For prefixed opcodes (&CB)

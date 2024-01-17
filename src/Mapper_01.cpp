@@ -104,10 +104,10 @@
  */
 
 Mapper_01::Mapper_01(uint8_t rom_banks, uint8_t ram_banks) : Mapper(rom_banks, ram_banks) {
-
+    reg.data = 0; addresses.rom_address = 0; addresses.ram_address = 0;
 }
-
-bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
+// TODO(kaelan): Review how this MBC works. Also should probably rename the classes to MBC rather than Mapper...
+bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr, bool &ram) {
     // Check if the address is within cartridge ROM
     if (addr >= 0x0000 && addr <= 0x7fff) {
         // First check if the address is in range 0x0000-0x3fff: ROM0
@@ -121,9 +121,9 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
             else {
                 // In mode 1, we will need to check a few things
                 // First see if we have <= 32 ROM banks
-                if (rom_banks <= 0x1f) {
+                if (rom_banks <= 0x20) {
                     // In this case we use mode 1 address mapping
-                    mapper_addr = addr & 0x3fff;
+                    mapper_addr = addr;
                     /* Disable bits 14-20: We don't have more than 32 banks
                      * so, we can ignore the upper 2-bit register, effectively making this
                      * the same as mode 0.
@@ -131,7 +131,7 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
                     mapper_addr &= ~(0x1fc000);
                 }
                 else {
-                    mapper_addr = addr & 0x3fff;
+                    mapper_addr = addr;
                     // Disable bits 14-18
                     mapper_addr &= ~(0x7c000);
                     // OR the address with the 2-bit register
@@ -140,14 +140,16 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
             }
         }
         // Now check if we are writing to 0x4000-0x7fff
+        // TODO(kaelan): Look more closely into how this works! I believe that this is the only ROM area that
+        //               we need to worry about while looking at Zelda.
         else if (addr >= 0x4000 && addr <= 0x7fff) {
-            // Check if banks <= 0x1f
-            if (rom_banks <= 0x1f) {
+            // Check if banks <= 0x20
+            if (rom_banks <= 0x20) {
                 // In this case, we ignore the 2-bit register
                 mapper_addr = addr & 0x3fff;
-                if (reg.rom_bank_number == 2) {
+                //if (reg.rom_bank_number == 2) {
 
-                }
+                //}
                 // Shift the bank number into mapper_addr 14 bits
                 mapper_addr |= (reg.rom_bank_number << 14);
                 // Disable bits 19 & 20
@@ -171,11 +173,12 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
                 mapper_addr = addr & 0x1fff;
                 // Shift in the 2-bit register 13 to the left
                 mapper_addr |= (reg.ram_rom_2bit << 13);
-
+                ram = true;
             }
             else {
                 // If we get here, there is no need to map the address
                 mapper_addr = addr & 0x1fff;
+                ram = true;
             }
             return true;
         }
@@ -186,8 +189,8 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
     }
     return false;
 }
-
-bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data) {
+// TODO(kaelan): Add a mapped_addr out param so that we can write to RAM!!!!!
+bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data, uint32_t &mapped_addr, bool &ram) {
     /* MBC01 will handle the following address ranges:
      * 0x0000-0x1fff RAM Enable
      * 0x2000-0x3fff ROM Bank Number
@@ -201,7 +204,7 @@ bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data) {
         // ram_enable register for RAM to be enabled.
         if ((data & 0x0f) == 0x0a) {
             reg.ram_enable = 1;
-            printf("RAM Enabled.\n");
+            //printf("RAM Enabled.\n");
         }
         else {
             reg.ram_enable = 0;
@@ -229,14 +232,26 @@ bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data) {
         reg.bank_mode = data & 0b1;
     }
     // Now check for a RAM write
+    // TODO(kaelan): Actually write to RAM!!!!
     else if (addr >= 0xa000 && addr <= 0xbfff) {
         // Now check if RAM is enabled
-        if (reg.ram_enable == 1) {
+        if (reg.ram_enable == 1) 
+        {
+            ram = true;
+            if(reg.bank_mode == 0)
+            {
 
+                mapped_addr = addr & 0x1fff;
+            }
+            else
+            {
+                mapped_addr = addr & 0x1fff;
+                mapped_addr |= reg.ram_rom_2bit << 13;
+            }
+            return true;
         }
         else {
             printf("Mapper_01 Error: Attempt to write to address: 0x%x when RAM is disabled\n", addr);
-            return true;
         }
     }
     else {

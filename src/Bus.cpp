@@ -15,8 +15,10 @@ Bus::Bus() {
 }
 
 void Bus::clear_screen() {
-    std::array<uint8_t, 160 * 144> empty = {};
-    std::swap(screen, empty);
+    for(auto index : screen)
+    {
+        index = 0;
+    }
 }
 
 void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
@@ -48,6 +50,10 @@ void Bus::cpu_write(uint16_t addr, uint8_t data, bool is_dma) {
     }
     // Check for writing to HRAM
     else if (addr >= 0xff80 && addr <= 0xfffe) {
+        if (addr == 0xffe8)
+        {
+            int test = 0;
+        }
         // Apply the mask to the address
        hram[addr - 0xff80] = data;
     }
@@ -198,7 +204,7 @@ uint8_t Bus::cpu_read(uint16_t addr, bool dma_copy) {
     else if (ppu.cpu_read(addr, data)) {
     }
     else {
-        printf("Cannot read from address: 0x%X is not readable.\n", addr);
+        //printf("Cannot read from address: 0x%X is not readable.\n", addr);
     }
     // If the address in not valid, return 0x00
     return data;
@@ -354,7 +360,8 @@ void Bus::reset() {
     cpu.reset();
     ppu.reset();
     clear_screen();
-
+    wram = {};
+    hram = {};
     system_clock_counter = 0;
     joypad_input_select = 0x03;
     joypad_action = 0x0f;
@@ -363,12 +370,20 @@ void Bus::reset() {
     tima = 0;
     tma = 0;
     tac = 0;
+    div = 0;
+    dma = 0;
+    dma_addr = 0x0000;
+    dma_cycle_count = 0;
+    ie_reg.data = 0;
+    if_reg.data = 0;
+    ime = 0;
+    dma_flag = false;
 
 }
 void Bus::push_pixel(uint8_t pixel, uint32_t index) {
     screen[index] = pixel;
 }
 
-void Bus::insert_cartridge(const std::shared_ptr<Cartridge> &cartridge) {
+void Bus::insert_cartridge(Cartridge *cartridge) {
     cart = cartridge;
 }

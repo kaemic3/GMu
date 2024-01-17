@@ -27,6 +27,9 @@ void BG_Fetcher::init() {
     // Grab the state of the relevant PPU members via the ppu_read function
 
     // Create a temporary copy of the lcdc_register union
+    // TODO(kaelan): Looking at this, encapsulation is causing some issues here.
+    //               ideally, we should not be copying things this way. 
+    //               Most likely a lot slower than just exposing the register.
     union lcdc_register {
         struct {
             uint8_t bg_window_enable        : 1;
@@ -226,9 +229,9 @@ void BG_Fetcher::clock() {
         return;
     clock_count = 0;
     // Fetcher state machine
+    uint16_t tilemap_address = 0x0000;
     switch (state) {
         case GetTileId:
-            uint16_t tilemap_address;
             // Check to see which tilemap to use based on the fetcher mode
             switch (fetch_mode) {
                 case BackgroundOnly:
@@ -277,6 +280,11 @@ void BG_Fetcher::clock() {
                 case 0x9000:
                     // Functions the same as 0x8000, just uses signed addressing so cast signed int to the tile id
                     tiledata_addr = tiledata_base_addr + ((int8_t) tile_id * 0x10);
+                    if(tiledata_addr == 0x9000)
+                    {
+                        int test = 0;
+                        printf("tiledata: 0x%X\ntileindex: 0x%X\ntilemap_address: 0x%X\n", tiledata_addr, tile_index, tilemap_bg);
+                    }
                     break;
             }
             // Now that we have the correct tiledata, find the correct byte for the current tile line.

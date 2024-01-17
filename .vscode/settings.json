@@ -1,0 +1,9 @@
+{
+    "C_Cpp.dimInactiveRegions": false,
+    "files.associations": {
+        "xutility": "cpp",
+        "vector": "cpp",
+        "ios": "cpp",
+        "xiosbase": "cpp"
+    }
+}

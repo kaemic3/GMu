@@ -18,7 +18,7 @@ public:
     // Bus connections
     SM83 cpu;
     DMG_PPU ppu;
-    std::shared_ptr<Cartridge> cart = nullptr;
+    Cartridge *cart = nullptr;
     // Initialize ram - Note need the {} for it to default initialize
     std::array<uint8_t, 8 * 1024> wram{};
     std::array<uint8_t, 127> hram{};
@@ -121,7 +121,7 @@ public:
     // Push a pixel to the screen array
     void push_pixel(uint8_t pixel, uint32_t index);
     // Function to load a cartridge into the Bus class
-    void insert_cartridge(const std::shared_ptr<Cartridge> &cartridge);
+    void insert_cartridge(Cartridge *cartridge);
 };
 
 

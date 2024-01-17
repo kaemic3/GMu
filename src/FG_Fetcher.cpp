@@ -2,6 +2,20 @@
 #include "FG_Fetcher.h"
 #include "DMG_PPU.h"
 
+void FG_Fetcher::init() {
+        scanned_sprites = {};
+        pixel_buffer = {};
+        tile_id = 0;
+        tile_line = 0;
+        tiledata_address = 0;
+        tiledata_low = 0;
+        tiledata_high = 0;
+        color_palette = 0;
+        bg_win_priority = 0;
+        idle_complete = false;
+}
+
+
 /*
  * The FG_Fetcher will fetch the 8 pixels for the first sprite
  */
@@ -91,7 +105,7 @@ void FG_Fetcher::pop_sprite() {
 }
 
 uint8_t FG_Fetcher::get_sprite_count() {
-    return scanned_sprites.size();
+    return (uint8_t)scanned_sprites.size();
 }
 Sprite FG_Fetcher::get_front_sprite() {
     if (scanned_sprites.empty()) {

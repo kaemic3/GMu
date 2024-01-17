@@ -17,6 +17,8 @@ public:
     explicit FG_Fetcher(DMG_PPU *p_ppu) : ppu (p_ppu) { }
     FG_Fetcher() = default;
     ~FG_Fetcher() = default;
+    // Reset and initialize the fetcher.
+    void init();
     // FG_Fetcher clock function - returns the number of additional clocks required by the fetcher
     uint8_t clock();
     // Sprite vector member functions
