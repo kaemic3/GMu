@@ -104,10 +104,10 @@
  */
 
 Mapper_01::Mapper_01(uint8_t rom_banks, uint8_t ram_banks) : Mapper(rom_banks, ram_banks) {
-
+    reg.data = 0; addresses.ram_address = 0; addresses.ram_address = 0;
 }
-
-bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
+// TODO(kaelan): Review how this MBC works. Also should probably rename the classes to MBC rather than Mapper...
+bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr, bool &ram) {
     // Check if the address is within cartridge ROM
     if (addr >= 0x0000 && addr <= 0x7fff) {
         // First check if the address is in range 0x0000-0x3fff: ROM0
@@ -121,7 +121,7 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
             else {
                 // In mode 1, we will need to check a few things
                 // First see if we have <= 32 ROM banks
-                if (rom_banks <= 0x1f) {
+                if (rom_banks <= 0x20) {
                     // In this case we use mode 1 address mapping
                     mapper_addr = addr & 0x3fff;
                     /* Disable bits 14-20: We don't have more than 32 banks
@@ -140,16 +140,18 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
             }
         }
         // Now check if we are writing to 0x4000-0x7fff
+        // TODO(kaelan): Look more closely into how this works! I believe that this is the only ROM area that
+        //               we need to worry about while looking at Zelda.
         else if (addr >= 0x4000 && addr <= 0x7fff) {
-            // Check if banks <= 0x1f
-            if (rom_banks <= 0x1f) {
+            // Check if banks <= 0x20
+            if (rom_banks <= 0x20) {
                 // In this case, we ignore the 2-bit register
                 mapper_addr = addr & 0x3fff;
-                if (reg.rom_bank_number == 2) {
+                //if (reg.rom_bank_number == 2) {
 
-                }
+                //}
                 // Shift the bank number into mapper_addr 14 bits
-                mapper_addr |= (reg.rom_bank_number << 14);
+                mapper_addr |= (reg.rom_bank_number << 14) & 0x7c000;
                 // Disable bits 19 & 20
                 mapper_addr &= ~(0x180000);
             }
@@ -163,6 +165,9 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
         return true;
     }
     // Check if the address is within cartridge RAM
+    // IMPORTANT: Confirmed that Zelda is trying to use RAM!! 
+    // FIXME(kaelan): Need a way to specify that the returned address is a RAM address, not a ROM address.
+    // TODO(kaelan): Add an out bool for if we are trying to access RAM.
     else if (addr >= 0xa000 && addr <= 0xbfff) {
         // Check if RAM is enabled
         if (reg.ram_enable) {
@@ -171,11 +176,12 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
                 mapper_addr = addr & 0x1fff;
                 // Shift in the 2-bit register 13 to the left
                 mapper_addr |= (reg.ram_rom_2bit << 13);
-
+                ram = true;
             }
             else {
                 // If we get here, there is no need to map the address
                 mapper_addr = addr & 0x1fff;
+                ram = true;
             }
             return true;
         }
@@ -186,7 +192,7 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr) {
     }
     return false;
 }
-
+// TODO(kaelan): Add a mapped_addr out param so that we can write to RAM!!!!!
 bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data) {
     /* MBC01 will handle the following address ranges:
      * 0x0000-0x1fff RAM Enable
@@ -229,10 +235,10 @@ bool Mapper_01::cpu_map_write(uint16_t addr, uint8_t data) {
         reg.bank_mode = data & 0b1;
     }
     // Now check for a RAM write
+    // TODO(kaelan): Actually write to RAM!!!!
     else if (addr >= 0xa000 && addr <= 0xbfff) {
         // Now check if RAM is enabled
         if (reg.ram_enable == 1) {
-
         }
         else {
             printf("Mapper_01 Error: Attempt to write to address: 0x%x when RAM is disabled\n", addr);

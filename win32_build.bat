@@ -7,7 +7,7 @@ pushd
 REM NOTE: I think this pipes output to a temp dir??
 cd %~dp0
 REM NOTE: This REMed stuff below is for reference. Pulled from handmade hero!
-set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi  -WX -W4 -wd 4996 -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -D NENJIN_INTERNAL=1 -D NENJIN_W32=1 -D NENJIN_SLOW=1 -Zi /std:c++17 /EHsc 
+set CommonCompilerFlags=-MTd -nologo -GR- -EHa- -Od -Oi  -WX -W4 -wd 4996 -wd 4201 -wd 4100 -wd 4189 -wd 4456 -wd 4505 -D NENJIN_INTERNAL=1 -D NENJIN_W32=1 -D NENJIN_SLOW=1 -Zi /std:c++17 /EHsc /Wv:18
 
 set CommonLinkerFlags= /subsystem:windows -incremental:no -opt:ref user32.lib gdi32.lib winmm.lib shell32.lib coremessaging.lib advapi32.lib Comdlg32.lib Ole32.lib 
 

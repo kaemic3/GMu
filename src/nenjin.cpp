@@ -50,12 +50,16 @@ internal void
 CreateCartridge(nenjin_state *state, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
                 debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory, char *file_name) {
     if(!state->gb_cart)
-    {
+    {   
+        #if 0
         state->gb_cart = (Cartridge *)calloc(1, sizeof(Cartridge));
         new (state->gb_cart) Cartridge();
+        #endif
+        state->gb_cart = new Cartridge();
     }
     state->gb_cart->CreateCartridge(&state->game_boy_arena, DEBUGPlatformReadEntireFile, DEBUGPlatformFreeFileMemory, file_name);
 }
+#if 0
 internal void
 CreateCartridge(nenjin_state *state, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
                 debug_platform_find_rom_file *DEBUGPlatformFindRomFile,
@@ -73,6 +77,7 @@ CreateCartridge(nenjin_state *state, debug_platform_read_entire_file *DEBUGPlatf
     state->gb_cart->CreateCartridge(&state->game_boy_arena, DEBUGPlatformReadEntireFile, DEBUGPlatformFindRomFile, DEBUGPlatformFreeFileMemory);
 
 }
+#endif
 
 // TODO(kaelan): Remove shared_ptr.
 // TODO(kaelan): This function should return void, but becuase the Bus class is not setup for memory arenas, it has to be this way for now.
@@ -276,7 +281,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state)) + emulator_state->bitmap_arena.size + 
                         emulator_state->game_boy_arena.size);
         CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
-                        "../data/ROMs/gb_snek.gb");
+                        "../data/ROMs/Zelda.gb");
                         
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;
@@ -570,12 +575,12 @@ extern "C"
 NENJIN_DRAW_DEBUG(NenjinDrawDebug) {
     Assert(memory->permanent_storage_size >= sizeof(nenjin_state));
     nenjin_state *state = (nenjin_state *)memory->permanent_storage;
-    char fps_value[6] = "";
+    char fps_value[256] = "";
     char fps_string[] = "fps";
-    char ms_value[6] = "";
+    char ms_value[256] = "";
     char ms_string[] = "ms";
-    _snprintf_s(fps_value, 6, "%.02f", fps);
-    _snprintf_s(ms_value, 6, "%.02f", f_time);
+    _snprintf_s(fps_value, sizeof(fps_value), "%.02f", fps);
+    _snprintf_s(ms_value, sizeof(ms_value), "%.02f", f_time);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 0.0f, 600.0f, fps_string);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_white, 16.0f*3, 600.0f, fps_value);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 16.0f*9, 600.0f, ms_string);

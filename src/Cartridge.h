@@ -12,7 +12,7 @@ struct memory_arena;
 class Cartridge {
 public:
     Cartridge();
-    ~Cartridge() { cart_ram.clear(); cart_rom.clear();}
+    ~Cartridge() { cart_ram.clear(); cart_rom.clear(); delete p_mapper;}
 
     // Communication with the Main Bus
     bool cpu_write(uint16_t addr, uint8_t data);
@@ -44,7 +44,7 @@ public:
     uint8_t ram_banks = 0x00;
 
     // Pointer to the mapper for this cartridge
-    std::shared_ptr<Mapper> p_mapper = nullptr;
+    Mapper *p_mapper = nullptr;
 
 };
 

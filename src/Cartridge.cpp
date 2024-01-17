@@ -122,6 +122,7 @@ Cartridge::Cartridge() {
     // Read in the ROM
     input_file.read((char*)cart_rom.data(), cart_rom.size());
 
+
     // Save the mapper id into the according member
     mapper_id = header.cart_type;
     // Load the correct mapper
@@ -149,16 +150,6 @@ Cartridge::Cartridge() {
     #endif
 }
 
-bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
-    // Check if the mapper needs to handle the write call
-    if (addr == 0x2000) {
-
-    }
-    if(p_mapper->cpu_map_write(addr, data)) {
-        return true;
-    }
-    return false;
-}
 
 void Cartridge::CreateCartridge(memory_arena *arena, debug_platform_read_entire_file *DEBUGPlatformReadEntireFile, 
                                 debug_platform_find_rom_file *DEBUGPlatformFindROMFile, debug_platform_free_file_memory *DEBUGPlatformFreeFileMemory) {
@@ -271,6 +262,8 @@ void Cartridge::CreateCartridge(memory_arena *arena, debug_platform_read_entire_
 
     // Resize the ROM - Keep in mind banks are 16 KiB <- Need to double-check this
     cart_rom.resize(rom_banks * 16384);
+    // Resize the RAM
+    cart_ram.resize(ram_banks * 16384);
     // Read in the ROM
     u8 *cart_rom_p = (u8 *)cart_rom.data();
     u8 *rom_p = (u8 *)read_result.contents;
@@ -287,16 +280,16 @@ void Cartridge::CreateCartridge(memory_arena *arena, debug_platform_read_entire_
         // ROM only, no mapper present
         case 0x00:
             // Construct the appropriate mapper according to the mapper_id
-            p_mapper = std::make_shared<Mapper_00>(rom_banks, ram_banks);
+            p_mapper = new Mapper_00(rom_banks, ram_banks);
             break;
         case 0x01:
-            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            p_mapper = new Mapper_01(rom_banks, ram_banks);
             break;
         case 0x02:
-            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            p_mapper = new Mapper_01(rom_banks, ram_banks);
             break;
         case 0x03:
-            p_mapper = std::make_shared<Mapper_01>(rom_banks, ram_banks);
+            p_mapper = new Mapper_01(rom_banks, ram_banks);
             break;
         default:
             break;
@@ -305,12 +298,28 @@ void Cartridge::CreateCartridge(memory_arena *arena, debug_platform_read_entire_
     DEBUGPlatformFreeFileMemory(read_result.contents);
 }
 
+bool Cartridge::cpu_write(uint16_t addr, uint8_t data) {
+    // Check if the mapper needs to handle the write call
+    if(p_mapper->cpu_map_write(addr, data)) {
+        return true;
+    }
+    return false;
+}
 bool Cartridge::cpu_read(uint16_t addr, uint8_t &data) {
     uint32_t mapped_addr = 0;
     // Check if the mapper needs to handle the read call
-    if(p_mapper->cpu_map_read(addr, mapped_addr)) {
-        data = cart_rom[mapped_addr];
-        return true;
+    bool ram = false;
+    if(p_mapper->cpu_map_read(addr, mapped_addr, ram)) {
+        if(!ram)
+        {
+            data = cart_rom[mapped_addr];
+            return true;
+        }
+        else
+        {
+            data = cart_ram[mapped_addr];
+            return true;
+        }
     }
     return false;
 }
