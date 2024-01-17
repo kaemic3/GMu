@@ -6,6 +6,8 @@ This is my first programming project, so keep that in mind.
 
 ## Usage
 
+Currently, Windows is the only OS that is supported.
+
 The emulator will only see ROM files that are put into the data/ROMs directory. For now, file dialog boxes are not working. I am planning on looking into this later on, but due to a lack of understanding on my part, it will take some time.
 
 By default, gb_snek.gb is loaded. 
@@ -23,10 +25,8 @@ If the build fails, you will need to locate the vcvarsall.bat file on your syste
 ## TODO
 - Finish UI.
     - Make the ROM menu more robust (adding scrolling or pages?)
-        - Make sure to only check for .gb files (and maybe .ROM as well).
         - Need to add fallback code for when files that are not properly structured are loaded?     
-    - Add all debug info.
-        - Make toggles for debug info.
+    - Make toggles for debug info.
     - Add color palette options.
     - Create a menu bar?
     - Add text that shows the keybinds!

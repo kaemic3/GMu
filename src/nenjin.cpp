@@ -281,7 +281,7 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state)) + emulator_state->bitmap_arena.size + 
                         emulator_state->game_boy_arena.size);
         CreateCartridge(emulator_state, memory->DEBUGPlatformReadEntireFile, memory->DEBUGPlatformFreeFileMemory,
-                        "../data/ROMs/Zelda.gb");
+                        "../data/ROMs/gb_snek.gb");
                         
         emulator_state->game_boy_bus = InitializeGameBoy(&emulator_state->game_boy_arena, emulator_state->gb_cart);
         memory->is_initialized = true;

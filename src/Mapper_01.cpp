@@ -165,9 +165,6 @@ bool Mapper_01::cpu_map_read(uint16_t addr, uint32_t &mapper_addr, bool &ram) {
         return true;
     }
     // Check if the address is within cartridge RAM
-    // IMPORTANT: Confirmed that Zelda is trying to use RAM!! 
-    // FIXME(kaelan): Need a way to specify that the returned address is a RAM address, not a ROM address.
-    // TODO(kaelan): Add an out bool for if we are trying to access RAM.
     else if (addr >= 0xa000 && addr <= 0xbfff) {
         // Check if RAM is enabled
         if (reg.ram_enable) {
