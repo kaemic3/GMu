@@ -652,6 +652,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
         {
             // Grab the function pointer to NenjinUpdateAndRender
             nenjin_update_and_render *UpdateAndRender = NenjinUpdateAndRender;
+            nenjin_draw_debug *DrawDebug = NenjinDrawDebug;
             nenjin_memory engine_memory = {};
             engine_memory.permanent_storage_size = Megabytes(16);
             engine_memory.transient_storage_size = Megabytes(48);
@@ -771,6 +772,15 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     f32 fps = 1000.0f/ms_per_frame;
                     // Update last_counter so it can be re-used again in the next frame time calculation.
                     last_counter = end_counter;
+
+                    // Debug output 
+                    #if 1
+                    char buffer[256];
+                    _snprintf_s(buffer, sizeof(buffer), "%.02ffps %.02fms", fps, ms_per_frame);
+                    DrawDebug(&engine_memory, &engine_buffer, buffer);
+                    //OutputDebugStringA(buffer);
+                    #endif
+
                     // TODO(kaelan): Setup a fixed timestep for the emulator to run at!
                     HDC device_context = GetDC(window);
                     win32_window_dimensions win_dim = Win32GetWindowDimensions(window);
@@ -782,12 +792,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                     new_input = old_input;
                     old_input = temp;
 
-                    // Debug output 
-                    #if 1
-                    char Buffer[256];
-                    _snprintf_s(Buffer, sizeof(Buffer), " %.02f FPS, %.02fms\n", fps, ms_per_frame);
-                    OutputDebugStringA(Buffer);
-                    #endif
+
                 }
             }
             else

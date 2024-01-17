@@ -7,6 +7,9 @@
 
 // TODO(kaelan): IDK how this just works, but it seems suspicous...
 // TODO(kaelan): Need to add support for re-sizeable arrays? Also need to create a queue/deque so I can remove stl.
+// TODO(kaelan): Tetris still has the missing block bug...
+//               This bug occurs because of the way that tetris uses hblank to update vram when tilesets are 
+//               swapped from sprites to bg tiles.
 #include "Bus.h"
 #include "Bus.cpp"
 #include "SM83.cpp"
@@ -87,6 +90,7 @@ InitializeGameBoy(memory_arena *gb_arena, Cartridge *gb_cart) {
         // TODO(kaelan): Need to load the boot rom
         // For now set pc to 0x0100 and sp to 0xfffe
         gb->cpu.pc = 0x0100;
+        gb->cpu.debug_pc = 0x0100;
         gb->cpu.sp = 0xfffe;
         gb->if_reg.data = 0xe1;
     }
@@ -104,6 +108,7 @@ internal void
 ResetGameBoy(nenjin_state *state) {
     state->game_boy_bus->reset();
     state->game_boy_bus->cpu.pc = 0x0100;
+    state->game_boy_bus->cpu.debug_pc = 0x0100;
     state->game_boy_bus->cpu.sp = 0xfffe;
     state->game_boy_bus->if_reg.data = 0xe1;
 }
@@ -546,6 +551,12 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     {
         DrawROMSelectMenu(buffer, memory, &emulator_state->font_maps, &emulator_state->directory_struct, emulator_state->selected_rom);
     }
+}
+extern "C"
+NENJIN_DRAW_DEBUG(NenjinDrawDebug) {
+    Assert(memory->permanent_storage_size >= sizeof(nenjin_state));
+    nenjin_state *state = (nenjin_state *)memory->permanent_storage;
+    DrawString(buffer, (font_bitmap *)state->font_maps.font_selected, 0.0f, 600.0f, fps_string);
 }
 
     // This kinda works, but has bugs with Mario for some reason.
