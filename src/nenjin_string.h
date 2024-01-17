@@ -48,6 +48,7 @@ StringCopy(u32 source_length, char *source, u32 dest_length, char *dest) {
         *dest++ = *source++;
     }
 }
+// IMPORTANT: The string funcitons below are NOT general purpose!
 // NOTE: For u8's the max size of the string would be 3.
 internal void
 ToHexStringU8(u8 value, char *dest) {
@@ -94,6 +95,20 @@ ToHexStringU16(u16 value, char *dest){
         buf[4] = 0;
     }
     // TODO(kaelan): Prefix 0's need to be added to the string.
+    StringCopy(string_size, buf, string_size, dest);
+
+}
+internal void
+ToFlagStringU8(u8 value, char* dest) {
+    const s32 string_size = 9;
+    char buf[string_size] = "";
+    s32 bit = 0;
+    for(s32 index = 7; index >= 0; --index)
+    {
+        ((value >> index) & 1) ? buf[bit] = '1' : buf[bit] = '0';
+        ++bit;
+    }
+    buf[8] = 0;
     StringCopy(string_size, buf, string_size, dest);
 
 }

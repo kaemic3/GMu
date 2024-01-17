@@ -219,7 +219,7 @@ typedef struct nenjin_memory
 // Definitions for callback functions
 #define NENJIN_UPDATE_AND_RENDER(name) void name(nenjin_memory *memory, nenjin_input *input, nenjin_offscreen_buffer *buffer)
 typedef NENJIN_UPDATE_AND_RENDER(nenjin_update_and_render);
-#define NENJIN_DRAW_DEBUG(name) void name(nenjin_memory *memory, nenjin_offscreen_buffer *buffer, char *fps_string)
+#define NENJIN_DRAW_DEBUG(name) void name(nenjin_memory *memory, nenjin_offscreen_buffer *buffer, f32 fps, f32 f_time)
 typedef NENJIN_DRAW_DEBUG(nenjin_draw_debug);
 #ifdef __cplusplus
 }

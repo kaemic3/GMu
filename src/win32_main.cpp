@@ -775,9 +775,9 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
 
                     // Debug output 
                     #if 1
-                    char buffer[256];
-                    _snprintf_s(buffer, sizeof(buffer), "%.02ffps %.02fms", fps, ms_per_frame);
-                    DrawDebug(&engine_memory, &engine_buffer, buffer);
+                    //char buffer[256];
+                    //_snprintf_s(buffer, sizeof(buffer), "%.02ffps %.02fms", fps, ms_per_frame);
+                    DrawDebug(&engine_memory, &engine_buffer,fps, ms_per_frame);
                     //OutputDebugStringA(buffer);
                     #endif
 

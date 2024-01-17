@@ -62,9 +62,10 @@ struct font_bitmap
 };
 struct font_maps 
 {
-	font_bitmap font_large[128];
-	font_bitmap font_small[128];
-	font_bitmap font_selected[128];
+	font_bitmap font_large_pink[128];
+	font_bitmap font_large_white[128];
+	font_bitmap font_small_white[128];
+	font_bitmap font_small_pink[128];
 };
 struct nenjin_state 
 {
@@ -73,8 +74,8 @@ struct nenjin_state
 	memory_arena game_boy_arena;
 	memory_arena bitmap_arena;
 	memory_arena cartridge_arena;
-	nenjin_color font_color_large;
-	nenjin_color font_color_small;
+	nenjin_color font_color_pink;
+	nenjin_color font_color_white;
 	font_maps font_maps;
 	directory_string_array directory_struct;
 	// Starting at 0.

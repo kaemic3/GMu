@@ -203,7 +203,7 @@ DrawROMSelectMenu(nenjin_offscreen_buffer *buffer, nenjin_memory *memory, font_m
     // Backdrop for the ROM menu.
     DrawRectangle(buffer, left_x, top_y, right_x, bottom_y, 0.34f, 0.33f, 0.33f);
 
-    DrawString(buffer, (font_bitmap *)font_maps->font_large, left_x + 50.0f, top_y + padding_y*2, "ROMS:");
+    DrawString(buffer, (font_bitmap *)font_maps->font_large_pink, left_x + 50.0f, top_y + padding_y*2, "ROMS:");
     // NOTE: Max number of ROMs on screen at one time is 15.
     s32 rom_count = directory_struct->size;
     s32 base_index = 0;
@@ -223,11 +223,11 @@ DrawROMSelectMenu(nenjin_offscreen_buffer *buffer, nenjin_memory *memory, font_m
     {
         if(selected_rom == index)
         {
-            DrawString(buffer, (font_bitmap *)font_maps->font_selected, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
+            DrawString(buffer, (font_bitmap *)font_maps->font_small_pink, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
         }
         else
         {
-            DrawString(buffer, (font_bitmap *)font_maps->font_small, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
+            DrawString(buffer, (font_bitmap *)font_maps->font_small_white, left_x + 50.0f, top_y + padding_y*(3 + draw_offset), directory_struct->strings[index].value);
         }
         ++draw_offset;
     }
@@ -255,17 +255,20 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
         // TODO(kaelan): Change this later after checking how much memory we actually use.
         InitializeArena(&emulator_state->bitmap_arena, Megabytes(4),
                         (u8 *)memory->permanent_storage + sizeof(nenjin_state));
-        emulator_state->font_color_large = {1.0f, 0.95f, 0.51f, 0.78f};
-        emulator_state->font_color_small = {1.0f, 1.0f, 1.0f, 1.0f};
-        // Generate large fonts.
-        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_large, 
-                          "../Fonts/amstrad_cpc464.ttf", 32.0f, emulator_state->font_color_large, memory->DEBUGPlatformReadEntireFile);
-        // Generate small fonts. 
-        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_small, 
-                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_small, memory->DEBUGPlatformReadEntireFile);
-        // Generate small selected fonts. 
-        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_selected, 
-                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_large, memory->DEBUGPlatformReadEntireFile);
+        emulator_state->font_color_pink = {1.0f, 0.95f, 0.51f, 0.78f};
+        emulator_state->font_color_white = {1.0f, 1.0f, 1.0f, 1.0f};
+        // Generate pink large fonts.
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_large_pink, 
+                          "../Fonts/amstrad_cpc464.ttf", 24.0f, emulator_state->font_color_pink, memory->DEBUGPlatformReadEntireFile);
+        // Generate white large fonts.
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_large_white, 
+                          "../Fonts/amstrad_cpc464.ttf", 24.0f, emulator_state->font_color_white, memory->DEBUGPlatformReadEntireFile);
+        // Generate white small fonts. 
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_small_white, 
+                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_white, memory->DEBUGPlatformReadEntireFile);
+        // Generate pink small fonts. 
+        GenerateFontTable(&emulator_state->bitmap_arena, (font_bitmap *)emulator_state->font_maps.font_small_pink, 
+                          "../Fonts/amstrad_cpc464.ttf", 16.0f, emulator_state->font_color_pink, memory->DEBUGPlatformReadEntireFile);
 
         InitializeArena(&emulator_state->game_boy_arena, sizeof(Bus), 
                         (u8 *)memory->permanent_storage + (sizeof(nenjin_state) + emulator_state->bitmap_arena.size));
@@ -282,9 +285,9 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     ClearBackBufferToBlack(buffer);
     u32 screen_width = 1280;
     u32 screen_height = 720;
-    f32 text_width_offset = 700.0f;
+    f32 text_width_offset = 660.0f;
     // Write my name to the screen.
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, screen_width/2.0f + 15.0f, 
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, screen_width/2.0f + 15.0f, 
                screen_height/2.0f + 64.0f, "Kaelan :3");
     // TODO(kaelan): Need to figure out if these need to be put in nenjin_state, also probably want to move the init
     //               code for the register text into a function.
@@ -302,34 +305,35 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     //       allocations. But, if I am already going to make a local allocator, then shouldn't it be as memory
     //       efficient as possible, with the speed as well?
 #define U8_REG_STRING_SIZE 5
+#define REGISTER_GAP 120.0f
     // DEBUG text code.
     char a_hex[3] = "";
     char a_text[3] = "A:";
     char a_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.a_reg, a_hex);
     CatString(S32StringLength(a_text), a_text, S32StringLength(a_hex), a_hex, U8_REG_STRING_SIZE, a_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 50.0f, a_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 50.0f, a_reg_text);
 
     char f_hex[3] = "";
     char f_text[3] = "F:";
     char f_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.f_reg, f_hex);
     CatString(S32StringLength(f_text), f_text, S32StringLength(f_hex), f_hex, U8_REG_STRING_SIZE, f_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 50.0f, f_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + REGISTER_GAP, 50.0f, f_reg_text);
 
     char b_hex[3] = "";
     char b_text[3] = "B:";
     char b_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.b_reg, b_hex);
     CatString(S32StringLength(b_text), b_text, S32StringLength(b_hex), b_hex, U8_REG_STRING_SIZE, b_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 100.0f, b_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 100.0f, b_reg_text);
 
     char c_hex[3] = "";
     char c_text[3] = "C:";
     char c_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.c_reg, c_hex);
     CatString(S32StringLength(c_text), c_text, S32StringLength(c_hex), c_hex, U8_REG_STRING_SIZE, c_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 100.0f, c_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + REGISTER_GAP, 100.0f, c_reg_text);
 
 
     char d_hex[3] = "";
@@ -337,28 +341,28 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     char d_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.d_reg, d_hex);
     CatString(S32StringLength(d_text), d_text, S32StringLength(d_hex), d_hex, U8_REG_STRING_SIZE, d_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 150.0f, d_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 150.0f, d_reg_text);
 
     char e_hex[3] = "";
     char e_text[3] = "E:";
     char e_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.e_reg, e_hex);
     CatString(S32StringLength(e_text), e_text, S32StringLength(e_hex), e_hex, U8_REG_STRING_SIZE, e_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 150.0f, e_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + REGISTER_GAP, 150.0f, e_reg_text);
 
     char h_hex[3] = "";
     char h_text[3] = "H:";
     char h_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.h_reg, h_hex);
     CatString(S32StringLength(h_text), h_text, S32StringLength(h_hex), h_hex, U8_REG_STRING_SIZE, h_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 200.0f, h_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 200.0f, h_reg_text);
 
     char l_hex[3] = "";
     char l_text[3] = "L:";
     char l_reg_text[U8_REG_STRING_SIZE] = "";
     ToHexStringU8(emulator_state->game_boy_bus->cpu.l_reg, l_hex);
     CatString(S32StringLength(l_text), l_text, S32StringLength(l_hex), l_hex, U8_REG_STRING_SIZE, l_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset + 160.0f, 200.0f, l_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + REGISTER_GAP, 200.0f, l_reg_text);
 
     #define U16_REG_STRING_SIZE 8
 
@@ -367,14 +371,24 @@ NENJIN_UPDATE_AND_RENDER(NenjinUpdateAndRender) {
     char pc_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.debug_pc, pc_hex); // NOTE: It is important that cpu.debug_pc is used here!
     CatString(S32StringLength(pc_text), pc_text, S32StringLength(pc_hex), pc_hex, U16_REG_STRING_SIZE, pc_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 250.0f, pc_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 250.0f, pc_reg_text);
 
     char sp_hex[5] = "";
     char sp_text[4] = "SP:";
     char sp_reg_text[U16_REG_STRING_SIZE] = "";
     ToHexStringU16(emulator_state->game_boy_bus->cpu.sp, sp_hex);
     CatString(S32StringLength(sp_text), sp_text, S32StringLength(sp_hex), sp_hex, U16_REG_STRING_SIZE, sp_reg_text);
-    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large, text_width_offset, 300.0f, sp_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 300.0f, sp_reg_text);
+
+    // Flag register expanded.
+    char flags_binary[9] = "";
+    char flags_text[7] = "Flags:";
+    char flags_reg_text[15] = "";
+    ToFlagStringU8(emulator_state->game_boy_bus->cpu.f_reg, flags_binary);
+    CatString(S32StringLength(flags_text), flags_text, S32StringLength(flags_binary), flags_binary, 15, flags_reg_text);
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset, 350.0f, flags_reg_text);
+    char flags_label[9] = "ZNHC----";
+    DrawString(buffer, (font_bitmap *)emulator_state->font_maps.font_large_pink, text_width_offset + 6.0f*24.0f, 380.0f, flags_label);
 
     gb_color_palette palette;
     palette.index_0 = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -556,7 +570,16 @@ extern "C"
 NENJIN_DRAW_DEBUG(NenjinDrawDebug) {
     Assert(memory->permanent_storage_size >= sizeof(nenjin_state));
     nenjin_state *state = (nenjin_state *)memory->permanent_storage;
-    DrawString(buffer, (font_bitmap *)state->font_maps.font_selected, 0.0f, 600.0f, fps_string);
+    char fps_value[6] = "";
+    char fps_string[] = "fps";
+    char ms_value[6] = "";
+    char ms_string[] = "ms";
+    _snprintf_s(fps_value, 6, "%.02f", fps);
+    _snprintf_s(ms_value, 6, "%.02f", f_time);
+    DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 0.0f, 600.0f, fps_string);
+    DrawString(buffer, (font_bitmap *)state->font_maps.font_small_white, 16.0f*3, 600.0f, fps_value);
+    DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 16.0f*9, 600.0f, ms_string);
+    DrawString(buffer, (font_bitmap *)state->font_maps.font_small_white, 16.0f*11, 600.0f, ms_value);
 }
 
     // This kinda works, but has bugs with Mario for some reason.
