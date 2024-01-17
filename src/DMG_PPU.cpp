@@ -608,6 +608,13 @@ void DMG_PPU::clock() {
                 clock_count++;
                 break;
             }
+            // TODO(kaelan): This chunk of code was made to combat an issue with HBLANK checks in 
+            //               tetris. Essentially, the game was trying to write to VRAM at the end of
+            //               hblank. At the time, I did not have vram access enabled during OAM search,
+            //               which it should be for any writes to the tiledata/tilemaps, just not OAM itself.
+            //               
+            //               Need to double check more that the issue has been resolved properply.
+
             // Check what the next PPU mode will be
             //else if (clock_count == 2 && ly + 1 == 144) {
                 //stat.mode_flag = 0;
@@ -616,8 +623,8 @@ void DMG_PPU::clock() {
             //else
                 //stat.mode_flag = 2;
             // Wait one clock cycle before resetting the HBlank flag
-            if (clock_count == old_clock + 2)
-                stat_hblank_flag = false;
+            //if (clock_count == old_clock + 2)
+                //stat_hblank_flag = false;
             // Check if we need to advance to a new scanline
             if (clock_count == 456) {
                 clock_count = 0;
