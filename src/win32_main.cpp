@@ -748,7 +748,7 @@ wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR command_line, int sh
                         //               This method has some inconsistencies.
                         if(sleep_is_granular)
                         {
-                            INT int_sleep_ms = (INT)(1000.0f*(target_seconds_per_frame-work_seconds_elapsed-1.0f));
+                            INT int_sleep_ms = (INT)(1000.0f*(target_seconds_per_frame-work_seconds_elapsed)-1.0f);
                             DWORD sleep_ms = (int_sleep_ms < 0 ? 0 : (DWORD)int_sleep_ms);
                             if(sleep_ms > 0)
                             {
