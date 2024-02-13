@@ -193,9 +193,11 @@ SDLGetDrawInfo(sdl_offscreen_buffer *buffer, SDL_Surface *surface) {
     buffer->bytes_per_pixel = buffer->width_in_bytes/buffer->width;
 }
 internal f32
-SDLGetSecondsElapsed(u64 start, u64 end) {
-    f32 result = (f32)(end - start);
-    return result;
+SDLGetSecondsElapsed(std::chrono::time_point<std::chrono::high_resolution_clock> start, 
+                     std::chrono::time_point<std::chrono::high_resolution_clock> end) {
+    using namespace std::chrono;
+    duration<f32> result = duration_cast<duration<f32>>(end-start);
+    return result.count();
 }
 int 
 main(int argc, char *argv[]) {
@@ -242,15 +244,16 @@ main(int argc, char *argv[]) {
     engine_memory.transient_storage = ((u8 *)engine_memory.permanent_storage + engine_memory.permanent_storage_size);
     if(engine_memory.permanent_storage && engine_memory.transient_storage)
     {
+        using namespace std::chrono;
         nenjin_input engine_input[2] = {};
         nenjin_input *new_input = &engine_input[0];
         nenjin_input *old_input = &engine_input[1];
         // Events for our event loop.
         SDL_Event event;
         // TODO(kaelan): Use std::chrono instead of SDLGetTick64. 
-        const f32 engine_update_freq_ms = (1.0f/60.0f)*1000.0f-1.0f;
+        const f32 engine_update_freq_ms = 16.66f;
         f32 target_seconds_per_frame = engine_update_freq_ms/1000.0f;
-        u64 last_counter = SDL_GetTicks64();
+        time_point<high_resolution_clock> last_counter = high_resolution_clock::now();
         // Main loop
         // NOTE: Seems like memory is allocated via malloc and not through SDL.
         while(global_alive)
@@ -279,8 +282,8 @@ main(int argc, char *argv[]) {
             // Update the emulator.
             UpdateAndRender(&engine_memory, engine_input, &offscreen_buffer);
             SDL_UnlockSurface(surface);
-            u64 work_counter = SDL_GetTicks64();
-            f32 work_seconds_elapsed = SDLGetSecondsElapsed(last_counter, work_counter)/1000.0f;
+            time_point<high_resolution_clock> work_counter = high_resolution_clock::now();
+            f32 work_seconds_elapsed = SDLGetSecondsElapsed(last_counter, work_counter);
             if(work_seconds_elapsed < target_seconds_per_frame)
             {
                 // Sleep if we are too fast!
@@ -292,11 +295,11 @@ main(int argc, char *argv[]) {
                 }
                 while(work_seconds_elapsed < target_seconds_per_frame)
                 {
-                    work_seconds_elapsed = SDLGetSecondsElapsed(last_counter, SDL_GetTicks64())/1000.0f;
+                    work_seconds_elapsed = SDLGetSecondsElapsed(last_counter, high_resolution_clock::now());
                 }
             }
-            u64 end_counter = SDL_GetTicks64();
-            f32 ms_per_frame = SDLGetSecondsElapsed(last_counter, end_counter);
+            time_point<high_resolution_clock> end_counter = high_resolution_clock::now();
+            f32 ms_per_frame = SDLGetSecondsElapsed(last_counter, end_counter)*1000.0f;
             f32 fps = 1000.0f/ms_per_frame;
             last_counter = end_counter;
             // Debug output
