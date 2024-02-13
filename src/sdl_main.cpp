@@ -251,7 +251,7 @@ main(int argc, char *argv[]) {
         // Events for our event loop.
         SDL_Event event;
         // TODO(kaelan): Use std::chrono instead of SDLGetTick64. 
-        const f32 engine_update_freq_ms = 16.66f;
+        const f32 engine_update_freq_ms = 16.74f;
         f32 target_seconds_per_frame = engine_update_freq_ms/1000.0f;
         time_point<high_resolution_clock> last_counter = high_resolution_clock::now();
         // Main loop
@@ -287,7 +287,8 @@ main(int argc, char *argv[]) {
             if(work_seconds_elapsed < target_seconds_per_frame)
             {
                 // Sleep if we are too fast!
-                int int_sleep_ms = (int)(1000.0f*(target_seconds_per_frame-work_seconds_elapsed));
+                // NOTE: We sleep 1 ms less so frames are locked in at the target.
+                int int_sleep_ms = (int)(1000.0f*(target_seconds_per_frame-work_seconds_elapsed)-1.0f);
                 u32 sleep_ms = (int_sleep_ms < 0 ? 0 : u32(int_sleep_ms));
                 if(sleep_ms > 0)
                 {
