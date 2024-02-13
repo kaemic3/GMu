@@ -163,7 +163,7 @@ GetController(nenjin_input *input, int controller_index) {
 }
 // TODO(kaelan): Need to figure out where this should actually go.
 // NOTE: This struct is made so strings can be stored in an array
-#define MAX_DIR_STRING MAX_PATH
+#define MAX_DIR_STRING 260
 typedef struct directory_string 
 {
 	char value[MAX_DIR_STRING];
@@ -198,6 +198,7 @@ typedef DEBUG_PLATFORM_GET_ROM_DIRECTORY(debug_platform_get_rom_directory);
 
 #define DEBUG_PLATFORM_WRITE_ENTIRE_FILE(name) bool32 name(char *file_name, u32 memory_size, void *memory)
 typedef DEBUG_PLATFORM_WRITE_ENTIRE_FILE(debug_platform_write_entire_file);
+
 
 #endif
 typedef struct nenjin_memory 
