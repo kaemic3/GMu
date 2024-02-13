@@ -60,55 +60,6 @@ DEBUG_PLATFORM_GET_ROM_DIRECTORY(DEBUGPlatformGetROMDirectory) {
         }
     }
     string_array->size = string_index;
-
-    #if 0
-    WIN32_FIND_DATAA data;
-    // Skip the . and .. strings, from what I can find, they always show up as the first two files.
-    HANDLE find = FindFirstFileA("../data/ROMs/*", &data);
-    FindNextFileA(find, &data);
-    s32 string_index = 0;
-    while(FindNextFileA(find, &data) != 0)
-    {
-        char *string = data.cFileName;
-        s32 string_length = StringLength(string);
-        // Traverse the string to the end of the string, then get the file ext.
-        for(s32 ext_index = 0; ext_index < string_length; ++ext_index)
-        {
-            ++string;
-        }
-        // Now go backwards until we see a . Store the number of chars.
-        s32 ext_length = 0;
-        while(*string != '.')
-        {
-            --string;
-            ++ext_length;
-        }
-        // String should be at the last period now, which should be the beginning of the ext.
-        // NOTE: I am not sure how long file extensions can be, but 8 seems like it would be long enough.
-        // Store the ext.
-        char ext[8];
-        for(s32 ext_index = 0; ext_index < ext_length; ++ext_index)
-        {
-            // Store as lowercase!
-            ext[ext_index] = (char)tolower(*++string);
-        }
-        // Now check the first two indicies of the ext array to see if they are gb
-        if(ext[0] == 'g' && ext[1] == 'b')
-        {
-            // Reset the string pointer
-            string = data.cFileName;
-            for(s32 index = 0; index < string_length; ++index)
-            {
-                string_array->strings[string_index].value[index] = string[index];
-            }
-            // Add null term.
-            string_array->strings[string_index].value[string_length] = 0;
-            ++string_index;
-        }
-        
-    }
-    string_array->size = string_index;
-    #endif
 }
 DEBUG_PLATFORM_WRITE_ENTIRE_FILE(DEBUGPlatformWriteEntireFile) {
     bool32 result = false;
