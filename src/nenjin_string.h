@@ -54,7 +54,7 @@ internal void
 ToHexStringU8(u8 value, char *dest) {
     const u32 string_size = 3;
     char buf[string_size];
-    _itoa_s(value, buf, 16);
+    sprintf(buf, "%x", value);
     // Prepend 0.
     if(value < 0x10)
     {
@@ -68,7 +68,7 @@ internal void
 ToHexStringU16(u16 value, char *dest){
     const u32 string_size = 5;
     char buf[string_size];
-    _itoa_s(value, buf, 16);
+    sprintf(buf, "%x", value);
     // Prepend zeros.
     if(value < 0x10)
     {

@@ -587,8 +587,8 @@ NENJIN_DRAW_DEBUG(NenjinDrawDebug) {
     char fps_string[] = "fps";
     char ms_value[256] = "";
     char ms_string[] = "ms";
-    _snprintf_s(fps_value, sizeof(fps_value), "%.02f", fps);
-    _snprintf_s(ms_value, sizeof(ms_value), "%.02f", f_time);
+    sprintf(fps_value, "%.02f", fps);
+    sprintf(ms_value,"%.02f", f_time);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 0.0f, 600.0f, fps_string);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_white, 16.0f*3, 600.0f, fps_value);
     DrawString(buffer, (font_bitmap *)state->font_maps.font_small_pink, 16.0f*9, 600.0f, ms_string);

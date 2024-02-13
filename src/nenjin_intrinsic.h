@@ -51,8 +51,9 @@ struct bit_scan_result
 inline bit_scan_result 
 FindLeastSignificantSetBit(u32 value) {
 	bit_scan_result result = {};
-	// NOTE: Both MSVC and CLANG have an intrinsic for this!
-#if COMPILER_MSVC || COMPILER_LLVM 
+	// NOTE: For now LLVM intrinsics are not working.
+	// TODO(kaelan): Look into LLVM intrinsics.
+#if COMPILER_MSVC 
 	result.found = _BitScanForward((unsigned long *)&result.index, value);
 #else
 	for(u32 test = 0; test < 32; ++test)

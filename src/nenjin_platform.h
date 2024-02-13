@@ -26,7 +26,7 @@
 #if _MSC_VER
 #undef COMPILER_MSVC
 #define COMPILER_MSVC 1
-#else if __CLANG__
+#else __CLANG__
 #undef COMPILER_LLVM
 #define COMPILER_LLVM 1
 
