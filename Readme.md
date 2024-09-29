@@ -4,6 +4,8 @@
 
 This is my first programming project, so keep that in mind.
 
+Playable demo is located here: https://kaemic3.github.io/Demos/GMu
+
 ## Usage
 
 Currently, Windows and MacOSX are supported. SDL2 is used for the Mac version, so Linux should build if you make a script for it.
